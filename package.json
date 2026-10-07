@@ -1,14 +1,21 @@
 {
-  "name": "temp_app",
-  "version": "0.1.0",
+  "name": "lider-kids",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "cap:sync": "next build && cap sync",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^14.0.0",
     "lucide-react": "^1.52.0",
