@@ -1,0 +1,430 @@
+import { SubjectInfo, QuizQuestion, Lesson, Achievement } from '@/types';
+
+export const SUBJECTS: SubjectInfo[] = [
+  {
+    id: 'math',
+    title: 'Matematika',
+    subtitle: 'Sonlar sehri va tezkor hisob',
+    iconName: 'Calculator',
+    themeColor: {
+      bg: 'bg-amber-50 dark:bg-amber-950/30',
+      border: 'border-amber-400 hover:border-amber-500',
+      text: 'text-amber-600 dark:text-amber-400',
+      badge: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+      gradient: 'from-amber-400 to-orange-500',
+    },
+    description: 'Prezident maktabiga xos oson va tez hisoblash usullari, geometrik sirlar hamda tenglamalar olami.',
+    totalQuestions: 15,
+  },
+  {
+    id: 'logic',
+    title: 'Muammoli masalalar',
+    subtitle: 'Problem Solving & Mantiq',
+    iconName: 'Lightbulb',
+    themeColor: {
+      bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+      border: 'border-emerald-400 hover:border-emerald-500',
+      text: 'text-emerald-600 dark:text-emerald-400',
+      badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
+      gradient: 'from-emerald-400 to-teal-500',
+    },
+    description: 'Hayotiy vaziyatlar, qiziqarli jumboqlar va mantiqiy chalkashliklarni yechish mahorati.',
+    totalQuestions: 15,
+  },
+  {
+    id: 'critical',
+    title: 'Tanqidiy fikrlash',
+    subtitle: 'Critical Thinking & Diqqat',
+    iconName: 'Brain',
+    themeColor: {
+      bg: 'bg-violet-50 dark:bg-violet-950/30',
+      border: 'border-violet-400 hover:border-violet-500',
+      text: 'text-violet-600 dark:text-violet-400',
+      badge: 'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-300',
+      gradient: 'from-violet-500 to-indigo-600',
+    },
+    description: 'Ketma-ketliklarni topish, ortiqcha narsani ajratish, fazoviy shakllar va chuqur tahlil sirlari.',
+    totalQuestions: 15,
+  },
+];
+
+export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  // 1-SINF: MATEMATIKA
+  {
+    id: 'm1-1',
+    subjectId: 'math',
+    grade: 1,
+    question: 'Savatchada 5 ta olma bor edi. Ali yana 3 ta olma soldi, lekin 2 tasini ukasiga berdi. Savatchada nechta olma qoldi?',
+    imageOrEmoji: '🍎🍏🍎',
+    hint: 'Avval qo‘shamiz, keyin ayiramiz!',
+    options: ['4 ta', '6 ta', '7 ta', '5 ta'],
+    correctAnswerIndex: 1,
+    explanation: '5 + 3 = 8 ta olma bo‘ldi. 8 - 2 = 6 ta olma qoldi! Juda to‘g‘ri hisoblading!',
+  },
+  {
+    id: 'm1-2',
+    subjectId: 'math',
+    grade: 1,
+    question: 'Qaysi son qatorda yetishmayapti?  2, 4, 6, [ ? ], 10',
+    imageOrEmoji: '🔢✨',
+    hint: 'Sonlar 2 tadan oshib boryapti!',
+    options: ['7', '8', '9', '5'],
+    correctAnswerIndex: 1,
+    explanation: 'Har bir son 2 ga oshmoqda: 6 + 2 = 8!',
+  },
+  {
+    id: 'm1-3',
+    subjectId: 'math',
+    grade: 1,
+    question: 'Uchburchakda nechta burchak bor?',
+    imageOrEmoji: '🔺📐',
+    hint: 'Uchburchak nomiga diqqat qiling: "Uch" burchak!',
+    options: ['2 ta', '3 ta', '4 ta', '5 ta'],
+    correctAnswerIndex: 1,
+    explanation: 'Nomidan ham ma\'lum: Uchburchakda 3 ta burchak va 3 ta tomon bor.',
+  },
+
+  // 1-SINF: MUAMMOLI MASALALAR
+  {
+    id: 'l1-1',
+    subjectId: 'logic',
+    grade: 1,
+    question: 'Daryodan narigi qirg‘oqqa o‘tish kerak. Qayiqqa faqat 1 ta bola sig‘adi. Qirg‘oqda 2 ta bola turibdi. Ular qanday qilib narigi tomonga o‘tishi mumkin?',
+    imageOrEmoji: '🛶🌊',
+    hint: 'Qayiq qaytib kela oladimi?',
+    options: [
+      'Biri suzib boradi, biri qayiqda',
+      'Birinchi bola o‘tadi, qayiqni qaytarib olib keladi, keyin ikkinchisi o‘tadi',
+      'Ikkalasi birga minadi',
+      'Hech qachon o‘ta olishmaydi'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'Bir bola qayiqda narigi qirg‘oqqa o‘tib, qayiqni do‘stiga qaytarib olib kelsa, ikkinchisi ham o‘ta oladi!',
+  },
+  {
+    id: 'l1-2',
+    subjectId: 'logic',
+    grade: 1,
+    question: 'Agar bugun seshanba bo‘lsa, 2 kundan keyin qaysi kun bo‘ladi?',
+    imageOrEmoji: '📅✨',
+    hint: 'Seshanbadan keyin chorshanba...',
+    options: ['Payshanba', 'Juma', 'Chorshanba', 'Shanba'],
+    correctAnswerIndex: 0,
+    explanation: 'Seshanba -> 1-kun: Chorshanba -> 2-kun: Payshanba! Ajoyib!',
+  },
+
+  // 1-SINF: TANQIDIY FIKRLASH
+  {
+    id: 'c1-1',
+    subjectId: 'critical',
+    grade: 1,
+    question: 'Quyidagilardan qaysi biri ortiqcha?  Mushuk, Kuchuk, Qaldirg‘och, Sigir',
+    imageOrEmoji: '🐱🐶🐦🐮',
+    hint: 'Qaysi biri ucha oladi?',
+    options: ['Sigir', 'Mushuk', 'Qaldirg‘och', 'Kuchuk'],
+    correctAnswerIndex: 2,
+    explanation: 'Qaldirg‘och - qush va ucha oladi, qolganlari esa to‘rt oyoqli uy hayvonlari!',
+  },
+  {
+    id: 'c1-2',
+    subjectId: 'critical',
+    grade: 1,
+    question: 'Soyada qaysi narsaning rangi yo‘qoladi?',
+    imageOrEmoji: '☀️🕶️',
+    hint: 'Soya har doim qanday rangda bo‘ladi?',
+    options: ['Faqat qizil', 'Barcha narsaning soyasi qoramtir bo‘ladi', 'Yashil bo‘ladi', 'Oq bo‘ladi'],
+    correctAnswerIndex: 1,
+    explanation: 'Quyosh nurida narsaning o‘zi qanday rangda bo‘lishidan qat\'iy nazar, soyasi qoramtir/kulrang bo‘ladi!',
+  },
+
+  // 2-SINF: MATEMATIKA
+  {
+    id: 'm2-1',
+    subjectId: 'math',
+    grade: 2,
+    question: 'Bir tovoqda 16 ta shirinlik bor. Jamshid tovoqdagi shirinliklarning yarmini, Malika esa qolganining yarmini yedi. Tovoqda nechta shirinlik qoldi?',
+    imageOrEmoji: '🍬🧁🍭',
+    hint: 'Yarmi degani 2 ga bo‘lish degani!',
+    options: ['8 ta', '4 ta', '6 ta', '2 ta'],
+    correctAnswerIndex: 1,
+    explanation: '16 ning yarmi: 8 ta (Jamshid yedi, 8 ta qoldi). 8 ning yarmi: 4 ta (Malika yedi). Demak 4 ta qoldi!',
+  },
+  {
+    id: 'm2-2',
+    subjectId: 'math',
+    grade: 2,
+    question: 'Agar bir soatda 60 daqiqa bo‘lsa, yarim soatda nechta daqiqa bor?',
+    imageOrEmoji: '⏰🕰️',
+    hint: '60 ning yarmini toping!',
+    options: ['20 daqiqa', '30 daqiqa', '45 daqiqa', '15 daqiqa'],
+    correctAnswerIndex: 1,
+    explanation: '60 ni 2 ga bo‘lsak 30 daqiqa bo‘ladi!',
+  },
+
+  // 2-SINF: MUAMMOLI MASALALAR
+  {
+    id: 'l2-1',
+    subjectId: 'logic',
+    grade: 2,
+    question: 'Yugurish musobaqasida siz ikkinchi o‘rindagi yuguruvchini quvib o‘tdingiz. Hozir siz nechanchi o‘rindasiz?',
+    imageOrEmoji: '🏃‍♂️🥇🥈',
+    hint: 'Yaxshilab o‘ylab ko‘ring, birinchini emas, ikkinchini quvib o‘tdingiz!',
+    options: ['1-o‘rinda', '2-o‘rinda', '3-o‘rinda', 'Oxirgi o‘rinda'],
+    correctAnswerIndex: 1,
+    explanation: 'Siz 2-o‘rindagi odamning joyini egalladingiz, demak hozir siz 2-o‘rindasiz!',
+  },
+
+  // 2-SINF: TANQIDIY FIKRLASH
+  {
+    id: 'c2-1',
+    subjectId: 'critical',
+    grade: 2,
+    question: 'Shakl qonuniyatini aniqlang: Doira, Kvadrat, Doira, Kvadrat, [ ? ]',
+    imageOrEmoji: '⚪⬛⚪⬛❓',
+    hint: 'Ketma-ketlik almashib kelyapti.',
+    options: ['Uchburchak', 'Doira', 'Kvadrat', 'Yulduzcha'],
+    correctAnswerIndex: 1,
+    explanation: 'Doira va kvadrat navbatma-navbat takrorlanmoqda, navbat yana Doiraga!',
+  },
+
+  // 3-SINF: MATEMATIKA
+  {
+    id: 'm3-1',
+    subjectId: 'math',
+    grade: 3,
+    question: 'Prezident maktabi testi: 1 dan 10 gacha bo‘lgan barcha sonlar yig‘indisi nechaga teng? (1+2+3+...+10)',
+    imageOrEmoji: '🧮⚡',
+    hint: 'Juftlab qo‘shing: 1+10=11, 2+9=11...',
+    options: ['50', '55', '60', '45'],
+    correctAnswerIndex: 1,
+    explanation: 'Gaus usuli: (1+10) * 10 / 2 = 11 * 5 = 55! Ajoyib tezkor hisoblash!',
+  },
+  {
+    id: 'm3-2',
+    subjectId: 'math',
+    grade: 3,
+    question: 'To‘g‘ri to‘rtburchakning bo‘yi 8 sm, eni esa bo‘yidan 3 sm qisqa. Uning perimetri qancha?',
+    imageOrEmoji: '📏📐',
+    hint: 'Eni = 8 - 3 = 5 sm. Perimetr = (bo‘yi + eni) * 2',
+    options: ['24 sm', '26 sm', '13 sm', '40 sm'],
+    correctAnswerIndex: 1,
+    explanation: 'Eni 5 sm. Perimetr = (8 + 5) * 2 = 13 * 2 = 26 sm!',
+  },
+
+  // 3-SINF: MUAMMOLI MASALALAR
+  {
+    id: 'l3-1',
+    subjectId: 'logic',
+    grade: 3,
+    question: '5 ta mushuk 5 ta sichqonni 5 daqiqada tutadi. 100 ta mushuk 100 ta sichqonni necha daqiqada tutadi?',
+    imageOrEmoji: '🐱🐭⏱️',
+    hint: 'Har bir mushukka bittadan sichqon to‘g‘ri kelyapti!',
+    options: ['100 daqiqada', '50 daqiqada', '5 daqiqada', '20 daqiqada'],
+    correctAnswerIndex: 2,
+    explanation: 'Har bir mushuk bitta sichqonni tutish uchun 5 daqiqa sarflaydi. Shuning uchun 100 ta mushuk ham bir vaqtda 5 daqiqada tutadi!',
+  },
+
+  // 3-SINF: TANQIDIY FIKRLASH
+  {
+    id: 'c3-1',
+    subjectId: 'critical',
+    grade: 3,
+    question: 'Agar barcha A lar B bo‘lsa, va barcha B lar C bo‘lsa, quyidagilardan qaysi biri aniq to‘g‘ri?',
+    imageOrEmoji: '🧠🔍',
+    hint: 'Zanjir hosil qiling: A -> B -> C',
+    options: [
+      'Barcha A lar C bo‘ladi',
+      'Barcha C lar A bo‘ladi',
+      'Hech qaysi B A emas',
+      'Hech biri to‘g‘ri emas'
+    ],
+    correctAnswerIndex: 0,
+    explanation: 'Mantiqiy xulosa: A sinfi B ga, B esa C ga kiradi. Demak, barcha A lar muqarrar tarzda C ga ham kiradi!',
+  },
+
+  // 4-SINF: MATEMATIKA (Prezident maktabi darajasi)
+  {
+    id: 'm4-1',
+    subjectId: 'math',
+    grade: 4,
+    question: 'Qafasda quyonlar va tovuqlar bor. Ularning jami boshlari soni 10 ta, oyoqlari soni esa 28 ta. Qafasda nechta quyon bor?',
+    imageOrEmoji: '🐇🐔🦶',
+    hint: 'Agar hammasi tovuq bo‘lsa: 10 * 2 = 20 ta oyoq bo‘lardi...',
+    options: ['4 ta', '5 ta', '6 ta', '3 ta'],
+    correctAnswerIndex: 0,
+    explanation: 'Ortiqcha oyoqlar: 28 - 20 = 8 ta. Har bir quyonda tovuqdan 2 ta ko‘p oyoq bor. 8 / 2 = 4 ta quyon va 6 ta tovuq!',
+  },
+  {
+    id: 'm4-2',
+    subjectId: 'math',
+    grade: 4,
+    question: 'Ketma-ket 3 ta butun sonning yig‘indisi 72 ga teng. Bu sonlarning eng kattasi nechchi?',
+    imageOrEmoji: '🔢🎯',
+    hint: 'O‘rtadagi sonni topish uchun 72 ni 3 ga bo‘ling!',
+    options: ['23', '24', '25', '26'],
+    correctAnswerIndex: 2,
+    explanation: 'O‘rtadagi son: 72 / 3 = 24. Sonlar: 23, 24, 25. Demak eng kattasi 25!',
+  },
+
+  // 4-SINF: MUAMMOLI MASALALAR (Prezident maktabi)
+  {
+    id: 'l4-1',
+    subjectId: 'logic',
+    grade: 4,
+    question: 'Uchta qutida etiketkalar adashtirib yopishtirilgan: "Olma", "Nok", "Aralash (Olma va Nok)". Ma\'lumki barcha etiketkalar NOTO‘G‘RI yopishtirilgan. Faqat bitta meva olib, hamma qutilarni qanday aniqlash mumkin?',
+    imageOrEmoji: '📦🍏🍐',
+    hint: 'Qaysi qutidan bitta meva olish eng ko‘p ma\'lumot beradi?',
+    options: [
+      '"Aralash" yozilgan qutidan bitta meva olib',
+      '"Olma" yozilgan qutidan olib',
+      '"Nok" yozilgan qutidan olib',
+      'Iloji yo‘q, kamida 2 ta meva olish kerak'
+    ],
+    correctAnswerIndex: 0,
+    explanation: '"Aralash" qutisi aniq bitta turdagi meva. Undan olingan meva (masalan olma) butun quti mevasini ochib beradi va qolgan noto‘g‘ri etiketkalar orqali hammasi topiladi!',
+  },
+
+  // 4-SINF: TANQIDIY FIKRLASH
+  {
+    id: 'c4-1',
+    subjectId: 'critical',
+    grade: 4,
+    question: 'Kub shaklidagi qutining 6 ta yog‘i bor. Agar kubning barcha tomonlari ko‘k rangga bo‘yalib, so‘ng 27 ta bir xil kichik kubchalarga bo‘linsa, nechta kichik kubchaning hech qaysi yog‘i bo‘yalmagan bo‘ladi?',
+    imageOrEmoji: '🎲🧊',
+    hint: 'Faqat kubning eng markazida (ichida) joylashgan kubchalar bo‘yalmaydi!',
+    options: ['0 ta', '1 ta', '6 ta', '8 ta'],
+    correctAnswerIndex: 1,
+    explanation: '3x3x3 kubda eng ichki markazda faqat 1 ta kubcha tashqi tomonga chiqmaydi, uning 0 ta yog‘i bo‘yalgan bo‘ladi!',
+  },
+];
+
+export const LESSONS: Lesson[] = [
+  {
+    id: 'les-1',
+    subjectId: 'math',
+    grade: 1,
+    title: 'Tezkor hisoblash: O‘nliklar bilan do‘stlashamiz',
+    durationMinutes: 6,
+    youtubeId: '3A_bX2q1f6E', // Namuna ta'lim videosi ID
+    description: '10 hosil qiluvchi juftliklar (1+9, 2+8, 3+7, 4+6, 5+5) orqali og‘zaki hisoblashni 2 baravar tezlashtiramiz!',
+    learningPoints: [
+      '10 sonining sehrli juftliklari',
+      'Barmoqlarsiz xayolda hisoblash sirlari',
+      'Do‘stona sonlar bilan o‘yinlar',
+    ],
+  },
+  {
+    id: 'les-2',
+    subjectId: 'logic',
+    grade: 1,
+    title: 'Mantiqiy jumboqlar: Qaysi biri ortiqcha?',
+    durationMinutes: 5,
+    youtubeId: '4-X2Fj0e-0c',
+    description: 'Narsalarning rangi, shakli, vazifasi va xususiyatlariga ko‘ra to‘g‘ri tasniflashni o‘rganamiz.',
+    learningPoints: [
+      'Narsalarning yashirin xususiyatlarini payqash',
+      'Guruhlash qoidalari',
+      'Kuzatuvchanlikni oshiruvchi mashqlar',
+    ],
+  },
+  {
+    id: 'les-3',
+    subjectId: 'critical',
+    grade: 2,
+    title: 'Ketma-ketlik va qonuniyatlarni topish',
+    durationMinutes: 8,
+    youtubeId: 'Wd71J2V-z2Q',
+    description: 'Prezident maktabi imtihonlarida eng ko‘p tushadigan shakllar va sonlar ketma-ketligining siri.',
+    learningPoints: [
+      'Shakllar aylanishi va o‘zgarishi',
+      'Qadamlar sonini hisoblash',
+      'Mantiqiy bog‘liqlikni ilg‘ash',
+    ],
+  },
+  {
+    id: 'les-4',
+    subjectId: 'math',
+    grade: 3,
+    title: 'Gaus usuli: Katta sonlarni 5 soniyada qo‘shish',
+    durationMinutes: 7,
+    youtubeId: 'k42_E7w8S_M',
+    description: 'Yosh Karl Gauss qanday qilib 1 dan 100 gacha sonlarni bir lahzada qo‘shib butun sinfni lol qoldirgan?',
+    learningPoints: [
+      'Bosh va oxirgi sonlarni juftlash',
+      'Formulasiz tezkor hayoliy hisob',
+      'Prezident maktabi testlarida qo‘llash',
+    ],
+  },
+  {
+    id: 'les-5',
+    subjectId: 'logic',
+    grade: 4,
+    title: 'Eyler doiralari va to‘plamlar bilan masalalar',
+    durationMinutes: 9,
+    youtubeId: 'dQw4w9WgXcQ',
+    description: 'Qaysi o‘quvchi ingliz tili, qaysi biri shaxmat to‘garagiga boradi? Murakkab masalalarni doiralar bilan bir zumda yeching.',
+    learningPoints: [
+      'Eyler doiralari nima?',
+      'Kesishtirish va umumiy qismni topish',
+      'Prezident maktabi 4-sinf imtihon savollari tahlili',
+    ],
+  },
+  {
+    id: 'les-6',
+    subjectId: 'critical',
+    grade: 4,
+    title: 'Fazoviy tasavvur: Qirqilgan kublar va shakllar',
+    durationMinutes: 8,
+    youtubeId: 'y6120QOlsfU',
+    description: 'Qog‘oz yoyilmasidan quti yasash, orqadan va tepadan ko‘rinishni tasavvur qilish mahorati.',
+    learningPoints: [
+      '3D shakllarni 2D tekislikda ko‘ra bilish',
+      'Yoyilmalarni xayolan buklash',
+      'Ko‘rinmas tomonlarni hisoblash',
+    ],
+  },
+];
+
+export const ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'first-step',
+    title: 'Birinchi Qadam',
+    description: 'Ilk test savoliga to‘g‘ri javob berding!',
+    icon: '🌱',
+    requiredCoins: 10,
+    unlocked: false,
+  },
+  {
+    id: 'coin-master',
+    title: 'Tanga Jamg‘aruvchi',
+    description: '50 dan ortiq oltin tanga to‘plading!',
+    icon: '💰',
+    requiredCoins: 50,
+    unlocked: false,
+  },
+  {
+    id: 'flame-keeper',
+    title: 'Olovli Bilimdon',
+    description: '3 ta video darsni muvaffaqiyatli yakunlading!',
+    icon: '🔥',
+    requiredStreaks: 3,
+    unlocked: false,
+  },
+  {
+    id: 'brain-champ',
+    title: 'Zukko Lider',
+    description: '5 ta test savolini a\'lo darajada yechding!',
+    icon: '👑',
+    requiredQuizzes: 5,
+    unlocked: false,
+  },
+  {
+    id: 'president-ready',
+    title: 'Prezident Maktabi Sari',
+    description: '100 tanga va 5 olovcha to‘plab shoh darajasiga yetding!',
+    icon: '🏆',
+    requiredCoins: 100,
+    requiredStreaks: 5,
+    unlocked: false,
+  },
+];
