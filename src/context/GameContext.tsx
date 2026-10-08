@@ -93,7 +93,22 @@ interface GameContextType {
   unequipMarketItem: (category: MarketCategory) => void;
   resetProgress: () => void;
   updateLastActiveDate: () => void;
+  dailyGamesCount: number;
+  remainingGamesToday: number;
+  canPlayGame: boolean;
+  maxDailyGames: number;
+  recordGamePlay: () => boolean;
 }
+
+export const MAX_DAILY_GAMES = 2;
+
+export const getTodayDateString = (): string => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const STORAGE_KEY = 'liderkids_progress_v1';
 const PROFILE_KEY = 'liderkids_user_profile_v1';
@@ -133,6 +148,10 @@ const defaultProgress: UserProgress = {
   inventory: ['backpack_red'],
   equippedItems: { backpack: 'backpack_red' },
   profile: defaultProfile,
+  dailyGames: {
+    date: getTodayDateString(),
+    count: 0,
+  },
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -144,6 +163,37 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
   const [smsHistory, setSmsHistory] = useState<SmsMessage[]>([]);
+
+  const todayStr = getTodayDateString();
+  const dailyGamesCount = progress.dailyGames?.date === todayStr ? (progress.dailyGames.count || 0) : 0;
+  const remainingGamesToday = Math.max(0, MAX_DAILY_GAMES - dailyGamesCount);
+  const canPlayGame = dailyGamesCount < MAX_DAILY_GAMES;
+
+  const recordGamePlay = useCallback((): boolean => {
+    const currentToday = getTodayDateString();
+    let permitted = false;
+
+    setProgress((prev) => {
+      const isToday = prev.dailyGames?.date === currentToday;
+      const currentCount = isToday ? (prev.dailyGames?.count || 0) : 0;
+
+      if (currentCount >= MAX_DAILY_GAMES) {
+        permitted = false;
+        return prev;
+      }
+
+      permitted = true;
+      return {
+        ...prev,
+        dailyGames: {
+          date: currentToday,
+          count: currentCount + 1,
+        },
+      };
+    });
+
+    return permitted;
+  }, []);
 
   const refreshSmsHistory = useCallback(() => {
     setSmsHistory(smsService.getHistory());
@@ -627,6 +677,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         unequipMarketItem,
         resetProgress,
         updateLastActiveDate,
+        dailyGamesCount,
+        remainingGamesToday,
+        canPlayGame,
+        maxDailyGames: MAX_DAILY_GAMES,
+        recordGamePlay,
       }}
     >
       {children}

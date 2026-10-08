@@ -26,7 +26,14 @@ export default function GameBreakModal({
   onChooseAnother,
 }: GameBreakModalProps) {
   const router = useRouter();
-  const { addCoins, progress } = useGame();
+  const {
+    addCoins,
+    progress,
+    dailyGamesCount,
+    remainingGamesToday,
+    canPlayGame,
+    recordGamePlay,
+  } = useGame();
   const cappedCoins = Math.min(10, Math.max(1, bonusCoins));
 
   useEffect(() => {
@@ -38,6 +45,15 @@ export default function GameBreakModal({
       }
     }
   }, [isOpen]);
+
+  const handleRestart = () => {
+    if (canPlayGame) {
+      const ok = recordGamePlay();
+      if (ok) {
+        onRestart();
+      }
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -67,6 +83,25 @@ export default function GameBreakModal({
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300">
             Miyangiz yangilandi va diqqatingiz oshdi. Yangi video darslar va bilim cho‘qqilari sizni kutmoqda!
           </p>
+
+          {/* Daily Games quota badge */}
+          <div className="pt-1">
+            <span
+              className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-xl border ${
+                dailyGamesCount >= 2
+                  ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-900'
+                  : 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+              }`}
+            >
+              <span>🎮 Bugungi o‘yinlar:</span>
+              <span>{dailyGamesCount} / 2</span>
+              {dailyGamesCount >= 2 ? (
+                <span className="text-rose-600 dark:text-rose-400 font-extrabold">(Bugungi limit to‘ldi)</span>
+              ) : (
+                <span className="text-amber-600 dark:text-amber-400 font-bold">({remainingGamesToday} ta imkoniyat qoldi)</span>
+              )}
+            </span>
+          </div>
         </div>
 
         {/* Bonus reward card */}
@@ -98,19 +133,28 @@ export default function GameBreakModal({
           </button>
 
           <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={onRestart}
-              className="py-2.5 px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 font-extrabold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Yana o‘ynash 🔄</span>
-            </button>
+            {canPlayGame ? (
+              <button
+                onClick={handleRestart}
+                className="py-2.5 px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 font-extrabold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Yana o‘ynash ({remainingGamesToday}) 🔄</span>
+              </button>
+            ) : (
+              <div
+                className="py-2.5 px-3 bg-zinc-100/70 dark:bg-zinc-800/70 text-zinc-400 dark:text-zinc-500 font-black text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-center gap-1.5 cursor-not-allowed select-none"
+                title="Bugun faqat 2 marta o‘ynash mumkin. Limitga yetdingiz!"
+              >
+                <span>Limit tugadi (2/2) 🔒</span>
+              </div>
+            )}
 
             <button
               onClick={onChooseAnother}
               className="py-2.5 px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 font-extrabold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span>Boshqa o‘yin 🎮</span>
+              <span>{canPlayGame ? 'Boshqa o‘yin 🎮' : 'Menyu 🎮'}</span>
             </button>
           </div>
         </div>

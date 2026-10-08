@@ -16,9 +16,12 @@ import {
   ChevronRight,
   Flame,
   Award,
-  Crown
+  Crown,
+  Lock,
+  X,
+  CheckCircle2
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 interface GameInfo {
@@ -70,11 +73,33 @@ const GAMES_LIST: GameInfo[] = [
 ];
 
 export default function GamesPage() {
-  const { progress, setGrade } = useGame();
+  const {
+    progress,
+    setGrade,
+    dailyGamesCount,
+    remainingGamesToday,
+    canPlayGame,
+    recordGamePlay,
+  } = useGame();
   const currentGrade = progress.grade || 1;
   const isJunior = currentGrade <= 2;
 
   const [activeGame, setActiveGame] = useState<MiniGameId | null>(null);
+  const [showLimitNoticeModal, setShowLimitNoticeModal] = useState(false);
+
+  const handleStartGame = (gameId: MiniGameId) => {
+    if (!canPlayGame) {
+      setShowLimitNoticeModal(true);
+      return;
+    }
+
+    const permitted = recordGamePlay();
+    if (permitted) {
+      setActiveGame(gameId);
+    } else {
+      setShowLimitNoticeModal(true);
+    }
+  };
 
   return (
     <div className="space-y-8 pb-16 max-w-5xl mx-auto">
@@ -82,15 +107,29 @@ export default function GamesPage() {
       <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2">
-              <Gamepad2 className="w-4 h-4 text-yellow-200" />
-              <span>Darslar Oralig‘idagi Tanaffus</span>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider">
+                <Gamepad2 className="w-4 h-4 text-yellow-200" />
+                <span>Darslar Oralig‘idagi Tanaffus</span>
+              </div>
+              <div
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black ${
+                  dailyGamesCount >= 2
+                    ? 'bg-red-500/80 text-white'
+                    : 'bg-white/25 text-yellow-100'
+                }`}
+              >
+                {dailyGamesCount >= 2 ? <Lock className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+                <span>
+                  Bugungi o‘yinlar: {dailyGamesCount}/2 {dailyGamesCount >= 2 ? '(Limit to‘ldi)' : `(${remainingGamesToday} ta qoldi)`}
+                </span>
+              </div>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black">
               2 Daqiqalik Mini-O‘yinlar 🎮
             </h1>
             <p className="text-orange-100 text-sm sm:text-base font-medium max-w-xl mt-1">
-              Darslar orasida miyangizni dam oldiring va yangi energiya to‘plang! Hech qanday jazosiz, faqat xursandchilik va +10 tanga bonus!
+              Darslar orasida miyangizni dam oldiring va yangi energiya to‘plang! Kuniga faqat 2 marta o‘ynash mumkin va har o‘yinda +10 tanga bonus beriladi!
             </p>
           </div>
 
@@ -157,6 +196,35 @@ export default function GamesPage() {
       ) : (
         /* Game Selection Hub */
         <div className="space-y-6">
+          {/* Daily Limit Warning Banner if limit reached */}
+          {dailyGamesCount >= 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-rose-50 to-amber-50 dark:from-zinc-900 dark:to-zinc-850 p-5 rounded-3xl border-2 border-rose-200 dark:border-rose-900/60 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
+                  🔒
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-zinc-900 dark:text-white">
+                    Bugungi 2 ta o‘yin imkoniyatingiz to‘ldi (2/2)
+                  </h3>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed mt-0.5">
+                    Kuniga ko‘pi bilan 2 ta o‘yin o‘ynash me’yori ko‘zni toliqishdan saqlaydi va bilimga e’tibor qaratishga yordam beradi. Yangi imkoniyatlar ertaga yana ochiladi!
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/lessons"
+                className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black text-xs rounded-2xl shadow-md shrink-0 hover:brightness-105 active:scale-95 transition"
+              >
+                Darslarga o‘tish 📚
+              </Link>
+            </motion.div>
+          )}
+
           <div className="flex items-center justify-between">
             <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <span>O‘yinni tanlang</span>
@@ -177,10 +245,14 @@ export default function GamesPage() {
             {GAMES_LIST.map((game) => (
               <motion.div
                 key={game.id}
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setActiveGame(game.id)}
-                className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border-2 border-amber-200 dark:border-zinc-800 shadow-md hover:shadow-xl hover:border-amber-400 dark:hover:border-amber-600 transition-all cursor-pointer flex flex-col justify-between space-y-5"
+                whileHover={{ scale: canPlayGame ? 1.02 : 1, y: canPlayGame ? -4 : 0 }}
+                whileTap={{ scale: canPlayGame ? 0.98 : 1 }}
+                onClick={() => handleStartGame(game.id)}
+                className={`bg-white dark:bg-zinc-900 rounded-3xl p-6 border-2 shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-5 ${
+                  canPlayGame
+                    ? 'border-amber-200 dark:border-zinc-800 hover:shadow-xl hover:border-amber-400 dark:hover:border-amber-600'
+                    : 'border-zinc-200 dark:border-zinc-800 opacity-80 hover:border-rose-300 dark:hover:border-rose-900'
+                }`}
               >
                 <div className="space-y-4">
                   {/* Icon & Title */}
@@ -222,10 +294,17 @@ export default function GamesPage() {
                     <span>2 daqiqa</span>
                   </div>
 
-                  <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs rounded-xl shadow-md">
-                    <span>O‘ynash</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </span>
+                  {canPlayGame ? (
+                    <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs rounded-xl shadow-md">
+                      <span>O‘ynash ({remainingGamesToday})</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Limit (2/2)</span>
+                    </span>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -237,9 +316,9 @@ export default function GamesPage() {
               <span className="text-3xl">🧘‍♂️</span>
               <div>
                 <strong className="text-zinc-900 dark:text-white font-black block text-sm">
-                  Pedagogik tanaffus qoidasi:
+                  Pedagogik tanaffus qoidasi (kuniga 2 marta):
                 </strong>
-                Har 20-30 daqiqa video dars yoki testdan so‘ng 2 daqiqalik mini-o‘yin diqqatni 40% ga oshiradi va ko‘zni toliqtirmaydi!
+                Har 20-30 daqiqa darsdan so‘ng 2 daqiqalik mini-o‘yin diqqatni oshiradi. Kuniga ko‘pi bilan 2 ta o‘yin bolalarni ekranga bog‘lanib qolishidan asraydi!
               </div>
             </div>
 
@@ -252,6 +331,80 @@ export default function GamesPage() {
           </div>
         </div>
       )}
+
+      {/* Daily limit reached notification modal */}
+      <AnimatePresence>
+        {showLimitNoticeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border-4 border-amber-300 dark:border-zinc-700 shadow-2xl text-center space-y-5 relative"
+            >
+              <button
+                onClick={() => setShowLimitNoticeModal(false)}
+                className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-amber-400 to-orange-500 rounded-3xl flex items-center justify-center text-4xl shadow-xl shadow-amber-500/20">
+                🛑
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs font-black uppercase tracking-wider bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 px-3 py-1 rounded-full">
+                  Kunlik limit yakunlandi
+                </span>
+                <h3 className="text-2xl font-black text-zinc-900 dark:text-white">
+                  Bugun faqat 2 marta o‘ynash mumkin!
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                  Siz bugungi <strong>2 ta o‘yin (jami 4 daqiqa)</strong> limitingizdan to‘liq foydalandingiz. Ko‘zlaringiz charchamasligi va darslarga diqqatingizni jamlash uchun o‘yinlar ertaga yana ochiladi! 🌟
+                </p>
+              </div>
+
+              <div className="bg-amber-50 dark:bg-zinc-800/80 p-4 rounded-2xl border border-amber-200 dark:border-zinc-700 text-left text-xs text-zinc-700 dark:text-zinc-300 space-y-1.5">
+                <div className="font-black text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <span>Hozir nima qilish mumkin?</span>
+                </div>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Video darslarni ko‘rib bilim oling yoki testlarni yechib reytingdagi o‘rningizni ko‘taring!
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Link
+                  href="/lessons"
+                  onClick={() => setShowLimitNoticeModal(false)}
+                  className="w-full py-3.5 px-6 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white font-black text-sm rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 hover:brightness-105 cursor-pointer"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Darslarga o‘tish 📚</span>
+                </Link>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/quiz"
+                    onClick={() => setShowLimitNoticeModal(false)}
+                    className="py-2.5 px-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 font-bold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 transition flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <span>Testlar 📝</span>
+                  </Link>
+                  <button
+                    onClick={() => setShowLimitNoticeModal(false)}
+                    className="py-2.5 px-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 font-bold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 transition cursor-pointer"
+                  >
+                    <span>Tushundim</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

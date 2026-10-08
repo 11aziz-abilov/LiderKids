@@ -120,6 +120,11 @@ export interface EquippedItems {
   accessory?: string;
 }
 
+export interface DailyGamesRecord {
+  date: string; // YYYY-MM-DD (mahalliy sana)
+  count: number;
+}
+
 export interface UserProgress {
   name: string;
   grade: GradeLevel;
@@ -139,6 +144,7 @@ export interface UserProgress {
   inventory?: string[];
   equippedItems?: EquippedItems;
   smsHistory?: SmsMessage[];
+  dailyGames?: DailyGamesRecord;
 }
 
 
