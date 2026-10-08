@@ -22,6 +22,8 @@ import {
   Calendar
 } from 'lucide-react';
 
+import { UZBEKISTAN_REGIONS } from '@/data/regionsData';
+
 export default function ProfileModal() {
   const {
     isProfileModalOpen,
@@ -29,6 +31,7 @@ export default function ProfileModal() {
     setIsRegistrationModalOpen,
     progress,
     updateProfile,
+    advanceAcademicYearManually,
     resetProgress,
     lionStage
   } = useGame();
@@ -43,6 +46,7 @@ export default function ProfileModal() {
   const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber || '');
   const [parentName, setParentName] = useState(profile?.parentName || '');
   const [region, setRegion] = useState(profile?.region || 'Toshkent shahri');
+  const [district, setDistrict] = useState(profile?.district || (UZBEKISTAN_REGIONS['Toshkent shahri']?.[0] || ''));
   const [cardNumber, setCardNumber] = useState(profile?.cardNumber || '');
   const [cardExpiry, setCardExpiry] = useState(profile?.cardExpiry || '');
   const [cardHolder, setCardHolder] = useState(profile?.cardHolder || '');
@@ -57,6 +61,7 @@ export default function ProfileModal() {
       phoneNumber,
       parentName: parentName.trim(),
       region,
+      district: district.trim(),
       cardNumber: cardNumber.trim(),
       cardExpiry: cardExpiry.trim(),
       cardHolder: cardHolder.trim().toUpperCase(),
@@ -219,6 +224,42 @@ export default function ProfileModal() {
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-zinc-500">Viloyat</label>
+                    <select
+                      value={region}
+                      onChange={(e) => {
+                        const newR = e.target.value;
+                        setRegion(newR);
+                        const dists = UZBEKISTAN_REGIONS[newR] || [];
+                        setDistrict(dists[0] || '');
+                      }}
+                      className="w-full p-2 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 outline-none"
+                    >
+                      {Object.keys(UZBEKISTAN_REGIONS).map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-zinc-500">Tuman / Shahar</label>
+                    <select
+                      value={district}
+                      onChange={(e) => setDistrict(e.target.value)}
+                      className="w-full p-2 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 outline-none"
+                    >
+                      {(UZBEKISTAN_REGIONS[region] || []).map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-[10px] font-black uppercase text-zinc-500">Karta raqami</label>
                   <input
@@ -245,7 +286,7 @@ export default function ProfileModal() {
                     <GraduationCap className="w-4 h-4 text-orange-500" /> Sinf:
                   </span>
                   <span className="font-black text-zinc-800 dark:text-zinc-200">
-                    {progress.grade}-sinf
+                    {progress.grade}-sinf ({profile?.academicYear || "2025-2026"} o‘quv yili)
                   </span>
                 </div>
 
@@ -271,10 +312,22 @@ export default function ProfileModal() {
                   <span className="text-zinc-500 dark:text-zinc-400 font-bold flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-rose-500" /> Hudud:
                   </span>
-                  <span className="font-black text-zinc-800 dark:text-zinc-200">
+                  <span className="font-black text-zinc-800 dark:text-zinc-200 text-right">
                     {profile?.region || "Toshkent shahri"}
+                    {profile?.district ? `, ${profile.district}` : ''}
                   </span>
                 </div>
+
+                {profile?.school && (
+                  <div className="flex items-center justify-between py-1 border-b border-zinc-200 dark:border-zinc-700">
+                    <span className="text-zinc-500 dark:text-zinc-400 font-bold flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4 text-amber-500" /> Maktab:
+                    </span>
+                    <span className="font-black text-zinc-800 dark:text-zinc-200">
+                      {profile.school}
+                    </span>
+                  </div>
+                )}
 
                 {profile?.registeredAt && (
                   <div className="flex items-center justify-between py-1">
@@ -286,6 +339,38 @@ export default function ProfileModal() {
                     </span>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* O'quv yili va Avtomatik sinf yangilanishi kartasi */}
+          <div className="bg-amber-100/60 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-300 dark:border-amber-800 space-y-2">
+            <div className="flex items-center justify-between text-xs font-black text-amber-950 dark:text-amber-200">
+              <span className="flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4 text-orange-500" />
+                <span>O‘quv yili: {profile?.academicYear || "2025-2026"}</span>
+              </span>
+              <span className="bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded-full text-[10px]">
+                Yakun: 25-may
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium">
+              O‘quv yili 25-mayda yakunlangach, tizim avtomatik ravishda keyingi sinfga o‘tkazadi va boshqa sinflar ko‘rinmaydi.
+            </p>
+            {progress.grade < 4 ? (
+              <button
+                onClick={() => {
+                  advanceAcademicYearManually();
+                  setIsProfileModalOpen(false);
+                }}
+                className="w-full mt-1 py-2 px-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+                title="O'quv yili yakunlanganda keyingi sinfga o'tishni sinab ko'rish"
+              >
+                <span>🎓 O‘quv yilini yakunlash (Keyingi sinfga o‘tishni sinash)</span>
+              </button>
+            ) : (
+              <div className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 text-center py-1">
+                👑 Siz 4-sinf — Prezident maktabi nomzodisiz!
               </div>
             )}
           </div>

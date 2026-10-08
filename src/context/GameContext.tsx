@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { GradeLevel, UserProgress, UserProfile } from '@/types';
 import { sound } from '@/utils/sound';
 
+import { getCurrentAcademicYear, getNextGrade } from '@/utils/academicYear';
+
 interface LionStage {
   title: string;
   stageName: string;
@@ -68,8 +70,10 @@ interface GameContextType {
   markLessonCompleted: (lessonId: string) => boolean;
   markQuizCompleted: (quizId: string) => void;
   toggleSound: () => void;
-  registerUser: (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt'>) => void;
+  registerUser: (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt' | 'academicYear' | 'academicYearEndDate'>) => void;
   updateProfile: (profileData: Partial<UserProfile>) => void;
+  advanceAcademicYearManually: () => void;
+  clearPromotionNotice: () => void;
   resetProgress: () => void;
 }
 
@@ -101,6 +105,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (parsed.profile?.isRegistered && parsed.profile.academicYearEndDate) {
+          const endDate = new Date(parsed.profile.academicYearEndDate);
+          const now = new Date();
+          if (now > endDate && parsed.grade < 4) {
+            const nextYearInfo = getCurrentAcademicYear(now);
+            const fromGrade = parsed.grade;
+            const toGrade = getNextGrade(fromGrade);
+            parsed.grade = toGrade;
+            parsed.profile.grade = toGrade;
+            parsed.profile.academicYear = nextYearInfo.academicYear;
+            parsed.profile.academicYearEndDate = nextYearInfo.endDate.toISOString();
+            parsed.academicYearPromotionNotice = {
+              fromGrade,
+              toGrade,
+              year: nextYearInfo.academicYear,
+            };
+          }
+        }
         setProgress((prev) => ({ ...prev, ...parsed }));
         if (!parsed.profile?.isRegistered) {
           setIsRegistrationModalOpen(true);
@@ -195,8 +217,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const registerUser = (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt'>) => {
+  const registerUser = (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt' | 'academicYear' | 'academicYearEndDate'>) => {
     const fullName = `${profileData.firstName} ${profileData.lastName}`.trim();
+    const { academicYear, endDate } = getCurrentAcademicYear();
     setProgress((prev) => {
       const isFirstReg = !prev.profile?.isRegistered;
       return {
@@ -207,6 +230,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         xp: isFirstReg ? prev.xp + 50 : prev.xp,
         profile: {
           ...profileData,
+          academicYear,
+          academicYearEndDate: endDate.toISOString(),
           isRegistered: true,
           registeredAt: prev.profile?.registeredAt || new Date().toISOString(),
         },
@@ -229,6 +254,44 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         profile: updatedProfile,
       };
     });
+  };
+
+  const advanceAcademicYearManually = () => {
+    setProgress((prev) => {
+      if (prev.grade >= 4) return prev;
+      const fromGrade = prev.grade;
+      const toGrade = getNextGrade(fromGrade);
+      const nextYearInfo = getCurrentAcademicYear();
+      return {
+        ...prev,
+        grade: toGrade,
+        coins: prev.coins + 50,
+        xp: prev.xp + 50,
+        profile: prev.profile
+          ? {
+              ...prev.profile,
+              grade: toGrade,
+              academicYear: nextYearInfo.academicYear,
+              academicYearEndDate: nextYearInfo.endDate.toISOString(),
+            }
+          : undefined,
+        academicYearPromotionNotice: {
+          fromGrade,
+          toGrade,
+          year: nextYearInfo.academicYear,
+        },
+      };
+    });
+    if (progress.soundEnabled) {
+      sound.playVictory();
+    }
+  };
+
+  const clearPromotionNotice = () => {
+    setProgress((prev) => ({
+      ...prev,
+      academicYearPromotionNotice: null,
+    }));
   };
 
   const resetProgress = () => {
@@ -261,6 +324,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         toggleSound,
         registerUser,
         updateProfile,
+        advanceAcademicYearManually,
+        clearPromotionNotice,
         resetProgress,
       }}
     >

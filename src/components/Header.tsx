@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
 import { GradeLevel } from '@/types';
-import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User } from 'lucide-react';
+import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Header() {
@@ -43,31 +43,47 @@ export default function Header() {
             </div>
           </Link>
 
-          {/* Sinf Tanlash (Grades 1-4) */}
-          <div className="flex items-center bg-amber-50 dark:bg-zinc-800/80 p-1.5 rounded-2xl border-2 border-amber-200 dark:border-zinc-700">
-            <span className="text-xs font-black text-amber-900 dark:text-amber-200 px-2 hidden md:inline">
-              Sinf:
-            </span>
-            <div className="flex gap-1">
-              {grades.map((g) => {
-                const isActive = progress.grade === g;
-                return (
-                  <motion.button
-                    key={g}
-                    whileTap={{ scale: 0.92 }}
-                    onClick={() => setGrade(g)}
-                    className={`px-3 py-1 text-xs sm:text-sm font-extrabold rounded-xl transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-orange-500/30 scale-105'
-                        : 'text-zinc-600 dark:text-zinc-400 hover:text-amber-600 hover:bg-white/60 dark:hover:bg-zinc-700/50'
-                    }`}
-                  >
-                    {g}-sinf
-                  </motion.button>
-                );
-              })}
+          {/* Sinf ko'rsatkichi (O'quv yili davomida faqat o'zining sinfi ko'rinadi) */}
+          {progress.profile?.isRegistered ? (
+            <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-yellow-500/10 dark:bg-zinc-800/90 px-3.5 py-1.5 rounded-2xl border-2 border-amber-300 dark:border-zinc-700 shadow-sm">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-black text-xs shadow-sm">
+                {progress.grade}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200 leading-tight">
+                  {progress.grade}-sinf o‘quvchisi
+                </span>
+                <span className="text-[10px] font-extrabold text-orange-600 dark:text-orange-400">
+                  {progress.profile.academicYear || "2025-2026"} o‘quv yili
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center bg-amber-50 dark:bg-zinc-800/80 p-1.5 rounded-2xl border-2 border-amber-200 dark:border-zinc-700">
+              <span className="text-xs font-black text-amber-900 dark:text-amber-200 px-2 hidden md:inline">
+                Sinf:
+              </span>
+              <div className="flex gap-1">
+                {grades.map((g) => {
+                  const isActive = progress.grade === g;
+                  return (
+                    <motion.button
+                      key={g}
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => setGrade(g)}
+                      className={`px-3 py-1 text-xs sm:text-sm font-extrabold rounded-xl transition-all ${
+                        isActive
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-orange-500/30 scale-105'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-amber-600 hover:bg-white/60 dark:hover:bg-zinc-700/50'
+                      }`}
+                    >
+                      {g}-sinf
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Mukofotlar & Sozlamalar */}
           <div className="flex items-center gap-2 sm:gap-3">

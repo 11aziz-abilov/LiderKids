@@ -29,8 +29,9 @@ function LessonsContent() {
   const [completedNotification, setCompletedNotification] = useState(false);
 
   const filteredLessons = LESSONS.filter((lesson) => {
-    if (selectedSubject === 'all') return true;
-    return lesson.subjectId === selectedSubject;
+    const gradeMatch = lesson.grade === progress.grade;
+    if (selectedSubject === 'all') return gradeMatch;
+    return gradeMatch && lesson.subjectId === selectedSubject;
   });
 
   const handleCompleteLesson = (lessonId: string) => {

@@ -143,7 +143,13 @@ export default function HomePage() {
               <span>Ro‘yxatdan o‘tgan</span>
             </span>
             <span>•</span>
-            <span className="text-zinc-800 dark:text-zinc-200">{progress.profile.region}</span>
+            <span className="text-amber-800 dark:text-amber-200 font-extrabold">
+              {progress.grade}-sinf ({progress.profile.academicYear || "2025-2026"})
+            </span>
+            <span>•</span>
+            <span className="text-zinc-800 dark:text-zinc-200">
+              {progress.profile.region}{progress.profile.district ? `, ${progress.profile.district}` : ''}
+            </span>
             <span>•</span>
             <span className="font-mono text-zinc-800 dark:text-zinc-200">
               Karta: {progress.profile.cardNumber.slice(0, 4)} ••••

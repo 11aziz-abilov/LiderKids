@@ -22,22 +22,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 
-const REGIONS = [
-  'Toshkent shahri',
-  'Toshkent viloyati',
-  'Samarqand',
-  'Andijon',
-  'Farg‘ona',
-  'Namangan',
-  'Buxoro',
-  'Xorazm',
-  'Qashqadaryo',
-  'Surxondaryo',
-  'Navoiy',
-  'Jizzax',
-  'Sirdaryo',
-  'Qoraqalpog‘iston Respublikasi',
-];
+import { UZBEKISTAN_REGIONS } from '@/data/regionsData';
 
 export default function RegistrationModal() {
   const {
@@ -54,6 +39,7 @@ export default function RegistrationModal() {
   const [lastName, setLastName] = useState('');
   const [grade, setGrade] = useState<GradeLevel>(progress.grade || 1);
   const [region, setRegion] = useState('Toshkent shahri');
+  const [district, setDistrict] = useState(UZBEKISTAN_REGIONS['Toshkent shahri'][0]);
   const [school, setSchool] = useState('');
 
   const [parentName, setParentName] = useState('');
@@ -125,6 +111,7 @@ export default function RegistrationModal() {
     const newErrors: Record<string, string> = {};
     if (!firstName.trim()) newErrors.firstName = 'Ismingizni kiriting';
     if (!lastName.trim()) newErrors.lastName = 'Familiyangizni kiriting';
+    if (!district.trim()) newErrors.district = 'Tumanni tanlang';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -163,6 +150,7 @@ export default function RegistrationModal() {
           lastName: lastName.trim(),
           grade,
           region,
+          district: district.trim(),
           school: school.trim() || undefined,
           parentName: parentName.trim(),
           phoneNumber,
@@ -341,22 +329,35 @@ export default function RegistrationModal() {
                       );
                     })}
                   </div>
+                  {/* Academic year lock explanation */}
+                  <div className="mt-2.5 bg-amber-100/70 dark:bg-amber-950/50 p-2.5 rounded-xl border border-amber-300 dark:border-amber-700/60 text-[11px] font-bold text-amber-950 dark:text-amber-200 flex items-start gap-2">
+                    <span className="text-base shrink-0">🔒</span>
+                    <span className="leading-snug">
+                      Tanlangan sinf joriy o‘quv yili davomida (25-maygacha) qat‘iy belgilanadi va boshqa sinflar ko‘rinmaydi. O‘quv yili tugagach avtomatik keyingi sinfga o‘tiladi.
+                    </span>
+                  </div>
                 </div>
 
-                {/* Region & School */}
+                {/* Region & District */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Viloyat */}
                   <div>
                     <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
-                      Viloyat / Shahar
+                      Viloyat <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <MapPin className="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400" />
                       <select
                         value={region}
-                        onChange={(e) => setRegion(e.target.value)}
+                        onChange={(e) => {
+                          const newReg = e.target.value;
+                          setRegion(newReg);
+                          const districts = UZBEKISTAN_REGIONS[newReg] || [];
+                          setDistrict(districts[0] || '');
+                        }}
                         className="w-full pl-10 pr-3 py-2.5 rounded-xl border-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold text-zinc-800 dark:text-zinc-100 outline-none focus:border-amber-500 transition"
                       >
-                        {REGIONS.map((r) => (
+                        {Object.keys(UZBEKISTAN_REGIONS).map((r) => (
                           <option key={r} value={r}>
                             {r}
                           </option>
@@ -365,20 +366,48 @@ export default function RegistrationModal() {
                     </div>
                   </div>
 
+                  {/* Tuman / Shahar */}
                   <div>
                     <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
-                      Maktab raqami (Ixtiyoriy)
+                      Tuman / Shahar <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <GraduationCap className="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400" />
-                      <input
-                        type="text"
-                        value={school}
-                        onChange={(e) => setSchool(e.target.value)}
-                        placeholder="Masalan: 45-maktab"
-                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold text-zinc-800 dark:text-zinc-100 outline-none focus:border-amber-500 transition"
-                      />
+                      <MapPin className="w-4 h-4 absolute left-3.5 top-3.5 text-amber-500" />
+                      <select
+                        value={district}
+                        onChange={(e) => {
+                          setDistrict(e.target.value);
+                          if (errors.district) setErrors((prev) => ({ ...prev, district: '' }));
+                        }}
+                        className={`w-full pl-10 pr-3 py-2.5 rounded-xl border-2 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold text-zinc-800 dark:text-zinc-100 outline-none transition ${
+                          errors.district ? 'border-red-400 bg-red-50/50' : 'border-zinc-200 dark:border-zinc-700 focus:border-amber-500'
+                        }`}
+                      >
+                        {(UZBEKISTAN_REGIONS[region] || []).map((d) => (
+                          <option key={d} value={d}>
+                            {d}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+                    {errors.district && <p className="text-xs text-red-500 mt-1 font-semibold">{errors.district}</p>}
+                  </div>
+                </div>
+
+                {/* Maktab */}
+                <div>
+                  <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
+                    Maktab raqami yoki nomi (Ixtiyoriy)
+                  </label>
+                  <div className="relative">
+                    <GraduationCap className="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400" />
+                    <input
+                      type="text"
+                      value={school}
+                      onChange={(e) => setSchool(e.target.value)}
+                      placeholder="Masalan: 45-maktab yoki 1-Prezident maktabi"
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl border-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold text-zinc-800 dark:text-zinc-100 outline-none focus:border-amber-500 transition"
+                    />
                   </div>
                 </div>
               </motion.div>

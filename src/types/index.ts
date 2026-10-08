@@ -62,8 +62,11 @@ export interface UserProfile {
   cardHolder: string;
   parentName: string;
   region: string;
+  district: string;
   school?: string;
   registeredAt?: string;
+  academicYear?: string;
+  academicYearEndDate?: string;
   isRegistered: boolean;
 }
 
@@ -78,5 +81,11 @@ export interface UserProgress {
   soundEnabled: boolean;
   unlockedAchievements: string[];
   profile?: UserProfile;
+  academicYearPromotionNotice?: {
+    fromGrade: GradeLevel;
+    toGrade: GradeLevel;
+    year: string;
+  } | null;
 }
+
 
