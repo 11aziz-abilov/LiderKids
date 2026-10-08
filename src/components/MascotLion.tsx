@@ -47,6 +47,18 @@ export default function MascotLion() {
         : "R-R-R-ROARRR! Prezident maktabiga biz albatta kiramiz! 🦁🔥",
       "Lider Kids chempionlari doimo birinchi o‘rinda! 🥇",
     ],
+    flex: [
+      isGirl
+        ? "Qara, malikalar ham kuchli va chaqqon bo‘ladi! Olg‘a, darsga! 💪✨"
+        : "Mushaklarni ko‘rdingmi? Har kungi dars — chempionlik kuchi! 💪🔥",
+      "Darsni boshla! Kuch va bilim biz bilan! 💥",
+    ],
+    study: [
+      isGirl
+        ? "Kitob o‘qish va masalalar yechish — eng sevimli mashg‘ulotim! 📖🌸"
+        : "Bilimdon Shercha tayyor! Bugungi yangi mavzuni zabt etamiz! 👓📚",
+      "Har bir to‘g‘ri yechilgan masala — buyuk kelajak sari qadam! 🌟",
+    ],
   };
 
   const triggerAction = (newAction: LionAction) => {
@@ -63,7 +75,7 @@ export default function MascotLion() {
 
   const handleLionClick = () => {
     setClickCount((prev) => prev + 1);
-    const actionsList: LionAction[] = ['wave', 'dance', 'jump', 'roar'];
+    const actionsList: LionAction[] = ['flex', 'wave', 'study', 'dance', 'jump', 'roar'];
     const chosen = actionsList[clickCount % actionsList.length];
     triggerAction(chosen);
   };

@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { GradeLevel, EquippedItems } from '@/types';
 
-export type LionAction = 'idle' | 'wave' | 'dance' | 'jump' | 'roar';
+export type LionAction = 'idle' | 'wave' | 'dance' | 'jump' | 'roar' | 'flex' | 'study';
 
 interface FullBodyLionCharacterProps {
   grade?: GradeLevel;
@@ -68,6 +68,16 @@ export default function FullBodyLionCharacter({
       rotate: [0, -2, 2, 0],
       transition: { duration: 1, repeat: Infinity, ease: 'easeInOut' as const },
     },
+    flex: {
+      scale: [1, 1.06, 1],
+      y: [0, -4, 0],
+      transition: { duration: 1, repeat: Infinity, ease: 'easeInOut' as const },
+    },
+    study: {
+      y: [0, -3, 0],
+      rotate: [-1, 1, -1],
+      transition: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' as const },
+    },
   };
 
   const rightArmVariants = {
@@ -91,6 +101,19 @@ export default function FullBodyLionCharacter({
       x: [0, 5, 0],
       transition: { duration: 1, repeat: Infinity },
     },
+    flex: {
+      rotate: [-110, -125, -110],
+      y: [-10, -14, -10],
+      x: [-8, -10, -8],
+      scale: [1, 1.1, 1],
+      transition: { duration: 0.8, repeat: Infinity, ease: 'easeInOut' as const },
+    },
+    study: {
+      rotate: [-35, -40, -35],
+      x: [-12, -12, -12],
+      y: [-10, -10, -10],
+      transition: { duration: 2, repeat: Infinity },
+    },
   };
 
   const leftArmVariants = {
@@ -109,6 +132,19 @@ export default function FullBodyLionCharacter({
       rotate: [-20, -35, -20],
       x: [0, -5, 0],
       transition: { duration: 1, repeat: Infinity },
+    },
+    flex: {
+      rotate: [110, 125, 110],
+      y: [-10, -14, -10],
+      x: [8, 10, 8],
+      scale: [1, 1.1, 1],
+      transition: { duration: 0.8, repeat: Infinity, ease: 'easeInOut' as const },
+    },
+    study: {
+      rotate: [35, 40, 35],
+      x: [12, 12, 12],
+      y: [-10, -10, -10],
+      transition: { duration: 2, repeat: Infinity },
     },
   };
 
@@ -132,6 +168,14 @@ export default function FullBodyLionCharacter({
     roar: {
       rotate: [15, 25, 15],
       transition: { duration: 0.8, repeat: Infinity, ease: 'easeInOut' as const },
+    },
+    flex: {
+      rotate: [15, 30, 15],
+      transition: { duration: 0.8, repeat: Infinity, ease: 'easeInOut' as const },
+    },
+    study: {
+      rotate: [-6, 6, -6],
+      transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' as const },
     },
   };
 
@@ -912,6 +956,81 @@ export default function FullBodyLionCharacter({
               <text x="70" y="60" fontSize="20" fill="#FACC15">⭐</text>
               <text x="200" y="55" fontSize="20" fill="#FACC15">✨</text>
               <text x="135" y="30" fontSize="22" fill="#F59E0B">🌟</text>
+            </g>
+          )}
+
+          {/* FLEX WORKOUT HEADBAND & SWEAT DROPS (DUOLINGO WIDGET STYLE) */}
+          {action === 'flex' && (
+            <g id="flex-workout-decorations">
+              {/* Athletic Workout Headband */}
+              <path
+                d="M 94 76 Q 140 68 186 76"
+                stroke={isGirl ? '#EC4899' : '#10B981'}
+                strokeWidth="10"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <path
+                d="M 98 76 Q 140 69 182 76"
+                stroke={isGirl ? '#F472B6' : '#34D399'}
+                strokeWidth="4"
+                strokeLinecap="round"
+                fill="none"
+              />
+              {/* Forehead sweat drops */}
+              <motion.path
+                animate={{ y: [0, 5, 0], opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 0.8, repeat: Infinity }}
+                d="M 90 88 C 90 84 95 78 95 78 C 95 78 100 84 100 88 C 100 91.5 97.8 94 95 94 C 92.2 94 90 91.5 90 88 Z"
+                fill="#38BDF8"
+              />
+              <motion.path
+                animate={{ y: [0, 5, 0], opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 0.8, repeat: Infinity, delay: 0.25 }}
+                d="M 186 86 C 186 82 191 76 191 76 C 191 76 196 82 196 86 C 196 89.5 193.8 92 191 92 C 188.2 92 186 89.5 186 86 Z"
+                fill="#38BDF8"
+              />
+              {/* Muscle flex sweat droplets */}
+              <motion.g
+                animate={{ scale: [1, 1.25, 1] }}
+                transition={{ duration: 0.8, repeat: Infinity }}
+              >
+                <text x="56" y="148" fontSize="20">💦</text>
+                <text x="204" y="148" fontSize="20">💦</text>
+              </motion.g>
+              {/* Muscle flex power emojis */}
+              <text x="52" y="210" fontSize="18">💪</text>
+              <text x="210" y="210" fontSize="18">💪</text>
+            </g>
+          )}
+
+          {/* STUDY ACTION DECORATIONS */}
+          {action === 'study' && (
+            <g id="study-decorations">
+              {!equipped.accessory?.includes('glasses') && (
+                <g id="study-glasses">
+                  <circle cx="118" cy="104" r="15" fill="none" stroke="#2563EB" strokeWidth="3.5" />
+                  <circle cx="162" cy="104" r="15" fill="none" stroke="#2563EB" strokeWidth="3.5" />
+                  <line x1="133" y1="104" x2="147" y2="104" stroke="#2563EB" strokeWidth="3" />
+                  <line x1="103" y1="102" x2="88" y2="98" stroke="#2563EB" strokeWidth="2.5" />
+                  <line x1="177" y1="102" x2="192" y2="98" stroke="#2563EB" strokeWidth="2.5" />
+                </g>
+              )}
+              {/* Open Book in front */}
+              <g transform="translate(105, 205)">
+                <rect x="0" y="0" width="34" height="26" rx="3" fill="#3B82F6" />
+                <rect x="36" y="0" width="34" height="26" rx="3" fill="#2563EB" />
+                <rect x="3" y="2" width="28" height="22" rx="2" fill="#FFFFFF" />
+                <rect x="39" y="2" width="28" height="22" rx="2" fill="#FFFFFF" />
+                <line x1="7" y1="7" x2="27" y2="7" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                <line x1="7" y1="12" x2="25" y2="12" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                <line x1="7" y1="17" x2="22" y2="17" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                <line x1="43" y1="7" x2="63" y2="7" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                <line x1="43" y1="12" x2="61" y2="12" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                <line x1="43" y1="17" x2="58" y2="17" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+              </g>
+              <text x="64" y="80" fontSize="22" className="animate-bounce">💡</text>
+              <text x="198" y="75" fontSize="22" className="animate-bounce">📖</text>
             </g>
           )}
         </g>

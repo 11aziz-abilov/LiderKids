@@ -136,6 +136,29 @@ class SoundEffects {
       osc.stop(noteTime + 0.35);
     });
   }
+
+  // Bildirishnoma / Eslatma ohangi (Duolingo-style chime)
+  playNotification() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, now); // D5
+    osc.frequency.setValueAtTime(880.00, now + 0.12); // A5
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.4);
+  }
 }
 
 export const sound = new SoundEffects();

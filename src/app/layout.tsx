@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import RegistrationModal from '@/components/RegistrationModal';
 import ProfileModal from '@/components/ProfileModal';
 import AcademicYearPromotionModal from '@/components/AcademicYearPromotionModal';
+import MascotReminderWidget from '@/components/MascotReminderWidget';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,6 +39,7 @@ export default function RootLayout({
           <RegistrationModal />
           <ProfileModal />
           <AcademicYearPromotionModal />
+          <MascotReminderWidget />
           <Header />
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
             {children}
