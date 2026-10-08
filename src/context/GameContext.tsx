@@ -82,6 +82,26 @@ interface GameContextType {
 }
 
 const STORAGE_KEY = 'liderkids_progress_v1';
+const PROFILE_KEY = 'liderkids_user_profile_v1';
+
+const defaultProfile: UserProfile = {
+  firstName: 'Yosh',
+  lastName: 'Lider',
+  gender: 'boy',
+  grade: 1,
+  phoneNumber: '+998 (90) 123-45-67',
+  parentName: 'Ota-ona',
+  region: 'Toshkent shahri',
+  district: 'Yunusobod tumani',
+  school: '1-maktab',
+  cardNumber: '8600 0000 0000 0000',
+  cardExpiry: '12/28',
+  cardHolder: 'YOSH LIDER',
+  academicYear: '2026-2027',
+  academicYearEndDate: new Date(2027, 4, 25, 23, 59, 59).toISOString(),
+  isRegistered: true,
+  registeredAt: new Date().toISOString(),
+};
 
 const defaultProgress: UserProgress = {
   name: 'Yosh Lider',
@@ -95,6 +115,7 @@ const defaultProgress: UserProgress = {
   unlockedAchievements: ['first-step'],
   inventory: ['backpack_red'],
   equippedItems: { backpack: 'backpack_red' },
+  profile: defaultProfile,
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -105,47 +126,62 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  // Load from localStorage on client mount
+  // Load from localStorage on client mount: foydalanuvchi to'g'ridan-to'g'ri o'z profiliga kiradi!
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
+      let parsedProgress: any = null;
+
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.profile) {
-          // 2025-2026 bo'lib qolgan bo'lsa darhol 2026-2027 ga yangilash
-          if (!parsed.profile.academicYear || parsed.profile.academicYear === '2025-2026') {
+        parsedProgress = JSON.parse(saved);
+      } else {
+        // Fallback profile key tekshirish
+        const savedProfile = localStorage.getItem(PROFILE_KEY);
+        if (savedProfile) {
+          const parsedProf = JSON.parse(savedProfile);
+          parsedProgress = {
+            ...defaultProgress,
+            profile: parsedProf,
+            name: `${parsedProf.firstName} ${parsedProf.lastName}`.trim(),
+            grade: parsedProf.grade || 1,
+          };
+        }
+      }
+
+      if (parsedProgress) {
+        if (!parsedProgress.profile) {
+          parsedProgress.profile = defaultProfile;
+        } else {
+          parsedProgress.profile.isRegistered = true;
+          if (!parsedProgress.profile.academicYear || parsedProgress.profile.academicYear === '2025-2026') {
             const currentYearInfo = getCurrentAcademicYear();
-            parsed.profile.academicYear = currentYearInfo.academicYear;
-            parsed.profile.academicYearEndDate = currentYearInfo.endDate.toISOString();
+            parsedProgress.profile.academicYear = currentYearInfo.academicYear;
+            parsedProgress.profile.academicYearEndDate = currentYearInfo.endDate.toISOString();
           }
         }
-        if (parsed.profile?.isRegistered && parsed.profile.academicYearEndDate) {
-          const endDate = new Date(parsed.profile.academicYearEndDate);
+
+        if (parsedProgress.profile?.academicYearEndDate) {
+          const endDate = new Date(parsedProgress.profile.academicYearEndDate);
           const now = new Date();
-          if (now > endDate && parsed.grade < 4) {
+          if (now > endDate && parsedProgress.grade < 4) {
             const nextYearInfo = getCurrentAcademicYear(now);
-            const fromGrade = parsed.grade;
+            const fromGrade = parsedProgress.grade;
             const toGrade = getNextGrade(fromGrade);
-            parsed.grade = toGrade;
-            parsed.profile.grade = toGrade;
-            parsed.profile.academicYear = nextYearInfo.academicYear;
-            parsed.profile.academicYearEndDate = nextYearInfo.endDate.toISOString();
-            parsed.academicYearPromotionNotice = {
+            parsedProgress.grade = toGrade;
+            parsedProgress.profile.grade = toGrade;
+            parsedProgress.profile.academicYear = nextYearInfo.academicYear;
+            parsedProgress.profile.academicYearEndDate = nextYearInfo.endDate.toISOString();
+            parsedProgress.academicYearPromotionNotice = {
               fromGrade,
               toGrade,
               year: nextYearInfo.academicYear,
             };
           }
         }
-        setProgress((prev) => ({ ...prev, ...parsed }));
-        if (!parsed.profile?.isRegistered) {
-          setIsRegistrationModalOpen(true);
-        }
-      } else {
-        setIsRegistrationModalOpen(true);
+        setProgress((prev) => ({ ...prev, ...parsedProgress }));
       }
     } catch {
-      setIsRegistrationModalOpen(true);
+      // ignore
     } finally {
       setIsLoaded(true);
     }
@@ -259,7 +295,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const { academicYear, endDate } = getCurrentAcademicYear();
     setProgress((prev) => {
       const isFirstReg = !prev.profile?.isRegistered;
-      return {
+      const nextProgress: UserProgress = {
         ...prev,
         name: fullName,
         grade: profileData.grade,
@@ -273,7 +309,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           registeredAt: prev.profile?.registeredAt || new Date().toISOString(),
         },
       };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextProgress));
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProgress.profile));
+      } catch {}
+
+      return nextProgress;
     });
+
+    setIsRegistrationModalOpen(false);
+
     if (progress.soundEnabled) {
       sound.playVictory();
     }
@@ -282,14 +328,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = (profileData: Partial<UserProfile>) => {
     setProgress((prev) => {
       if (!prev.profile) return prev;
-      const updatedProfile = { ...prev.profile, ...profileData };
+      const updatedProfile = { ...prev.profile, ...profileData, isRegistered: true };
       const fullName = `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim();
-      return {
+      const nextProgress: UserProgress = {
         ...prev,
         name: fullName || prev.name,
         grade: updatedProfile.grade || prev.grade,
         profile: updatedProfile,
       };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextProgress));
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProgress.profile));
+      } catch {}
+
+      return nextProgress;
     });
   };
 
