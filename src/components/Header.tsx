@@ -55,7 +55,7 @@ export default function Header() {
                   {progress.grade}-sinf o‘quvchisi
                 </span>
                 <span className="text-[10px] font-extrabold text-orange-600 dark:text-orange-400">
-                  {progress.profile.academicYear || "2025-2026"} o‘quv yili
+                  {progress.profile.academicYear || "2026-2027"} o‘quv yili
                 </span>
               </div>
             </div>

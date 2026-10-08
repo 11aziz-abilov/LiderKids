@@ -332,7 +332,7 @@ export default function ProfileModal() {
                     <GraduationCap className="w-4 h-4 text-orange-500" /> Sinf:
                   </span>
                   <span className="font-black text-zinc-800 dark:text-zinc-200">
-                    {progress.grade}-sinf ({profile?.academicYear || "2025-2026"} o‘quv yili)
+                    {progress.grade}-sinf ({profile?.academicYear || "2026-2027"} o‘quv yili)
                   </span>
                 </div>
 
@@ -394,7 +394,7 @@ export default function ProfileModal() {
             <div className="flex items-center justify-between text-xs font-black text-amber-950 dark:text-amber-200">
               <span className="flex items-center gap-1.5">
                 <GraduationCap className="w-4 h-4 text-orange-500" />
-                <span>O‘quv yili: {profile?.academicYear || "2025-2026"}</span>
+                <span>O‘quv yili: {profile?.academicYear || "2026-2027"}</span>
               </span>
               <span className="bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded-full text-[10px]">
                 Yakun: 25-may

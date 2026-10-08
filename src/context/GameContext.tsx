@@ -110,6 +110,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (parsed.profile) {
+          // 2025-2026 bo'lib qolgan bo'lsa darhol 2026-2027 ga yangilash
+          if (!parsed.profile.academicYear || parsed.profile.academicYear === '2025-2026') {
+            const currentYearInfo = getCurrentAcademicYear();
+            parsed.profile.academicYear = currentYearInfo.academicYear;
+            parsed.profile.academicYearEndDate = currentYearInfo.endDate.toISOString();
+          }
+        }
         if (parsed.profile?.isRegistered && parsed.profile.academicYearEndDate) {
           const endDate = new Date(parsed.profile.academicYearEndDate);
           const now = new Date();

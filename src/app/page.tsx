@@ -144,7 +144,7 @@ export default function HomePage() {
             </span>
             <span>•</span>
             <span className="text-amber-800 dark:text-amber-200 font-extrabold">
-              {progress.grade}-sinf ({progress.profile.academicYear || "2025-2026"})
+              {progress.grade}-sinf ({progress.profile.academicYear || "2026-2027"})
             </span>
             <span>•</span>
             <span className="text-zinc-800 dark:text-zinc-200">
