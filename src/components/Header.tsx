@@ -17,6 +17,7 @@ export default function Header() {
     { href: '/quiz', label: 'Testlar', icon: CheckCircle2 },
     { href: '/lessons', label: 'Darslar', icon: BookOpen },
     { href: '/market', label: 'Market 🛍️', icon: ShoppingBag },
+    { href: '/leaderboard', label: 'Reyting 🔥', icon: Flame },
     { href: '/achievements', label: 'Yutuqlar', icon: Trophy },
   ];
 
@@ -98,15 +99,17 @@ export default function Header() {
               <span className="font-black text-sm sm:text-base">{progress.coins}</span>
             </motion.div>
 
-            {/* Streaks / Fire */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-1.5 bg-orange-100/80 dark:bg-orange-950/60 text-orange-900 dark:text-orange-200 px-3 py-1.5 rounded-2xl border-2 border-orange-300 dark:border-orange-700 shadow-sm"
-              title="Ko‘rilgan video darslar / Olovcha"
-            >
-              <Flame className="w-5 h-5 text-orange-500 fill-orange-500 animate-pulse" />
-              <span className="font-black text-sm sm:text-base">{progress.streaks}</span>
-            </motion.div>
+            {/* Streaks / Fire -> Reyting sahifasiga o'tadi */}
+            <Link href="/leaderboard">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-1.5 bg-orange-100/80 dark:bg-orange-950/60 text-orange-900 dark:text-orange-200 px-3 py-1.5 rounded-2xl border-2 border-orange-300 dark:border-orange-700 shadow-sm cursor-pointer hover:border-orange-500 transition"
+                title="Olovchalar Reytingini ko‘rish"
+              >
+                <Flame className="w-5 h-5 text-orange-500 fill-orange-500 animate-pulse" />
+                <span className="font-black text-sm sm:text-base">{progress.streaks}</span>
+              </motion.div>
+            </Link>
 
             {/* Ovoz tugmasi */}
             <motion.button

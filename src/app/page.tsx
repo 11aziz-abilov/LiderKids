@@ -6,6 +6,7 @@ import SubjectCard from '@/components/SubjectCard';
 import DailyQuests from '@/components/DailyQuests';
 import { useGame } from '@/context/GameContext';
 import { SUBJECTS, QUIZ_QUESTIONS, LESSONS } from '@/data/mockData';
+import { MOCK_LEADERBOARD_STUDENTS } from '@/data/leaderboardData';
 import { Sparkles, Trophy, Flame, Coins, Edit3, Check, Star, User, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -256,6 +257,89 @@ export default function HomePage() {
           >
             Mashg‘ulotni boshlash 🚀
           </Link>
+        </div>
+      </section>
+
+      {/* Top Leaders by Flames (Olovchalar Reytingi Preview) */}
+      <section className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border-2 border-amber-200 dark:border-zinc-800 shadow-md">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2">
+              <Flame className="w-4 h-4 fill-orange-500" />
+              <span>Olovchalar Reytingi</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white">
+              Haftaning Eng Kuchli Liderlari 🔥
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+              Barcha viloyatlar bo‘yicha eng ko‘p olovcha (streak) to‘plagan yosh iqtidorlar
+            </p>
+          </div>
+          <Link
+            href="/leaderboard"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-orange-500/20 transition-all hover:scale-105 active:scale-95"
+          >
+            <Trophy className="w-4 h-4" />
+            <span>Barcha Liderlar Reytingi</span>
+            <span>→</span>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Top 3 Mock Students */}
+          {MOCK_LEADERBOARD_STUDENTS.slice(0, 3).map((student, idx) => (
+            <div
+              key={student.id}
+              className={`p-4 rounded-2xl border-2 flex items-center gap-3 transition-all ${
+                idx === 0
+                  ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-400 dark:border-amber-700 shadow-sm'
+                  : 'bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700'
+              }`}
+            >
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-base shrink-0 ${
+                  idx === 0
+                    ? 'bg-amber-400 text-amber-950 shadow-sm'
+                    : idx === 1
+                    ? 'bg-slate-300 text-slate-800'
+                    : 'bg-amber-600 text-white'
+                }`}
+              >
+                {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="font-black text-sm text-zinc-900 dark:text-white truncate">
+                  {student.name}
+                </h4>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                  {student.grade}-sinf • {student.region}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 font-black text-sm text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/80 px-2.5 py-1 rounded-xl shrink-0">
+                <Flame className="w-3.5 h-3.5 fill-orange-500" />
+                <span>{student.streaks}</span>
+              </div>
+            </div>
+          ))}
+
+          {/* Current User Card */}
+          <div className="p-4 rounded-2xl border-2 border-amber-500 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 shadow-sm flex items-center gap-3 ring-2 ring-amber-400/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+              Siz
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-black text-sm text-zinc-900 dark:text-white truncate">
+                {progress.profile ? `${progress.profile.firstName} ${progress.profile.lastName}` : progress.name}
+              </h4>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                {progress.grade}-sinf • {progress.profile?.region || 'O‘zbekiston'}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 font-black text-sm text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/80 px-2.5 py-1 rounded-xl shrink-0">
+              <Flame className="w-3.5 h-3.5 fill-orange-500" />
+              <span>{progress.streaks}</span>
+            </div>
+          </div>
         </div>
       </section>
     </div>
