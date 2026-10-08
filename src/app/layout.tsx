@@ -7,6 +7,7 @@ import RegistrationModal from '@/components/RegistrationModal';
 import ProfileModal from '@/components/ProfileModal';
 import AcademicYearPromotionModal from '@/components/AcademicYearPromotionModal';
 import MascotReminderWidget from '@/components/MascotReminderWidget';
+import ParentSmsModal from '@/components/ParentSmsModal';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -43,6 +44,7 @@ export default function RootLayout({
         <GameProvider>
           <RegistrationModal />
           <ProfileModal />
+          <ParentSmsModal />
           <AcademicYearPromotionModal />
           <MascotReminderWidget />
           <Header />

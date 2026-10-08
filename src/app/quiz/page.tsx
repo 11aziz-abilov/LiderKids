@@ -4,8 +4,9 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
 import { QUIZ_QUESTIONS, SUBJECTS } from '@/data/mockData';
-import { SubjectId, QuizQuestion } from '@/types';
+import { SubjectId, QuizQuestion, SmsMessage } from '@/types';
 import { sound } from '@/utils/sound';
+import { smsService } from '@/utils/smsService';
 import { triggerConfetti } from '@/components/ConfettiEffect';
 import {
   Sparkles,
@@ -18,6 +19,9 @@ import {
   Home,
   Flame,
   Award,
+  Smartphone,
+  MessageSquare,
+  Check,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -27,7 +31,14 @@ function QuizContent() {
   const searchParams = useSearchParams();
   const subjectParam = searchParams.get('subject') as SubjectId | null;
 
-  const { progress, addCoins, markQuizCompleted } = useGame();
+  const {
+    progress,
+    addCoins,
+    markQuizCompleted,
+    sendQuizReportSms,
+    setIsSmsModalOpen,
+    updateLastActiveDate,
+  } = useGame();
 
   const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(
     subjectParam || 'all'
@@ -39,6 +50,7 @@ function QuizContent() {
   const [earnedCoins, setEarnedCoins] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
   const [floatingCoin, setFloatingCoin] = useState(false);
+  const [sentSms, setSentSms] = useState<SmsMessage | null>(null);
 
   // Filter questions for the current student's grade and subject
   const filteredQuestions: QuizQuestion[] = QUIZ_QUESTIONS.filter((q) => {
@@ -98,6 +110,19 @@ function QuizContent() {
         sound.playVictory();
       }
       triggerConfetti();
+      updateLastActiveDate();
+
+      const currentSubInfo = SUBJECTS.find((s) => s.id === selectedSubject);
+      const subjectTitle = currentSubInfo ? currentSubInfo.title : 'Barcha fanlar';
+
+      sendQuizReportSms({
+        score,
+        totalQuestions: filteredQuestions.length,
+        earnedCoins,
+        subjectTitle,
+      }).then((sms) => {
+        if (sms) setSentSms(sms);
+      });
     }
   };
 
@@ -108,6 +133,7 @@ function QuizContent() {
     setScore(0);
     setEarnedCoins(0);
     setQuizFinished(false);
+    setSentSms(null);
   };
 
   // If no questions match for this grade
@@ -219,8 +245,75 @@ function QuizContent() {
             </div>
           </div>
 
+          {/* SMS Xabarnoma bloki (Ota-onaga yuborilgan hisobot) */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-800/90 dark:to-zinc-800/50 p-5 rounded-3xl border-2 border-blue-200 dark:border-blue-900/50 text-left space-y-3 max-w-lg mx-auto shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center text-base shadow-sm">
+                  📱
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <span>Ota-onaga SMS hisobot</span>
+                    {sentSms?.status === 'sent' ? (
+                      <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-extrabold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
+                        ✓ Real SMS Yuborildi
+                      </span>
+                    ) : sentSms?.status === 'failed' ? (
+                      <span className="text-[10px] bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-extrabold px-2 py-0.5 rounded-full border border-red-300">
+                        ⚠️ Eskiz API xatosi
+                      </span>
+                    ) : (
+                      <span className="text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-extrabold px-2 py-0.5 rounded-full border border-amber-300">
+                        Tizim jurnalida qayd etildi
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Qabul qiluvchi: <span className="font-bold text-zinc-700 dark:text-zinc-300">{progress.profile?.parentPhoneNumber || progress.profile?.phoneNumber || '+998 (90) 123-45-67'}</span> ({progress.profile?.parentName || 'Ota-ona'})
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-900/90 rounded-2xl p-3.5 border border-blue-100 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+              <span className="font-bold text-blue-600 dark:text-blue-400">SMS Matni: </span>
+              {sentSms?.message || `LiderKids: Farzandingiz ${progress.name} testni ${score}/${filteredQuestions.length} (${filteredQuestions.length > 0 ? Math.round((score / filteredQuestions.length) * 100) : 100}%) natija bilan yakunladi! +${earnedCoins}🪙, Joriy darajasi: ${progress.grade}-sinf.`}
+            </div>
+
+            {sentSms?.status !== 'sent' && (
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/50">
+                💡 <strong>Haqiqiy telefon raqamga SMS borishi uchun:</strong> Pastdagi <span className="font-black">«📲 Telefonimdan SMS jo‘natish»</span> tugmasini bosing (telefoningizning SMS ilovasi ochiladi) yoki avtomatik yuborish uchun Eskiz.uz hisobingizni ulang.
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  const text = sentSms?.message || `LiderKids: ${progress.name} test natijasi: ${score}/${filteredQuestions.length}`;
+                  const phone = progress.profile?.parentPhoneNumber || progress.profile?.phoneNumber || '+998 (90) 123-45-67';
+                  smsService.openDeviceSms(phone, text);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black rounded-xl shadow-md transition hover:scale-105 active:scale-95"
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>📲 Telefonimdan Real SMS jo‘natish</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsSmsModalOpen(true)}
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                <span>SMS Markazi & Eskiz sozlamalari</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <button
               onClick={handleRestart}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold rounded-2xl shadow-lg transition-transform hover:scale-105"

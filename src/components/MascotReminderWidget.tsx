@@ -111,6 +111,17 @@ export default function MascotReminderWidget() {
       buttonHref: '/leaderboard',
       accentBg: 'from-[#0369A1] via-[#0284C7] to-[#1D4ED8]',
     },
+    {
+      id: 'parent-sms-notice',
+      action: 'study',
+      streakText: `${streaksCount}`,
+      title: 'Parent SMS Alerts',
+      titleUz: '1 kun kirmasa SMS!',
+      subtitle: 'Agar 1 kun ilovaga kirmasang, ota-onangga ogohlantirish SMS yuboriladi! Har kuni 1 ta test ishlab bilimingni oshir! 📱🦁',
+      buttonText: 'Test ishlash 🎯',
+      buttonHref: '/quiz',
+      accentBg: 'from-[#1D4ED8] via-[#2563EB] to-[#0284C7]',
+    },
   ];
 
   const currentReminder = reminders[currentIndex];

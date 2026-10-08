@@ -30,6 +30,8 @@ export default function ProfileModal() {
     isProfileModalOpen,
     setIsProfileModalOpen,
     setIsRegistrationModalOpen,
+    isSmsModalOpen,
+    setIsSmsModalOpen,
     progress,
     updateProfile,
     advanceAcademicYearManually,
@@ -46,6 +48,7 @@ export default function ProfileModal() {
   const [gender, setGender] = useState<'boy' | 'girl'>(profile?.gender || 'boy');
   const [grade, setGrade] = useState<GradeLevel>(profile?.grade || progress.grade || 1);
   const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber || '');
+  const [parentPhoneNumber, setParentPhoneNumber] = useState(profile?.parentPhoneNumber || profile?.phoneNumber || '');
   const [parentName, setParentName] = useState(profile?.parentName || '');
   const [region, setRegion] = useState(profile?.region || 'Toshkent shahri');
   const [district, setDistrict] = useState(profile?.district || (UZBEKISTAN_REGIONS['Toshkent shahri']?.[0] || ''));
@@ -62,6 +65,7 @@ export default function ProfileModal() {
       gender,
       grade,
       phoneNumber,
+      parentPhoneNumber,
       parentName: parentName.trim(),
       region,
       district: district.trim(),
@@ -242,12 +246,23 @@ export default function ProfileModal() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase text-zinc-500">Telefon raqam</label>
+                  <label className="text-[10px] font-black uppercase text-zinc-500">O‘quvchi telefon raqami</label>
                   <input
                     type="text"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className="w-full p-2 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 outline-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase text-zinc-500">Ota-ona telefon raqami (SMS qabul qiluvchi)</label>
+                  <input
+                    type="text"
+                    value={parentPhoneNumber}
+                    onChange={(e) => setParentPhoneNumber(e.target.value)}
+                    className="w-full p-2 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 outline-none font-mono"
+                    placeholder="+998 (90) 123-45-67"
                   />
                 </div>
 
@@ -338,10 +353,10 @@ export default function ProfileModal() {
 
                 <div className="flex items-center justify-between py-1 border-b border-zinc-200 dark:border-zinc-700">
                   <span className="text-zinc-500 dark:text-zinc-400 font-bold flex items-center gap-1.5">
-                    <Phone className="w-4 h-4 text-emerald-500" /> Telefon:
+                    <Phone className="w-4 h-4 text-emerald-500" /> Ota-ona telefoni (SMS):
                   </span>
                   <span className="font-black font-mono text-zinc-800 dark:text-zinc-200">
-                    {profile?.phoneNumber || "Ko‘rsatilmagan"}
+                    {profile?.parentPhoneNumber || profile?.phoneNumber || "Ko‘rsatilmagan"}
                   </span>
                 </div>
 
@@ -387,6 +402,35 @@ export default function ProfileModal() {
                 )}
               </div>
             )}
+          </div>
+
+          {/* Ota-onalar SMS Markazi Kartasi */}
+          <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-sky-500/10 dark:from-blue-950/40 dark:to-indigo-950/40 p-4 rounded-2xl border-2 border-blue-200 dark:border-blue-800 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-lg shadow-md">
+                📱
+              </div>
+              <div>
+                <div className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span>Ota-onalar SMS Markazi</span>
+                  <span className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    Faol
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">
+                  1 kun kirmasa ogohlantirish & test natijalari hisoboti
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setIsProfileModalOpen(false);
+                setIsSmsModalOpen(true);
+              }}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition"
+            >
+              SMS Markazi
+            </button>
           </div>
 
           {/* O'quv yili va Avtomatik sinf yangilanishi kartasi */}

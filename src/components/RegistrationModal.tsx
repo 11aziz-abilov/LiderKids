@@ -156,9 +156,12 @@ export default function RegistrationModal() {
           school: school.trim() || undefined,
           parentName: parentName.trim(),
           phoneNumber,
+          parentPhoneNumber: phoneNumber,
           cardNumber: cardNumber.trim(),
           cardExpiry: cardExpiry.trim(),
           cardHolder: cardHolder.trim().toUpperCase(),
+          smsNotificationsEnabled: true,
+          lastActiveDate: new Date().toISOString(),
         });
         setStep(4);
         triggerConfetti();

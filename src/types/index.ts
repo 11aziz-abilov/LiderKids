@@ -52,12 +52,37 @@ export interface Achievement {
   unlocked: boolean;
 }
 
+export type SmsType = 'inactivity_1day' | 'quiz_progress' | 'level_up' | 'system';
+
+export interface SmsMessage {
+  id: string;
+  type: SmsType;
+  recipientPhone: string;
+  recipientName: string;
+  studentName: string;
+  message: string;
+  sentAt: string;
+  status: 'sent' | 'delivered' | 'failed' | 'simulated';
+  metadata?: {
+    score?: number;
+    totalQuestions?: number;
+    accuracy?: number;
+    grade?: GradeLevel;
+    earnedCoins?: number;
+    lionStageTitle?: string;
+    subjectTitle?: string;
+    daysInactive?: number;
+    streaks?: number;
+  };
+}
+
 export interface UserProfile {
   firstName: string;
   lastName: string;
   grade: GradeLevel;
   gender: 'boy' | 'girl';
   phoneNumber: string;
+  parentPhoneNumber?: string;
   cardNumber: string;
   cardExpiry: string;
   cardHolder: string;
@@ -69,6 +94,9 @@ export interface UserProfile {
   academicYear?: string;
   academicYearEndDate?: string;
   isRegistered: boolean;
+  smsNotificationsEnabled?: boolean;
+  lastActiveDate?: string;
+  lastInactivitySmsSentDate?: string;
 }
 
 export type MarketCategory = 'outfit' | 'backpack' | 'hat' | 'accessory';
@@ -110,6 +138,7 @@ export interface UserProgress {
   } | null;
   inventory?: string[];
   equippedItems?: EquippedItems;
+  smsHistory?: SmsMessage[];
 }
 
 

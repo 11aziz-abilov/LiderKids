@@ -5,17 +5,26 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
 import { GradeLevel } from '@/types';
-import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap, ShoppingBag } from 'lucide-react';
+import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap, ShoppingBag, Smartphone, Gamepad2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Header() {
   const pathname = usePathname();
-  const { progress, setGrade, toggleSound, setIsRegistrationModalOpen, setIsProfileModalOpen } = useGame();
+  const {
+    progress,
+    setGrade,
+    toggleSound,
+    setIsRegistrationModalOpen,
+    setIsProfileModalOpen,
+    setIsSmsModalOpen,
+    smsHistory,
+  } = useGame();
 
   const navLinks = [
     { href: '/', label: 'Bosh sahifa', icon: Crown },
     { href: '/quiz', label: 'Testlar', icon: CheckCircle2 },
     { href: '/lessons', label: 'Darslar', icon: BookOpen },
+    { href: '/games', label: 'Tanaffus 🎮', icon: Gamepad2 },
     { href: '/market', label: 'Market 🛍️', icon: ShoppingBag },
     { href: '/leaderboard', label: 'Reyting 🔥', icon: Flame },
     { href: '/achievements', label: 'Yutuqlar', icon: Trophy },
@@ -123,6 +132,22 @@ export default function Header() {
               title={progress.soundEnabled ? "Ovoz yoqilgan" : "Ovoz o‘chirilgan"}
             >
               {progress.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </motion.button>
+
+            {/* Ota-onalar SMS Markazi */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => setIsSmsModalOpen(true)}
+              className="relative p-2 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition shadow-sm"
+              title="Ota-onalar SMS Markazi (1 kun kirmasa ogohlantirish & Test natijalari hisoboti)"
+            >
+              <Smartphone className="w-5 h-5" />
+              {smsHistory.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white rounded-full text-[9px] font-black flex items-center justify-center animate-pulse">
+                  {smsHistory.length > 9 ? '9+' : smsHistory.length}
+                </span>
+              )}
             </motion.button>
 
             {/* Profile / Ro'yxatdan o'tish */}

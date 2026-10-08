@@ -1,8 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { GradeLevel, UserProgress, UserProfile, MarketItem, MarketCategory } from '@/types';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { GradeLevel, UserProgress, UserProfile, MarketItem, MarketCategory, SmsMessage } from '@/types';
 import { sound } from '@/utils/sound';
+import { smsService } from '@/utils/smsService';
+import { notifications } from '@/utils/notifications';
 
 import { getCurrentAcademicYear, getNextGrade } from '@/utils/academicYear';
 import { saveStoredLearner } from '@/data/leaderboardData';
@@ -64,6 +66,17 @@ interface GameContextType {
   setIsRegistrationModalOpen: (open: boolean) => void;
   isProfileModalOpen: boolean;
   setIsProfileModalOpen: (open: boolean) => void;
+  isSmsModalOpen: boolean;
+  setIsSmsModalOpen: (open: boolean) => void;
+  smsHistory: SmsMessage[];
+  refreshSmsHistory: () => void;
+  sendInactivitySmsAlert: (forceDemo?: boolean) => Promise<void>;
+  sendQuizReportSms: (params: {
+    score: number;
+    totalQuestions: number;
+    earnedCoins: number;
+    subjectTitle?: string;
+  }) => Promise<SmsMessage | null>;
   setGrade: (grade: GradeLevel) => void;
   setName: (name: string) => void;
   addCoins: (amount: number) => void;
@@ -79,6 +92,7 @@ interface GameContextType {
   equipMarketItem: (category: MarketCategory, itemId: string) => void;
   unequipMarketItem: (category: MarketCategory) => void;
   resetProgress: () => void;
+  updateLastActiveDate: () => void;
 }
 
 const STORAGE_KEY = 'liderkids_progress_v1';
@@ -90,6 +104,7 @@ const defaultProfile: UserProfile = {
   gender: 'boy',
   grade: 1,
   phoneNumber: '+998 (90) 123-45-67',
+  parentPhoneNumber: '+998 (90) 123-45-67',
   parentName: 'Ota-ona',
   region: 'Toshkent shahri',
   district: 'Yunusobod tumani',
@@ -101,6 +116,8 @@ const defaultProfile: UserProfile = {
   academicYearEndDate: new Date(2027, 4, 25, 23, 59, 59).toISOString(),
   isRegistered: true,
   registeredAt: new Date().toISOString(),
+  smsNotificationsEnabled: true,
+  lastActiveDate: new Date().toISOString(),
 };
 
 const defaultProgress: UserProgress = {
@@ -125,10 +142,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
+  const [smsHistory, setSmsHistory] = useState<SmsMessage[]>([]);
+
+  const refreshSmsHistory = useCallback(() => {
+    setSmsHistory(smsService.getHistory());
+  }, []);
 
   // Load from localStorage on client mount: foydalanuvchi to'g'ridan-to'g'ri o'z profiliga kiradi!
   useEffect(() => {
     try {
+      setSmsHistory(smsService.getHistory());
+
       const saved = localStorage.getItem(STORAGE_KEY);
       let parsedProgress: any = null;
 
@@ -153,6 +178,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           parsedProgress.profile = defaultProfile;
         } else {
           parsedProgress.profile.isRegistered = true;
+          if (!parsedProgress.profile.parentPhoneNumber) {
+            parsedProgress.profile.parentPhoneNumber = parsedProgress.profile.phoneNumber || '+998 (90) 123-45-67';
+          }
+          if (parsedProgress.profile.smsNotificationsEnabled === undefined) {
+            parsedProgress.profile.smsNotificationsEnabled = true;
+          }
           if (!parsedProgress.profile.academicYear || parsedProgress.profile.academicYear === '2025-2026') {
             const currentYearInfo = getCurrentAcademicYear();
             parsedProgress.profile.academicYear = currentYearInfo.academicYear;
@@ -160,11 +191,47 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        // --- 1 KUN KIRMASH (INACTIVITY) NAZORATI VA SMS YUBORISH ---
+        const lastActive = parsedProgress.profile?.lastActiveDate;
+        const now = Date.now();
+        const todayStr = new Date().toISOString().slice(0, 10);
+
+        if (lastActive) {
+          const lastActiveTime = new Date(lastActive).getTime();
+          const diffHours = (now - lastActiveTime) / (1000 * 60 * 60);
+          const lastSmsSentDate = parsedProgress.profile?.lastInactivitySmsSentDate;
+
+          // Agar oxirgi kirishdan beri 24 soat (1 kun) o'tgan bo'lsa va bugun SMS jo'natilmagan bo'lsa:
+          if (diffHours >= 24 && lastSmsSentDate !== todayStr && parsedProgress.profile?.smsNotificationsEnabled !== false) {
+            const parentPhone = parsedProgress.profile?.parentPhoneNumber || parsedProgress.profile?.phoneNumber || '+998 (90) 123-45-67';
+            const parentName = parsedProgress.profile?.parentName || 'Ota-ona';
+            const studentName = parsedProgress.name || `${parsedProgress.profile?.firstName || 'Yosh'} ${parsedProgress.profile?.lastName || 'Lider'}`.trim();
+            const daysInactive = Math.max(1, Math.floor(diffHours / 24));
+
+            smsService.sendInactivityAlert({
+              parentPhone,
+              parentName,
+              studentName,
+              streaks: parsedProgress.streaks || 1,
+              daysInactive,
+            }).then(() => {
+              setSmsHistory(smsService.getHistory());
+            });
+
+            parsedProgress.profile.lastInactivitySmsSentDate = todayStr;
+          }
+        }
+
+        // Oxirgi faollik vaqtini hozirga yangilash
+        if (parsedProgress.profile) {
+          parsedProgress.profile.lastActiveDate = new Date().toISOString();
+        }
+
         if (parsedProgress.profile?.academicYearEndDate) {
           const endDate = new Date(parsedProgress.profile.academicYearEndDate);
-          const now = new Date();
-          if (now > endDate && parsedProgress.grade < 4) {
-            const nextYearInfo = getCurrentAcademicYear(now);
+          const nowDate = new Date();
+          if (nowDate > endDate && parsedProgress.grade < 4) {
+            const nextYearInfo = getCurrentAcademicYear(nowDate);
             const fromGrade = parsedProgress.grade;
             const toGrade = getNextGrade(fromGrade);
             parsedProgress.grade = toGrade;
@@ -442,6 +509,90 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateLastActiveDate = useCallback(() => {
+    setProgress((prev) => {
+      if (!prev.profile) return prev;
+      return {
+        ...prev,
+        profile: {
+          ...prev.profile,
+          lastActiveDate: new Date().toISOString(),
+        },
+      };
+    });
+  }, []);
+
+  const sendInactivitySmsAlert = async (forceDemo: boolean = false) => {
+    const parentPhone = progress.profile?.parentPhoneNumber || progress.profile?.phoneNumber || '+998 (90) 123-45-67';
+    const parentName = progress.profile?.parentName || 'Ota-ona';
+    const studentName = progress.name || `${progress.profile?.firstName || 'Yosh'} ${progress.profile?.lastName || 'Lider'}`.trim();
+    const streaks = progress.streaks || 1;
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    await smsService.sendInactivityAlert({
+      parentPhone,
+      parentName,
+      studentName,
+      streaks,
+      daysInactive: 1,
+    });
+
+    // Native / Web push eslatmasi
+    await notifications.showNotification({
+      title: '📱 Ota-onaga SMS xabarnoma yuborildi!',
+      body: `${parentName}ga farzandining 1 kun dars qoldirgani haqida ogohlantirish SMS yuborildi.`,
+      streaks,
+      url: '/lessons',
+    });
+
+    setProgress((prev) => {
+      if (!prev.profile) return prev;
+      return {
+        ...prev,
+        profile: {
+          ...prev.profile,
+          lastInactivitySmsSentDate: todayStr,
+        },
+      };
+    });
+    refreshSmsHistory();
+  };
+
+  const sendQuizReportSms = async ({
+    score,
+    totalQuestions,
+    earnedCoins,
+    subjectTitle,
+  }: {
+    score: number;
+    totalQuestions: number;
+    earnedCoins: number;
+    subjectTitle?: string;
+  }): Promise<SmsMessage | null> => {
+    if (progress.profile?.smsNotificationsEnabled === false) return null;
+
+    const parentPhone = progress.profile?.parentPhoneNumber || progress.profile?.phoneNumber || '+998 (90) 123-45-67';
+    const parentName = progress.profile?.parentName || 'Ota-ona';
+    const studentName = progress.name || `${progress.profile?.firstName || 'Yosh'} ${progress.profile?.lastName || 'Lider'}`.trim();
+    const currentLionStage = LION_STAGES[progress.grade] || LION_STAGES[1];
+
+    const sms = await smsService.sendQuizProgressReport({
+      parentPhone,
+      parentName,
+      studentName,
+      score,
+      totalQuestions,
+      earnedCoins,
+      grade: progress.grade,
+      lionStageTitle: currentLionStage.title,
+      streaks: progress.streaks,
+      subjectTitle,
+    });
+
+    refreshSmsHistory();
+    return sms;
+  };
+
   const lionStage = LION_STAGES[progress.grade] || LION_STAGES[1];
 
   return (
@@ -454,6 +605,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setIsRegistrationModalOpen,
         isProfileModalOpen,
         setIsProfileModalOpen,
+        isSmsModalOpen,
+        setIsSmsModalOpen,
+        smsHistory,
+        refreshSmsHistory,
+        sendInactivitySmsAlert,
+        sendQuizReportSms,
         setGrade,
         setName,
         addCoins,
@@ -469,6 +626,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         equipMarketItem,
         unequipMarketItem,
         resetProgress,
+        updateLastActiveDate,
       }}
     >
       {children}
