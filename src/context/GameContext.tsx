@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { GradeLevel, UserProgress, UserProfile } from '@/types';
+import { GradeLevel, UserProgress, UserProfile, MarketItem, MarketCategory } from '@/types';
 import { sound } from '@/utils/sound';
 
 import { getCurrentAcademicYear, getNextGrade } from '@/utils/academicYear';
@@ -74,6 +74,9 @@ interface GameContextType {
   updateProfile: (profileData: Partial<UserProfile>) => void;
   advanceAcademicYearManually: () => void;
   clearPromotionNotice: () => void;
+  buyMarketItem: (item: MarketItem) => boolean;
+  equipMarketItem: (category: MarketCategory, itemId: string) => void;
+  unequipMarketItem: (category: MarketCategory) => void;
   resetProgress: () => void;
 }
 
@@ -89,6 +92,8 @@ const defaultProgress: UserProgress = {
   completedQuizzes: [],
   soundEnabled: true,
   unlockedAchievements: ['first-step'],
+  inventory: ['backpack_red'],
+  equippedItems: { backpack: 'backpack_red' },
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -294,6 +299,55 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const buyMarketItem = (item: MarketItem): boolean => {
+    if (progress.coins < item.price) return false;
+    if (progress.inventory?.includes(item.id)) return false;
+
+    setProgress((prev) => {
+      const nextCoins = prev.coins - item.price;
+      const inventory = [...(prev.inventory || []), item.id];
+      const equippedItems = {
+        ...(prev.equippedItems || {}),
+        [item.category]: item.id,
+      };
+      return {
+        ...prev,
+        coins: nextCoins,
+        inventory,
+        equippedItems,
+      };
+    });
+
+    if (progress.soundEnabled) {
+      sound.playCoin();
+    }
+    return true;
+  };
+
+  const equipMarketItem = (category: MarketCategory, itemId: string) => {
+    setProgress((prev) => ({
+      ...prev,
+      equippedItems: {
+        ...(prev.equippedItems || {}),
+        [category]: itemId,
+      },
+    }));
+    if (progress.soundEnabled) {
+      sound.playFire();
+    }
+  };
+
+  const unequipMarketItem = (category: MarketCategory) => {
+    setProgress((prev) => {
+      const updated = { ...(prev.equippedItems || {}) };
+      delete updated[category];
+      return {
+        ...prev,
+        equippedItems: updated,
+      };
+    });
+  };
+
   const resetProgress = () => {
     setProgress(defaultProgress);
     try {
@@ -326,6 +380,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         advanceAcademicYearManually,
         clearPromotionNotice,
+        buyMarketItem,
+        equipMarketItem,
+        unequipMarketItem,
         resetProgress,
       }}
     >

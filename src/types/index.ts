@@ -70,6 +70,26 @@ export interface UserProfile {
   isRegistered: boolean;
 }
 
+export type MarketCategory = 'outfit' | 'backpack' | 'hat' | 'accessory';
+
+export interface MarketItem {
+  id: string;
+  name: string;
+  category: MarketCategory;
+  price: number;
+  emoji: string;
+  description: string;
+  badge: string;
+  color: string;
+}
+
+export interface EquippedItems {
+  outfit?: string;
+  backpack?: string;
+  hat?: string;
+  accessory?: string;
+}
+
 export interface UserProgress {
   name: string;
   grade: GradeLevel;
@@ -86,6 +106,8 @@ export interface UserProgress {
     toGrade: GradeLevel;
     year: string;
   } | null;
+  inventory?: string[];
+  equippedItems?: EquippedItems;
 }
 
 

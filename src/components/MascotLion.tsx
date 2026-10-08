@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '@/context/GameContext';
-import { Sparkles, Award, Zap, Heart } from 'lucide-react';
+import { Sparkles, Award, Zap, Heart, ShoppingBag } from 'lucide-react';
+import Link from 'next/link';
 
 export default function MascotLion() {
   const { progress, lionStage } = useGame();
@@ -248,6 +249,49 @@ export default function MascotLion() {
                   <line x1="140" y1="118" x2="160" y2="122" stroke="#78350F" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               )}
+
+              {/* Equipped Hat Overlay */}
+              {progress.equippedItems?.hat && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-30 text-4xl select-none filter drop-shadow">
+                  {progress.equippedItems.hat === 'crown_gold' && '👑'}
+                  {progress.equippedItems.hat === 'grad_cap' && '🎓'}
+                  {progress.equippedItems.hat === 'sherlock_hat' && '🕵️'}
+                  {progress.equippedItems.hat === 'cap_cool' && '🧢'}
+                </div>
+              )}
+
+              {/* Equipped Accessory Overlay */}
+              {progress.equippedItems?.accessory && (
+                <div className="absolute top-12 left-1/2 transform -translate-x-1/2 z-30 text-3xl select-none filter drop-shadow">
+                  {progress.equippedItems.accessory === 'glasses_genius' && '👓'}
+                  {progress.equippedItems.accessory === 'headphones_gamer' && '🎧'}
+                  {progress.equippedItems.accessory === 'gold_medal' && '🥇'}
+                  {progress.equippedItems.accessory === 'magic_wand' && '🪄'}
+                </div>
+              )}
+
+              {/* Equipped Backpack Overlay */}
+              {progress.equippedItems?.backpack && (
+                <div className="absolute bottom-2 -left-3 z-30 text-4xl select-none filter drop-shadow-md">
+                  {progress.equippedItems.backpack === 'backpack_red' && '🎒'}
+                  {progress.equippedItems.backpack === 'backpack_rocket' && '🚀'}
+                  {progress.equippedItems.backpack === 'briefcase_leather' && '💼'}
+                  {progress.equippedItems.backpack === 'backpack_neon' && '⚡'}
+                  {progress.equippedItems.backpack === 'backpack_gold' && '🌟'}
+                </div>
+              )}
+
+              {/* Equipped Outfit Overlay */}
+              {progress.equippedItems?.outfit && (
+                <div className="absolute bottom-2 right-1 z-30 text-3xl select-none filter drop-shadow">
+                  {progress.equippedItems.outfit === 'uniform_pm' && '👔'}
+                  {progress.equippedItems.outfit === 'royal_cape' && '👑'}
+                  {progress.equippedItems.outfit === 'superhero_suit' && '🦸‍♂️'}
+                  {progress.equippedItems.outfit === 'karate_gi' && '🥋'}
+                  {progress.equippedItems.outfit === 'space_suit' && '🚀'}
+                  {progress.equippedItems.outfit === 'cozy_hoodie' && '🧥'}
+                </div>
+              )}
             </motion.div>
 
             {/* Click me hint badge */}
@@ -256,13 +300,25 @@ export default function MascotLion() {
             </span>
           </div>
 
-          <div className="mt-3 text-center">
+          <div className="mt-3 text-center flex flex-col items-center">
             <h3 className="text-xl sm:text-2xl font-black text-amber-950 dark:text-amber-200">
               {lionStage.title}
             </h3>
             <span className="inline-block mt-1 text-xs sm:text-sm font-bold bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 px-3 py-1 rounded-full">
               {lionStage.badge}
             </span>
+
+            {/* Market & Wardrobe Button */}
+            <Link
+              href="/market"
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm rounded-2xl shadow-md shadow-orange-500/20 transition-all hover:scale-105 active:scale-95"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>Shercha Marketi (Garderob)</span>
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold text-yellow-200">
+                {progress.coins} 🪙
+              </span>
+            </Link>
           </div>
         </div>
 
