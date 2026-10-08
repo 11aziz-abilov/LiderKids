@@ -38,6 +38,7 @@ export default function RegistrationModal() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [grade, setGrade] = useState<GradeLevel>(progress.grade || 1);
+  const [gender, setGender] = useState<'boy' | 'girl'>('boy');
   const [region, setRegion] = useState('Toshkent shahri');
   const [district, setDistrict] = useState(UZBEKISTAN_REGIONS['Toshkent shahri'][0]);
   const [school, setSchool] = useState('');
@@ -149,6 +150,7 @@ export default function RegistrationModal() {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           grade,
+          gender,
           region,
           district: district.trim(),
           school: school.trim() || undefined,
@@ -199,7 +201,7 @@ export default function RegistrationModal() {
                 </span>
                 <span className="flex items-center gap-1 text-xs font-bold text-yellow-200">
                   <Coins className="w-3.5 h-3.5 fill-yellow-300" />
-                  +100 Tanga Bonus!
+                  +500 Tanga Bonus!
                 </span>
               </div>
               <h2 className="text-2xl font-black tracking-tight mt-0.5">
@@ -299,6 +301,39 @@ export default function RegistrationModal() {
                       />
                     </div>
                     {errors.lastName && <p className="text-xs text-red-500 mt-1 font-semibold">{errors.lastName}</p>}
+                  </div>
+                </div>
+
+                {/* Gender Selection */}
+                <div>
+                  <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1.5">
+                    O‘quvchi jinsi <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setGender('boy')}
+                      className={`py-3 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm ${
+                        gender === 'boy'
+                          ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/20 scale-[1.02]'
+                          : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-blue-300'
+                      }`}
+                    >
+                      <span className="text-xl">👦</span>
+                      <span>O‘g‘il bola (Sher)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGender('girl')}
+                      className={`py-3 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm ${
+                        gender === 'girl'
+                          ? 'border-pink-500 bg-pink-500 text-white shadow-md shadow-pink-500/20 scale-[1.02]'
+                          : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-pink-300'
+                      }`}
+                    >
+                      <span className="text-xl">👧</span>
+                      <span>Qiz bola (Shercha)</span>
+                    </button>
                   </div>
                 </div>
 

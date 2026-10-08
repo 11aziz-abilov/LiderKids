@@ -7,6 +7,7 @@ import { MarketCategory, MarketItem } from '@/types';
 import { triggerConfetti } from '@/components/ConfettiEffect';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import FullBodyLionCharacter, { LionAction } from '@/components/FullBodyLionCharacter';
 import {
   ShoppingBag,
   Coins,
@@ -18,7 +19,10 @@ import {
   Crown,
   Glasses,
   Lock,
-  RotateCcw
+  RotateCcw,
+  Hand,
+  Music,
+  Heart
 } from 'lucide-react';
 
 const CATEGORY_TABS: { id: MarketCategory | 'all'; label: string; icon: React.ElementType }[] = [
@@ -39,12 +43,21 @@ export default function MarketPage() {
   } = useGame();
 
   const [activeCategory, setActiveCategory] = useState<MarketCategory | 'all'>('all');
+  const [characterAction, setCharacterAction] = useState<LionAction>('idle');
   const [purchaseNotification, setPurchaseNotification] = useState<string | null>(null);
 
   const inventory = progress.inventory || [];
   const equipped = progress.equippedItems || {};
+  const userGender = progress.profile?.gender || 'boy';
+  const isGirl = userGender === 'girl';
 
+  // Filter items by active category AND user gender (girl sees girl & unisex; boy sees boy & unisex)
   const filteredItems = MARKET_ITEMS.filter((item) => {
+    // Gender check
+    const matchesGender = !item.gender || item.gender === 'all' || item.gender === userGender;
+    if (!matchesGender) return false;
+
+    // Category check
     if (activeCategory === 'all') return true;
     return item.category === activeCategory;
   });
@@ -53,9 +66,19 @@ export default function MarketPage() {
     const success = buyMarketItem(item);
     if (success) {
       triggerConfetti();
-      setPurchaseNotification(`🎉 Tabriklaymiz! "${item.name}" sotib olindi va kiyildi!`);
-      setTimeout(() => setPurchaseNotification(null), 3500);
+      setCharacterAction('dance');
+      setPurchaseNotification(`🎉 Ajoyib! "${item.name}" sotib olindi va kiyildi!`);
+      setTimeout(() => {
+        setPurchaseNotification(null);
+        setCharacterAction('idle');
+      }, 3500);
     }
+  };
+
+  const handleEquip = (category: MarketCategory, itemId: string) => {
+    equipMarketItem(category, itemId);
+    setCharacterAction('wave');
+    setTimeout(() => setCharacterAction('idle'), 2000);
   };
 
   const getEquippedName = (category: MarketCategory) => {
@@ -76,13 +99,15 @@ export default function MarketPage() {
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider">
               <ShoppingBag className="w-4 h-4 text-yellow-200" />
-              <span>Shercha Do‘koni & Garderobi</span>
+              <span>{isGirl ? '👧 Malika Shercha Do‘koni' : '👦 Shercha Do‘koni'}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">
               Shercha Marketi 🛍️
             </h1>
             <p className="text-amber-100 text-sm sm:text-base font-medium">
-              Testlar va darslardan to‘plagan oltin tangalaringiz evaziga Sherchangiz uchun eng chiroyli kiyimlar, ryukzaklar va shohona tojlarni sotib oling!
+              {isGirl
+                ? 'Malika sherchangiz uchun eng nafis ko‘ylaklar, malika tiaralari, pushti sumkalar va taqinchoqlarni tanlang!'
+                : 'Sherchangiz uchun Prezident maktabi liboslari, shohona mantiya, ryukzaklar va tojlarni tanlang!'}
             </p>
           </div>
 
@@ -111,7 +136,10 @@ export default function MarketPage() {
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             className="bg-emerald-500 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between font-black text-sm sm:text-base"
           >
-            <span>{purchaseNotification}</span>
+            <span className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              {purchaseNotification}
+            </span>
             <button
               onClick={() => setPurchaseNotification(null)}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-xl text-xs"
@@ -122,66 +150,51 @@ export default function MarketPage() {
         )}
       </AnimatePresence>
 
-      {/* Shercha Live Fitting Room (Jonli Garderob & Ko'rinish) */}
+      {/* Shercha Live Fitting Room (Jonli Garderob & To'liq Tana) */}
       <section className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border-2 border-amber-200 dark:border-zinc-800 shadow-md">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-          {/* Left: Mascot Character Visual with Live Equipment */}
+          {/* Left: Full Body Mascot Character Visual with Live Equipment */}
           <div className="flex flex-col items-center">
-            <div className="relative w-48 h-48 sm:w-56 sm:h-56 bg-gradient-to-tr from-amber-100 to-orange-100 dark:from-zinc-800 dark:to-zinc-800/60 rounded-3xl flex items-center justify-center border-4 border-amber-300 dark:border-zinc-700 shadow-inner">
+            <div className="relative w-60 h-72 sm:w-64 sm:h-80 bg-gradient-to-tr from-amber-100/70 via-orange-50/50 to-amber-100/70 dark:from-zinc-800 dark:to-zinc-800/60 rounded-3xl flex items-center justify-center border-4 border-amber-300 dark:border-zinc-700 shadow-inner overflow-hidden p-2">
               {/* Floating Glow */}
-              <div className="absolute inset-0 bg-amber-400/20 rounded-3xl blur-xl" />
+              <div className="absolute inset-0 bg-amber-400/15 rounded-3xl blur-xl pointer-events-none" />
 
-              {/* Lion Emoji Base */}
-              <div className="text-7xl sm:text-8xl relative z-10 select-none animate-pulse">
-                🦁
-              </div>
-
-              {/* Equipped Hat Overlay */}
-              {equipped.hat && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20 text-4xl select-none filter drop-shadow">
-                  {equipped.hat === 'crown_gold' && '👑'}
-                  {equipped.hat === 'grad_cap' && '🎓'}
-                  {equipped.hat === 'sherlock_hat' && '🕵️'}
-                  {equipped.hat === 'cap_cool' && '🧢'}
-                </div>
-              )}
-
-              {/* Equipped Accessory Overlay */}
-              {equipped.accessory && (
-                <div className="absolute top-14 left-1/2 transform -translate-x-1/2 z-20 text-3xl select-none filter drop-shadow">
-                  {equipped.accessory === 'glasses_genius' && '👓'}
-                  {equipped.accessory === 'headphones_gamer' && '🎧'}
-                  {equipped.accessory === 'gold_medal' && '🥇'}
-                  {equipped.accessory === 'magic_wand' && '🪄'}
-                </div>
-              )}
-
-              {/* Equipped Backpack Overlay */}
-              {equipped.backpack && (
-                <div className="absolute bottom-1 -left-2 z-20 text-4xl select-none filter drop-shadow">
-                  {equipped.backpack === 'backpack_red' && '🎒'}
-                  {equipped.backpack === 'backpack_rocket' && '🚀'}
-                  {equipped.backpack === 'briefcase_leather' && '💼'}
-                  {equipped.backpack === 'backpack_neon' && '⚡'}
-                  {equipped.backpack === 'backpack_gold' && '🌟'}
-                </div>
-              )}
-
-              {/* Equipped Outfit Overlay */}
-              {equipped.outfit && (
-                <div className="absolute bottom-2 right-2 z-20 text-3xl select-none filter drop-shadow">
-                  {equipped.outfit === 'uniform_pm' && '👔'}
-                  {equipped.outfit === 'royal_cape' && '👑'}
-                  {equipped.outfit === 'superhero_suit' && '🦸‍♂️'}
-                  {equipped.outfit === 'karate_gi' && '🥋'}
-                  {equipped.outfit === 'space_suit' && '🚀'}
-                  {equipped.outfit === 'cozy_hoodie' && '🧥'}
-                </div>
-              )}
+              {/* LIVE FULL-BODY CHARACTER */}
+              <FullBodyLionCharacter
+                grade={progress.grade}
+                gender={userGender}
+                equipped={equipped}
+                action={characterAction}
+                size="md"
+              />
             </div>
 
-            <span className="mt-3 text-xs font-black text-amber-900 dark:text-amber-200">
-              {progress.name}ning Sherchasi ({lionStage.title})
+            {/* Fitting room mini-controls */}
+            <div className="mt-3 flex items-center gap-1">
+              <button
+                onClick={() => setCharacterAction('wave')}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 transition flex items-center gap-1"
+                title="Salom berish"
+              >
+                <Hand className="w-3 h-3" /> Salom
+              </button>
+              <button
+                onClick={() => setCharacterAction('dance')}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-800 transition flex items-center gap-1"
+                title="Raqsga tushish"
+              >
+                <Music className="w-3 h-3" /> Raqs
+              </button>
+              <button
+                onClick={() => setCharacterAction('idle')}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition"
+              >
+                Normal
+              </button>
+            </div>
+
+            <span className="mt-2 text-xs font-black text-amber-900 dark:text-amber-200">
+              {progress.name}ning {isGirl ? 'Malika Sherchasi' : 'Sherchasi'}
             </span>
           </div>
 
@@ -192,8 +205,8 @@ export default function MarketPage() {
                 <Sparkles className="w-5 h-5 text-amber-500" />
                 <span>Hozir kiyilgan buyumlar</span>
               </h3>
-              <span className="text-xs font-bold text-zinc-500">
-                {lionStage.badge}
+              <span className="text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2.5 py-1 rounded-full">
+                {isGirl ? '👧 Qizlar kolleksiyasi' : '👦 O‘g‘il bolalar kolleksiyasi'}
               </span>
             </div>
 
@@ -201,7 +214,7 @@ export default function MarketPage() {
               {/* Outfit slot */}
               <div className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                 <div>
-                  <div className="text-[10px] font-black uppercase text-zinc-400">Kiyim</div>
+                  <div className="text-[10px] font-black uppercase text-zinc-400">Kiyim (Tana ustida)</div>
                   <div className="text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 truncate max-w-[150px]">
                     {getEquippedName('outfit')}
                   </div>
@@ -366,7 +379,7 @@ export default function MarketPage() {
                     </button>
                   ) : isOwned ? (
                     <button
-                      onClick={() => equipMarketItem(item.category, item.id)}
+                      onClick={() => handleEquip(item.category, item.id)}
                       className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm shadow-md transition hover:scale-[1.02] active:scale-95"
                     >
                       ✨ Kiyintirish
@@ -402,7 +415,7 @@ export default function MarketPage() {
             <span>🪙 Yana ko‘proq tanga yig‘ishni xohlaysizmi?</span>
           </h3>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-            Testlarni to‘g‘ri yeching va har bir savol uchun oltin tangalarga ega bo‘ling!
+            Testlarni to‘g‘ri yeching va har bir to‘g‘ri javob uchun +50 tangaga ega bo‘ling!
           </p>
         </div>
         <Link

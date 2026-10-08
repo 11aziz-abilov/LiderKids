@@ -85,7 +85,7 @@ const STORAGE_KEY = 'liderkids_progress_v1';
 const defaultProgress: UserProgress = {
   name: 'Yosh Lider',
   grade: 1,
-  coins: 50, // boshlang'ich bonus qiziqtirish uchun
+  coins: 500, // boshlang'ich bonus market uchun
   streaks: 2,
   xp: 70,
   completedLessons: [],
@@ -231,7 +231,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         name: fullName,
         grade: profileData.grade,
-        coins: isFirstReg ? prev.coins + 100 : prev.coins,
+        coins: isFirstReg ? prev.coins + 500 : prev.coins,
         xp: isFirstReg ? prev.xp + 50 : prev.xp,
         profile: {
           ...profileData,

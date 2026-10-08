@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 import { UZBEKISTAN_REGIONS } from '@/data/regionsData';
+import FullBodyLionCharacter from './FullBodyLionCharacter';
 
 export default function ProfileModal() {
   const {
@@ -42,6 +43,7 @@ export default function ProfileModal() {
   // Editable fields
   const [firstName, setFirstName] = useState(profile?.firstName || '');
   const [lastName, setLastName] = useState(profile?.lastName || '');
+  const [gender, setGender] = useState<'boy' | 'girl'>(profile?.gender || 'boy');
   const [grade, setGrade] = useState<GradeLevel>(profile?.grade || progress.grade || 1);
   const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber || '');
   const [parentName, setParentName] = useState(profile?.parentName || '');
@@ -57,6 +59,7 @@ export default function ProfileModal() {
     updateProfile({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
+      gender,
       grade,
       phoneNumber,
       parentName: parentName.trim(),
@@ -102,8 +105,13 @@ export default function ProfileModal() {
           </button>
 
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-4xl shadow-inner border border-white/30">
-              🦁
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner border border-white/30 overflow-hidden p-1">
+              <FullBodyLionCharacter
+                size="sm"
+                gender={profile?.gender || 'boy'}
+                grade={progress.grade}
+                equipped={progress.equippedItems}
+              />
             </div>
             <div>
               <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-0.5 rounded-full text-xs font-black uppercase">
@@ -154,6 +162,7 @@ export default function ProfileModal() {
                 onClick={() => {
                   setFirstName(profile?.firstName || '');
                   setLastName(profile?.lastName || '');
+                  setGender(profile?.gender || 'boy');
                   setGrade(profile?.grade || progress.grade || 1);
                   setPhoneNumber(profile?.phoneNumber || '');
                   setParentName(profile?.parentName || '');
@@ -201,6 +210,34 @@ export default function ProfileModal() {
                       onChange={(e) => setLastName(e.target.value)}
                       className="w-full p-2 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 outline-none"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase text-zinc-500">Jinsi (Shercha qiyofasi)</label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => setGender('boy')}
+                      className={`py-2 px-3 rounded-xl text-xs font-black border-2 transition-all flex items-center justify-center gap-1.5 ${
+                        gender === 'boy'
+                          ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 shadow-sm'
+                          : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
+                      }`}
+                    >
+                      <span>👦 O‘g‘il bola (Sher)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGender('girl')}
+                      className={`py-2 px-3 rounded-xl text-xs font-black border-2 transition-all flex items-center justify-center gap-1.5 ${
+                        gender === 'girl'
+                          ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-200 shadow-sm'
+                          : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
+                      }`}
+                    >
+                      <span>👧 Qiz bola (Shercha)</span>
+                    </button>
                   </div>
                 </div>
 
@@ -278,6 +315,15 @@ export default function ProfileModal() {
                   </span>
                   <span className="font-black text-zinc-800 dark:text-zinc-200">
                     {profile ? `${profile.firstName} ${profile.lastName}` : progress.name}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-1 border-b border-zinc-200 dark:border-zinc-700">
+                  <span className="text-zinc-500 dark:text-zinc-400 font-bold flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-pink-500" /> Jinsi & Maskot:
+                  </span>
+                  <span className="font-black text-zinc-800 dark:text-zinc-200">
+                    {profile?.gender === 'girl' ? '👧 Qiz bola (Malika Shercha)' : '👦 O‘g‘il bola (Shercha)'}
                   </span>
                 </div>
 

@@ -69,8 +69,8 @@ function QuizContent() {
 
     if (isCorrect) {
       setScore((prev) => prev + 1);
-      setEarnedCoins((prev) => prev + 10);
-      addCoins(10);
+      setEarnedCoins((prev) => prev + 50);
+      addCoins(50);
       markQuizCompleted(currentQ.id);
 
       if (progress.soundEnabled) {

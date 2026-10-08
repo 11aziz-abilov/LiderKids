@@ -56,6 +56,7 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   grade: GradeLevel;
+  gender: 'boy' | 'girl';
   phoneNumber: string;
   cardNumber: string;
   cardExpiry: string;
@@ -76,6 +77,7 @@ export interface MarketItem {
   id: string;
   name: string;
   category: MarketCategory;
+  gender?: 'boy' | 'girl' | 'all';
   price: number;
   emoji: string;
   description: string;
