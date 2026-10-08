@@ -262,7 +262,7 @@ export default function PuzzleGame({ grade, onBackToMenu }: PuzzleGameProps) {
         isOpen={isGameOver}
         gameTitle="Mini-pazl"
         score={correctlyPlacedCount * 12 + 20}
-        bonusCoins={30}
+        bonusCoins={10}
         onRestart={initializePuzzle}
         onChooseAnother={onBackToMenu}
       />

@@ -250,7 +250,7 @@ export default function MemoryGame({ grade, onBackToMenu }: MemoryGameProps) {
         isOpen={isGameOver}
         gameTitle="Juftini top"
         score={matchedPairsCount * 15}
-        bonusCoins={30}
+        bonusCoins={10}
         onRestart={initializeGame}
         onChooseAnother={onBackToMenu}
       />

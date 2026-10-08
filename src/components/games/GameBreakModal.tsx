@@ -21,17 +21,18 @@ export default function GameBreakModal({
   isOpen,
   gameTitle,
   score,
-  bonusCoins = 30,
+  bonusCoins = 10,
   onRestart,
   onChooseAnother,
 }: GameBreakModalProps) {
   const router = useRouter();
   const { addCoins, progress } = useGame();
+  const cappedCoins = Math.min(10, Math.max(1, bonusCoins));
 
   useEffect(() => {
     if (isOpen) {
       triggerConfetti();
-      addCoins(bonusCoins);
+      addCoins(cappedCoins);
       if (progress.soundEnabled) {
         sound.playVictory();
       }
@@ -74,7 +75,7 @@ export default function GameBreakModal({
             <Coins className="w-6 h-6 text-amber-500 fill-amber-400 animate-spin-slow" />
             <div className="text-left">
               <div className="text-[10px] font-bold text-zinc-400 uppercase">Dam olish bonusi</div>
-              <div className="text-lg font-black text-amber-600 dark:text-amber-400">+{bonusCoins} Tanga</div>
+              <div className="text-lg font-black text-amber-600 dark:text-amber-400">+{cappedCoins} Tanga</div>
             </div>
           </div>
           {typeof score === 'number' && (

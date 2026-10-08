@@ -90,7 +90,7 @@ export default function GamesPage() {
               2 Daqiqalik Mini-O‘yinlar 🎮
             </h1>
             <p className="text-orange-100 text-sm sm:text-base font-medium max-w-xl mt-1">
-              Darslar orasida miyangizni dam oldiring va yangi energiya to‘plang! Hech qanday jazosiz, faqat xursandchilik va +30 tanga bonus!
+              Darslar orasida miyangizni dam oldiring va yangi energiya to‘plang! Hech qanday jazosiz, faqat xursandchilik va +10 tanga bonus!
             </p>
           </div>
 

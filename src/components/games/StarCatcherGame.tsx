@@ -277,7 +277,7 @@ export default function StarCatcherGame({ grade, onBackToMenu }: StarCatcherGame
         isOpen={isGameOver}
         gameTitle="Yulduz ushlash"
         score={score}
-        bonusCoins={30}
+        bonusCoins={10}
         onRestart={restartGame}
         onChooseAnother={onBackToMenu}
       />
