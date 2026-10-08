@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { GradeLevel, UserProgress } from '@/types';
+import { GradeLevel, UserProgress, UserProfile } from '@/types';
 import { sound } from '@/utils/sound';
 
 interface LionStage {
@@ -56,6 +56,11 @@ const LION_STAGES: Record<GradeLevel, LionStage> = {
 interface GameContextType {
   progress: UserProgress;
   lionStage: LionStage;
+  isLoaded: boolean;
+  isRegistrationModalOpen: boolean;
+  setIsRegistrationModalOpen: (open: boolean) => void;
+  isProfileModalOpen: boolean;
+  setIsProfileModalOpen: (open: boolean) => void;
   setGrade: (grade: GradeLevel) => void;
   setName: (name: string) => void;
   addCoins: (amount: number) => void;
@@ -63,6 +68,8 @@ interface GameContextType {
   markLessonCompleted: (lessonId: string) => boolean;
   markQuizCompleted: (quizId: string) => void;
   toggleSound: () => void;
+  registerUser: (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt'>) => void;
+  updateProfile: (profileData: Partial<UserProfile>) => void;
   resetProgress: () => void;
 }
 
@@ -85,6 +92,8 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState<UserProgress>(defaultProgress);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Load from localStorage on client mount
   useEffect(() => {
@@ -93,9 +102,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         setProgress((prev) => ({ ...prev, ...parsed }));
+        if (!parsed.profile?.isRegistered) {
+          setIsRegistrationModalOpen(true);
+        }
+      } else {
+        setIsRegistrationModalOpen(true);
       }
     } catch {
-      // ignore
+      setIsRegistrationModalOpen(true);
     } finally {
       setIsLoaded(true);
     }
@@ -116,6 +130,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setProgress((prev) => ({
       ...prev,
       grade,
+      profile: prev.profile ? { ...prev.profile, grade } : undefined,
     }));
   };
 
@@ -180,6 +195,42 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const registerUser = (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt'>) => {
+    const fullName = `${profileData.firstName} ${profileData.lastName}`.trim();
+    setProgress((prev) => {
+      const isFirstReg = !prev.profile?.isRegistered;
+      return {
+        ...prev,
+        name: fullName,
+        grade: profileData.grade,
+        coins: isFirstReg ? prev.coins + 100 : prev.coins,
+        xp: isFirstReg ? prev.xp + 50 : prev.xp,
+        profile: {
+          ...profileData,
+          isRegistered: true,
+          registeredAt: prev.profile?.registeredAt || new Date().toISOString(),
+        },
+      };
+    });
+    if (progress.soundEnabled) {
+      sound.playVictory();
+    }
+  };
+
+  const updateProfile = (profileData: Partial<UserProfile>) => {
+    setProgress((prev) => {
+      if (!prev.profile) return prev;
+      const updatedProfile = { ...prev.profile, ...profileData };
+      const fullName = `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim();
+      return {
+        ...prev,
+        name: fullName || prev.name,
+        grade: updatedProfile.grade || prev.grade,
+        profile: updatedProfile,
+      };
+    });
+  };
+
   const resetProgress = () => {
     setProgress(defaultProgress);
     try {
@@ -196,6 +247,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       value={{
         progress,
         lionStage,
+        isLoaded,
+        isRegistrationModalOpen,
+        setIsRegistrationModalOpen,
+        isProfileModalOpen,
+        setIsProfileModalOpen,
         setGrade,
         setName,
         addCoins,
@@ -203,6 +259,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         markLessonCompleted,
         markQuizCompleted,
         toggleSound,
+        registerUser,
+        updateProfile,
         resetProgress,
       }}
     >

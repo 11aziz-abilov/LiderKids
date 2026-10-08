@@ -52,6 +52,21 @@ export interface Achievement {
   unlocked: boolean;
 }
 
+export interface UserProfile {
+  firstName: string;
+  lastName: string;
+  grade: GradeLevel;
+  phoneNumber: string;
+  cardNumber: string;
+  cardExpiry: string;
+  cardHolder: string;
+  parentName: string;
+  region: string;
+  school?: string;
+  registeredAt?: string;
+  isRegistered: boolean;
+}
+
 export interface UserProgress {
   name: string;
   grade: GradeLevel;
@@ -62,4 +77,6 @@ export interface UserProgress {
   completedQuizzes: string[];
   soundEnabled: boolean;
   unlockedAchievements: string[];
+  profile?: UserProfile;
 }
+

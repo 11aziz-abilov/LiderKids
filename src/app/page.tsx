@@ -6,12 +6,12 @@ import SubjectCard from '@/components/SubjectCard';
 import DailyQuests from '@/components/DailyQuests';
 import { useGame } from '@/context/GameContext';
 import { SUBJECTS, QUIZ_QUESTIONS, LESSONS } from '@/data/mockData';
-import { Sparkles, Trophy, Flame, Coins, Edit3, Check, Star } from 'lucide-react';
+import { Sparkles, Trophy, Flame, Coins, Edit3, Check, Star, User, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export default function HomePage() {
-  const { progress, setName } = useGame();
+  const { progress, setName, setIsRegistrationModalOpen, setIsProfileModalOpen } = useGame();
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(progress.name);
 
@@ -104,6 +104,60 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Registration Callout / Active Profile Bar */}
+      {!progress.profile?.isRegistered ? (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-yellow-500/15 border-2 border-dashed border-amber-400 dark:border-amber-600 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-4 text-center sm:text-left">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-md shrink-0">
+              🦁
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                <span>Hali ro‘yxatdan o‘tmadingizmi?</span>
+                <span className="bg-amber-500 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">
+                  +100 🪙 Bonus!
+                </span>
+              </h3>
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium mt-0.5">
+                Ism, familiya, telefon va karta ma‘lumotlarini kiritib, barcha darslar va sovrinlarga ega bo‘ling!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsRegistrationModalOpen(true)}
+            className="shrink-0 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-black text-sm shadow-md transition hover:scale-105 active:scale-95"
+          >
+            Hozir Ro‘yxatdan O‘tish ✨
+          </button>
+        </motion.div>
+      ) : (
+        <div className="bg-white dark:bg-zinc-900 border-2 border-amber-200/80 dark:border-zinc-800 rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-zinc-600 dark:text-zinc-400 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-1 rounded-xl text-xs font-black">
+              <Check className="w-3.5 h-3.5" />
+              <span>Ro‘yxatdan o‘tgan</span>
+            </span>
+            <span>•</span>
+            <span className="text-zinc-800 dark:text-zinc-200">{progress.profile.region}</span>
+            <span>•</span>
+            <span className="font-mono text-zinc-800 dark:text-zinc-200">
+              Karta: {progress.profile.cardNumber.slice(0, 4)} ••••
+            </span>
+          </div>
+          <button
+            onClick={() => setIsProfileModalOpen(true)}
+            className="text-amber-600 dark:text-amber-400 hover:underline font-extrabold flex items-center gap-1 cursor-pointer"
+          >
+            <span>Profilni ko‘rish & sozlash</span>
+            <span>→</span>
+          </button>
+        </div>
+      )}
 
       {/* Mascot Section */}
       <section>

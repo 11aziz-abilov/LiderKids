@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
 import { GradeLevel } from '@/types';
-import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown } from 'lucide-react';
+import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Header() {
   const pathname = usePathname();
-  const { progress, setGrade, toggleSound } = useGame();
+  const { progress, setGrade, toggleSound, setIsRegistrationModalOpen, setIsProfileModalOpen } = useGame();
 
   const navLinks = [
     { href: '/', label: 'Bosh sahifa', icon: Crown },
@@ -104,6 +104,35 @@ export default function Header() {
             >
               {progress.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </motion.button>
+
+            {/* Profile / Ro'yxatdan o'tish */}
+            {progress.profile?.isRegistered ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsProfileModalOpen(true)}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3 py-1.5 rounded-2xl shadow-sm text-xs sm:text-sm font-extrabold transition"
+                title="Profil ma‘lumotlari va bog‘langan karta"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline max-w-[90px] truncate">
+                  {progress.profile.firstName}
+                </span>
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsRegistrationModalOpen(true)}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-3 py-1.5 rounded-2xl shadow-md text-xs sm:text-sm font-black transition animate-pulse"
+                title="Ro‘yxatdan o‘tib 100 tanga oling"
+              >
+                <span>🦁 Kirish</span>
+                <span className="bg-white/20 text-[10px] px-1.5 py-0.5 rounded-full font-bold hidden sm:inline">
+                  +100🪙
+                </span>
+              </motion.button>
+            )}
           </div>
         </div>
 
