@@ -1,6 +1,6 @@
 import { GradeLevel } from '@/types';
 
-export interface LeaderboardStudent {
+export interface ActiveLearner {
   id: string;
   name: string;
   grade: GradeLevel;
@@ -12,219 +12,44 @@ export interface LeaderboardStudent {
   coins: number;
   xp: number;
   badge: string;
-  avatarEmoji?: string;
   equippedOutfit?: string;
+  isCurrentUser?: boolean;
 }
 
-export const MOCK_LEADERBOARD_STUDENTS: LeaderboardStudent[] = [
-  {
-    id: 'lead-1',
-    name: 'Madinabonu Aliyeva',
-    grade: 4,
-    gender: 'girl',
-    region: 'Toshkent shahri',
-    district: 'Yunusobod tumani',
-    school: '1-sonli ixtisoslashtirilgan maktab',
-    streaks: 48,
-    coins: 3450,
-    xp: 2900,
-    badge: 'Prezident Maktabi Lideri 👑',
-    equippedOutfit: 'princess_dress_girl',
-  },
-  {
-    id: 'lead-2',
-    name: 'Jasurbek Toirov',
-    grade: 3,
-    gender: 'boy',
-    region: 'Samarqand viloyati',
-    district: 'Samarqand shahri',
-    school: '7-sonli maktab',
-    streaks: 42,
-    coins: 2900,
-    xp: 2450,
-    badge: 'Matematika Dahosi ⚡',
-    equippedOutfit: 'uniform_pm_boy',
-  },
-  {
-    id: 'lead-3',
-    name: 'Zulayho Saidova',
-    grade: 4,
-    gender: 'girl',
-    region: 'Farg‘ona viloyati',
-    district: 'Qo‘qon shahri',
-    school: '32-sonli maktab',
-    streaks: 39,
-    coins: 2600,
-    xp: 2180,
-    badge: 'Mantiq Malikasii 🌟',
-    equippedOutfit: 'school_apron_girl',
-  },
-  {
-    id: 'lead-4',
-    name: 'Diyorbek Rahmonov',
-    grade: 2,
-    gender: 'boy',
-    region: 'Buxoro viloyati',
-    district: 'Buxoro shahri',
-    school: '11-sonli maktab',
-    streaks: 35,
-    coins: 2350,
-    xp: 1950,
-    badge: 'Oltin Chempion 🥇',
-    equippedOutfit: 'superhero_suit_boy',
-  },
-  {
-    id: 'lead-5',
-    name: 'Rayhona Karimova',
-    grade: 3,
-    gender: 'girl',
-    region: 'Toshkent viloyati',
-    district: 'Chirchiq shahri',
-    school: '15-sonli maktab',
-    streaks: 31,
-    coins: 2100,
-    xp: 1780,
-    badge: 'Tanqidiy Fikrlovchi 💡',
-    equippedOutfit: 'ballerina_suit_girl',
-  },
-  {
-    id: 'lead-6',
-    name: 'Shaxzodbek Ergashev',
-    grade: 1,
-    gender: 'boy',
-    region: 'Namangan viloyati',
-    district: 'Namangan shahri',
-    school: '3-sonli maktab',
-    streaks: 28,
-    coins: 1950,
-    xp: 1620,
-    badge: 'Kichik Qahramon 🦁',
-    equippedOutfit: 'karate_gi_boy',
-  },
-  {
-    id: 'lead-7',
-    name: 'Kamila Usmonova',
-    grade: 2,
-    gender: 'girl',
-    region: 'Andijon viloyati',
-    district: 'Andijon shahri',
-    school: '25-sonli maktab',
-    streaks: 25,
-    coins: 1800,
-    xp: 1490,
-    badge: 'Bilimdon Malika 🌸',
-    equippedOutfit: 'spring_dress_girl',
-  },
-  {
-    id: 'lead-8',
-    name: 'Bobur Mirzayev',
-    grade: 4,
-    gender: 'boy',
-    region: 'Qashqadaryo viloyati',
-    district: 'Qarshi shahri',
-    school: '4-sonli ixtisoslashtirilgan maktab',
-    streaks: 22,
-    coins: 1650,
-    xp: 1350,
-    badge: 'Fazogir Lider 🚀',
-    equippedOutfit: 'space_suit_boy',
-  },
-  {
-    id: 'lead-9',
-    name: 'Nigora Xolmatova',
-    grade: 1,
-    gender: 'girl',
-    region: 'Xorazm viloyati',
-    district: 'Urganch shahri',
-    school: '9-sonli maktab',
-    streaks: 19,
-    coins: 1450,
-    xp: 1210,
-    badge: 'A‘lochi Yulduzcha ✨',
-    equippedOutfit: 'cozy_hoodie_girl',
-  },
-  {
-    id: 'lead-10',
-    name: 'Ulug‘bek Abdullayev',
-    grade: 3,
-    gender: 'boy',
-    region: 'Navoiy viloyati',
-    district: 'Zarafshon shahri',
-    school: '12-sonli maktab',
-    streaks: 16,
-    coins: 1300,
-    xp: 1080,
-    badge: 'Topqir Shercha 🐾',
-    equippedOutfit: 'cozy_hoodie_boy',
-  },
-  {
-    id: 'lead-11',
-    name: 'Sevara Jo‘rayeva',
-    grade: 2,
-    gender: 'girl',
-    region: 'Surxondaryo viloyati',
-    district: 'Termiz shahri',
-    school: '8-sonli maktab',
-    streaks: 14,
-    coins: 1150,
-    xp: 950,
-    badge: 'Quvnoq O‘quvchi 🎈',
-    equippedOutfit: 'superhero_dress_girl',
-  },
-  {
-    id: 'lead-12',
-    name: 'Sardor Sobirov',
-    grade: 1,
-    gender: 'boy',
-    region: 'Jizzax viloyati',
-    district: 'Jizzax shahri',
-    school: '22-sonli maktab',
-    streaks: 11,
-    coins: 980,
-    xp: 820,
-    badge: 'Yosh Izlanuvchi 🌱',
-    equippedOutfit: 'cozy_hoodie_boy',
-  },
-  {
-    id: 'lead-13',
-    name: 'Gulnoza Ro‘ziyeva',
-    grade: 4,
-    gender: 'girl',
-    region: 'Sirdaryo viloyati',
-    district: 'Guliston shahri',
-    school: '5-sonli maktab',
-    streaks: 9,
-    coins: 850,
-    xp: 710,
-    badge: 'Kelajak Lideri 🎯',
-    equippedOutfit: 'school_apron_girl',
-  },
-  {
-    id: 'lead-14',
-    name: 'Azamat Berdimuratov',
-    grade: 3,
-    gender: 'boy',
-    region: 'Qoraqalpog‘iston Respublikasi',
-    district: 'Nukus shahri',
-    school: '37-sonli maktab',
-    streaks: 7,
-    coins: 720,
-    xp: 620,
-    badge: 'G‘ayratli Shercha 🦁',
-    equippedOutfit: 'uniform_pm_boy',
-  },
-  {
-    id: 'lead-15',
-    name: 'Iroda Normatova',
-    grade: 2,
-    gender: 'girl',
-    region: 'Toshkent shahri',
-    district: 'Mirzo Ulug‘bek tumani',
-    school: '71-sonli maktab',
-    streaks: 5,
-    coins: 600,
-    xp: 500,
-    badge: 'Boshlang‘ich Lider 🌟',
-    equippedOutfit: 'spring_dress_girl',
-  },
-];
+export const ACTIVE_LEARNERS_STORAGE_KEY = 'liderkids_registered_learners_v2';
+
+/**
+ * Platformadan foydalanayotgan ro'yxatdan o'tgan haqiqiy o'quvchilarni yuklash
+ */
+export function getStoredLearners(): ActiveLearner[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(ACTIVE_LEARNERS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Yangi foydalanuvchini platforma o'quvchilari ro'yxatiga saqlash yoki yangilash
+ */
+export function saveStoredLearner(learner: ActiveLearner) {
+  if (typeof window === 'undefined') return;
+  try {
+    const list = getStoredLearners();
+    const existingIndex = list.findIndex(
+      (l) => l.id === learner.id || (l.name.toLowerCase() === learner.name.toLowerCase() && l.region === learner.region)
+    );
+    if (existingIndex >= 0) {
+      list[existingIndex] = { ...list[existingIndex], ...learner };
+    } else {
+      list.push(learner);
+    }
+    localStorage.setItem(ACTIVE_LEARNERS_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    // ignore
+  }
+}

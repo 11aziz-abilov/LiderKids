@@ -5,6 +5,7 @@ import { GradeLevel, UserProgress, UserProfile, MarketItem, MarketCategory } fro
 import { sound } from '@/utils/sound';
 
 import { getCurrentAcademicYear, getNextGrade } from '@/utils/academicYear';
+import { saveStoredLearner } from '@/data/leaderboardData';
 
 interface LionStage {
   title: string;
@@ -155,6 +156,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (isLoaded) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+        if (progress.profile?.isRegistered) {
+          saveStoredLearner({
+            id: progress.profile.phoneNumber || progress.name,
+            name: `${progress.profile.firstName} ${progress.profile.lastName}`.trim(),
+            grade: progress.grade,
+            gender: progress.profile.gender || 'boy',
+            region: progress.profile.region || 'Toshkent shahri',
+            district: progress.profile.district || '',
+            school: progress.profile.school || '',
+            streaks: progress.streaks,
+            coins: progress.coins,
+            xp: progress.xp,
+            badge:
+              progress.streaks >= 30
+                ? 'Afsonaviy Lider 👑'
+                : progress.streaks >= 15
+                ? 'Oltin Chempion 🥇'
+                : progress.streaks >= 5
+                ? 'Faol O‘quvchi ⚡'
+                : 'Yosh Izlanuvchi 🌱',
+            equippedOutfit: progress.equippedItems?.outfit,
+          });
+        }
       } catch {
         // ignore
       }
