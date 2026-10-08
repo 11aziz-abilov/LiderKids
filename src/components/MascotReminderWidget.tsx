@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '@/context/GameContext';
 import FullBodyLionCharacter, { LionAction } from './FullBodyLionCharacter';
 import { sound } from '@/utils/sound';
+import { notifications } from '@/utils/notifications';
 import { 
   X, 
   Flame, 
@@ -13,10 +14,13 @@ import {
   ChevronRight, 
   ChevronLeft, 
   Bell, 
+  BellRing,
   Volume2, 
   VolumeX,
-  BookOpen,
-  Award
+  ExternalLink,
+  Smartphone,
+  Download,
+  Pin
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -38,7 +42,10 @@ export default function MascotReminderWidget() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [browserNotificationAllowed, setBrowserNotificationAllowed] = useState(false);
+  const [notificationAllowed, setNotificationAllowed] = useState(false);
+  const [pipActive, setPipActive] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
+  const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
 
   const isGirl = progress.profile?.gender === 'girl';
   const streaksCount = Math.max(1, progress.streaks || 1);
@@ -108,8 +115,23 @@ export default function MascotReminderWidget() {
 
   const currentReminder = reminders[currentIndex];
 
-  // Auto-open reminder card on initial visit after 2 seconds
+  // Initialize service worker, permissions, and exit event listeners
   useEffect(() => {
+    notifications.init();
+
+    // Check permission
+    notifications.hasPermission().then((granted) => {
+      setNotificationAllowed(granted);
+    });
+
+    // Capture PWA install prompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Initial popup on page load
     const timer = setTimeout(() => {
       setIsOpen(true);
       if (soundEnabled) {
@@ -117,20 +139,33 @@ export default function MascotReminderWidget() {
       }
     }, 2500);
 
-    // Check existing notification permission
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'granted') {
-        setBrowserNotificationAllowed(true);
+    // AUTO EXIT REMINDER: When user switches tabs, minimizes or leaves the app!
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        notifications.scheduleExitReminder(streaksCount, isGirl);
       }
-    }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    const handlePageHide = () => {
+      notifications.scheduleExitReminder(streaksCount, isGirl);
+    };
 
-  // Periodic reminder toggle / attention grabber every 75 seconds if minimized
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
+    };
+  }, [streaksCount, isGirl, soundEnabled]);
+
+  // Periodic reminder toggle / attention grabber every 18 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      // Switch to next pose randomly or sequentially
       setCurrentIndex((prev) => (prev + 1) % reminders.length);
     }, 18000);
 
@@ -158,31 +193,122 @@ export default function MascotReminderWidget() {
     setHasInteracted(true);
   };
 
-  // Request browser native notification
-  const requestBrowserNotification = async () => {
-    if (typeof window === 'undefined' || !('Notification' in window)) {
-      alert("Brauzeringizda bildirishnomalar qo‘llab-quvvatlanmaydi.");
-      return;
+  // Request notifications permission (both Web & Capacitor Android)
+  const enableNotifications = async () => {
+    const granted = await notifications.requestPermission();
+    setNotificationAllowed(granted);
+    if (granted) {
+      if (soundEnabled) sound.playVictory();
+      notifications.showNotification({
+        title: `🔥 ${streaksCount} — Bildirishnomalar yoqildi!`,
+        body: 'Endi ilovadan yoki saytdan chiqsangiz ham Shercha sizga eslatib turadi! 🦁✨',
+        streaks: streaksCount,
+        url: '/lessons',
+      });
+      setStatusFeedback("Bildirishnoma yoqildi! Chiqqanda ham eslatiladi.");
+      setTimeout(() => setStatusFeedback(null), 4000);
+    } else {
+      alert("Bildirishnomalarni yoqish uchun brauzeringiz sozlamalarida ruxsat bering.");
     }
+  };
 
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        setBrowserNotificationAllowed(true);
-        new Notification("🦁 LiderKids Eslatmasi", {
-          body: `🔥 Olovchang ${streaksCount} ta! Bugungi darsni yechishni unutmang!`,
-          icon: '/favicon.ico',
+  // Floating Picture-in-Picture (Always on top across other apps!)
+  const togglePictureInPicture = async () => {
+    if (typeof window === 'undefined') return;
+
+    // Check Document Picture-in-Picture API
+    if ('documentPictureInPicture' in window) {
+      try {
+        const docPip = (window as any).documentPictureInPicture;
+        
+        // If already active, close it
+        if (docPip.window) {
+          docPip.window.close();
+          setPipActive(false);
+          return;
+        }
+
+        const pipWin = await docPip.requestWindow({
+          width: 320,
+          height: 440,
         });
+
+        // Copy styles into PiP window
+        document.querySelectorAll('style, link[rel="stylesheet"]').forEach((styleSheet) => {
+          pipWin.document.head.appendChild(styleSheet.cloneNode(true));
+        });
+
+        pipWin.document.title = '🔥 LiderKids — Shercha Vidjeti';
+
+        const wrapper = pipWin.document.createElement('div');
+        wrapper.innerHTML = `
+          <div style="font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(180deg, #0094F7 0%, #0074E8 50%, #004EB8 100%); color: white; padding: 20px; border-radius: 28px; text-align: center; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; border: 4px solid rgba(255,255,255,0.3); box-shadow: inset 0 2px 10px rgba(255,255,255,0.2);">
+            <div>
+              <div style="font-size: 34px; font-weight: 900; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">🔥 ${streaksCount}</div>
+              <div style="font-size: 19px; font-weight: 800; margin-top: 4px;">Start a lesson!</div>
+              <div style="font-size: 12px; font-weight: 600; color: #FDE047;">(Darsni boshla!)</div>
+            </div>
+            <div style="font-size: 80px; margin: 10px 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">
+              ${isGirl ? '🦁🌸' : '🦁💪'}
+            </div>
+            <div style="font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.18); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3); line-height: 1.4;">
+              ${isGirl 
+                ? 'Shercha qizcha kutmoqda! Olovchangiz o‘chmasligi uchun darsni boshlang! 🌸' 
+                : 'Sherchang kuchga to‘ldi! Bugungi 1 ta darsni tugatib olovchangni saqla! 💪🔥'}
+            </div>
+            <button id="pip-action-btn" style="background: #FBBF24; color: #78350F; border: none; border-radius: 16px; padding: 14px; font-weight: 900; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;">
+              Darsga kirish 🚀
+            </button>
+          </div>
+        `;
+
+        pipWin.document.body.style.margin = '0';
+        pipWin.document.body.style.overflow = 'hidden';
+        pipWin.document.body.appendChild(wrapper);
+
+        const btn = pipWin.document.getElementById('pip-action-btn');
+        if (btn) {
+          btn.onclick = () => {
+            window.focus();
+            window.location.href = '/lessons';
+            pipWin.close();
+          };
+        }
+
+        setPipActive(true);
+        setStatusFeedback("Suzuvchi vidjet ekranga chiqdi! Boshqa ilovalarda ham turadi.");
+        setTimeout(() => setStatusFeedback(null), 4000);
+
+        pipWin.addEventListener('pagehide', () => {
+          setPipActive(false);
+        });
+      } catch (err) {
+        console.warn('PiP window failed:', err);
       }
-    } catch {
-      // Ignored
+    } else {
+      // Fallback: Enable background system notifications
+      enableNotifications();
+    }
+  };
+
+  // Trigger PWA installation to Home Screen
+  const handleInstallApp = async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choiceResult = await deferredInstallPrompt.userChoice;
+      if (choiceResult.outcome === 'accepted') {
+        setStatusFeedback("LiderKids telefoningiz ekraniga o‘rnatildi! 🎉");
+      }
+      setDeferredInstallPrompt(null);
+    } else {
+      alert("Ilovani ekranga o‘rnatish uchun brauzer menyusidan 'Bosh ekranga qo‘shish' (Add to Home screen) ni tanlang.");
     }
   };
 
   return (
     <>
       {/* ======================================================== */}
-      {/* 1. FLOATING MINIMIZED PILL (ALWAYS AVAILABLE IN CORNER)   */}
+      {/* 1. FLOATING MINIMIZED PILL (ALWAYS PINNED ON SCREEN)     */}
       {/* ======================================================== */}
       {!isOpen && (
         <motion.div
@@ -255,6 +381,13 @@ export default function MascotReminderWidget() {
               <div className="absolute -top-24 -left-24 w-48 h-48 bg-white/20 rounded-full blur-2xl pointer-events-none" />
               <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-400/25 rounded-full blur-3xl pointer-events-none" />
 
+              {/* Status feedback toast if triggered */}
+              {statusFeedback && (
+                <div className="relative z-20 mb-2 bg-emerald-500 text-white text-xs font-bold py-1.5 px-3 rounded-xl text-center shadow-lg animate-bounce">
+                  {statusFeedback}
+                </div>
+              )}
+
               {/* Top Controls Bar */}
               <div className="relative z-10 flex items-center justify-between mb-2">
                 {/* Pose switch dots & navigation */}
@@ -285,8 +418,19 @@ export default function MascotReminderWidget() {
                   </button>
                 </div>
 
-                {/* Sound & Close Actions */}
+                {/* Picture-in-Picture, Sound & Close Actions */}
                 <div className="flex items-center gap-1">
+                  {/* Floating PiP Widget Button */}
+                  <button
+                    onClick={togglePictureInPicture}
+                    title="Ekranda suzuvchi vidjet qilib qo‘yish (boshqa ilovalarda ham turadi)"
+                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors text-white ${
+                      pipActive ? 'bg-amber-400 text-amber-950 font-bold' : 'bg-white/15 hover:bg-white/25'
+                    }`}
+                  >
+                    <Pin className="w-3.5 h-3.5" />
+                  </button>
+
                   <button
                     onClick={() => setSoundEnabled(!soundEnabled)}
                     aria-label="Ovozni yoqish/o‘chirish"
@@ -308,9 +452,8 @@ export default function MascotReminderWidget() {
                 </div>
               </div>
 
-              {/* DUOLINGO TOP TITLE: FIRE STREAK & CALLOUT (IDENTICAL TO SCREENSHOT) */}
+              {/* DUOLINGO TOP TITLE: FIRE STREAK & CALLOUT (EXACTLY MATCHING SCREENSHOT) */}
               <div className="relative z-10 flex flex-col items-center justify-center pt-1 pb-2 text-center">
-                {/* Large Flame Streak Header: 🔥 1 */}
                 <motion.div
                   key={`streak-${currentReminder.streakText}`}
                   initial={{ scale: 0.8, y: -6 }}
@@ -321,7 +464,6 @@ export default function MascotReminderWidget() {
                   <span>{currentReminder.streakText}</span>
                 </motion.div>
 
-                {/* Subtitle text: "Start a lesson!" / "Darsni boshla!" */}
                 <motion.p
                   key={`title-${currentReminder.title}`}
                   initial={{ opacity: 0, y: 4 }}
@@ -335,17 +477,15 @@ export default function MascotReminderWidget() {
                 </span>
               </div>
 
-              {/* CENTER: MASCOT IN ACTION (FLEXING, WAVING, ROARING, ETC.) */}
+              {/* CENTER: MASCOT IN ACTION (FLEXING MUSCLES, WAVING, ROARING, ETC.) */}
               <div 
                 onClick={handleNext}
                 className="relative z-10 my-2 flex items-center justify-center cursor-pointer group"
                 title="Boshqa harakatga almashtirish uchun bosing"
               >
                 <div className="relative w-48 h-52 sm:w-52 sm:h-56 flex items-center justify-center">
-                  {/* Subtle ground shadow */}
                   <div className="absolute bottom-3 w-36 h-6 bg-black/25 rounded-full blur-md" />
 
-                  {/* Character */}
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentReminder.action}
@@ -368,7 +508,7 @@ export default function MascotReminderWidget() {
               </div>
 
               {/* MASCOT SPEECH BUBBLE / MOTIVATION TEXT */}
-              <div className="relative z-10 bg-white/15 backdrop-blur-md border border-white/25 rounded-2xl p-3 text-center mb-3.5 shadow-inner">
+              <div className="relative z-10 bg-white/15 backdrop-blur-md border border-white/25 rounded-2xl p-3 text-center mb-3 shadow-inner">
                 <p className="text-xs sm:text-[13px] font-semibold text-white/95 leading-snug">
                   {currentReminder.subtitle}
                 </p>
@@ -385,28 +525,52 @@ export default function MascotReminderWidget() {
                   <ArrowRight className="w-4 h-4 stroke-[2.5]" />
                 </Link>
 
-                {/* Sub-actions footer: Browser notifications & minimization */}
-                <div className="flex items-center justify-between text-[11px] font-semibold text-white/80 pt-1 px-1">
-                  {!browserNotificationAllowed ? (
-                    <button
-                      onClick={requestBrowserNotification}
-                      className="hover:text-amber-300 transition-colors flex items-center gap-1"
-                    >
-                      <Bell className="w-3 h-3" />
-                      <span>Eslatmalarni yoqish</span>
-                    </button>
-                  ) : (
-                    <span className="text-emerald-300 flex items-center gap-1">
-                      <span>✓</span> Eslatmalar faol
-                    </span>
-                  )}
+                {/* Sub-actions footer: Exit notification trigger & PWA Install */}
+                <div className="flex flex-col gap-1.5 pt-1">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-white/90 px-1">
+                    {!notificationAllowed ? (
+                      <button
+                        onClick={enableNotifications}
+                        className="hover:text-amber-300 transition-colors flex items-center gap-1.5 text-amber-200 font-bold underline decoration-amber-200/50"
+                      >
+                        <Bell className="w-3.5 h-3.5" />
+                        <span>Saytdan chiqqanda eslatish 🔔</span>
+                      </button>
+                    ) : (
+                      <span className="text-emerald-300 flex items-center gap-1">
+                        <span>✓</span> Chiqqanda eslatiladi
+                      </span>
+                    )}
 
-                  <button
-                    onClick={handleClose}
-                    className="hover:text-white transition-colors underline decoration-white/40"
-                  >
-                    Keyinroq
-                  </button>
+                    <button
+                      onClick={handleClose}
+                      className="hover:text-white transition-colors underline decoration-white/40"
+                    >
+                      Keyinroq
+                    </button>
+                  </div>
+
+                  {/* Extra helper: Pin to screen / Install to home screen */}
+                  <div className="flex items-center justify-center gap-3 pt-1 border-t border-white/15 text-[11px] text-white/80">
+                    <button
+                      onClick={togglePictureInPicture}
+                      className="hover:text-white flex items-center gap-1 transition-colors"
+                      title="Ekranda doimiy turuvchi suzuvchi oyna"
+                    >
+                      <Pin className="w-3 h-3 text-amber-300" />
+                      <span>Ekranda qoldirish</span>
+                    </button>
+
+                    {deferredInstallPrompt && (
+                      <button
+                        onClick={handleInstallApp}
+                        className="hover:text-white flex items-center gap-1 transition-colors text-amber-200 font-bold"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>Bosh ekranga qo‘shish</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

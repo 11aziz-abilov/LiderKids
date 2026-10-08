@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   title: 'LiderKids | Prezident Maktabiga Tayyorlov Platformasi',
   description:
     '1-4 sinf o‘quvchilari uchun gamifikatsiyalashgan ta‘lim platformasi: Matematika, Muammoli masalalar va Tanqidiy fikrlash sirlari.',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

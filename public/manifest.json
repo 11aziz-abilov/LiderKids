@@ -1,0 +1,18 @@
+{
+  "name": "LiderKids — Prezident Maktabiga Tayyorlov",
+  "short_name": "LiderKids",
+  "description": "1-4 sinf o‘quvchilari uchun gamifikatsiyalashgan ta‘lim platformasi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0284c7",
+  "theme_color": "#0284c7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
