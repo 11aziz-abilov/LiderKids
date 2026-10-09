@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGame } from '@/context/GameContext';
-import { ActiveLearner, getStoredLearners, saveStoredLearner } from '@/data/leaderboardData';
+import { ActiveLearner, getStoredLearners, refreshLearnersFromCloud, saveStoredLearner } from '@/data/leaderboardData';
 import FullBodyLionCharacter from '@/components/FullBodyLionCharacter';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -37,9 +37,26 @@ export default function LeaderboardPage() {
   const [newStudentSchool, setNewStudentSchool] = useState('');
   const [newStudentStreaks, setNewStudentStreaks] = useState(1);
 
-  // Load stored active learners
+  // Load stored active learners and poll from cloud
   useEffect(() => {
     setStoredList(getStoredLearners());
+
+    // Bulutdan real vaqtda sinxronizatsiya
+    refreshLearnersFromCloud().then((cloudList) => {
+      if (cloudList && cloudList.length > 0) {
+        setStoredList(cloudList);
+      }
+    });
+
+    const interval = setInterval(() => {
+      refreshLearnersFromCloud().then((cloudList) => {
+        if (cloudList && cloudList.length > 0) {
+          setStoredList(cloudList);
+        }
+      });
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Current user as an active learner
