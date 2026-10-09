@@ -18,6 +18,24 @@ export interface ActiveLearner {
 }
 
 export const ACTIVE_LEARNERS_STORAGE_KEY = 'liderkids_registered_learners_v2';
+export const UNIQUE_USER_ID_KEY = 'liderkids_device_user_id_v2';
+
+/**
+ * Har bir foydalanuvchi/qurilma uchun noyob identifikator olish yoki yaratish
+ */
+export function getOrCreateUniqueUserId(): string {
+  if (typeof window === 'undefined') return 'user_server';
+  try {
+    let uid = localStorage.getItem(UNIQUE_USER_ID_KEY);
+    if (!uid) {
+      uid = 'student_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+      localStorage.setItem(UNIQUE_USER_ID_KEY, uid);
+    }
+    return uid;
+  } catch {
+    return 'student_' + Date.now().toString(36);
+  }
+}
 
 /**
  * Platformadan foydalanayotgan ro'yxatdan o'tgan haqiqiy o'quvchilarni yuklash (localStorage keshidan)
@@ -41,11 +59,7 @@ export function saveStoredLearner(learner: ActiveLearner) {
   if (typeof window === 'undefined') return;
   try {
     const list = getStoredLearners();
-    const existingIndex = list.findIndex(
-      (l) =>
-        l.id === learner.id ||
-        (l.name.toLowerCase() === learner.name.toLowerCase() && l.region === learner.region)
-    );
+    const existingIndex = list.findIndex((l) => l.id === learner.id);
     if (existingIndex >= 0) {
       list[existingIndex] = { ...list[existingIndex], ...learner };
     } else {
@@ -53,7 +67,7 @@ export function saveStoredLearner(learner: ActiveLearner) {
     }
     localStorage.setItem(ACTIVE_LEARNERS_STORAGE_KEY, JSON.stringify(list));
 
-    // Bulutli bazaga (Firebase) sinxronizatsiya qilish
+    // Bulutli bazaga (Firebase Realtime Database) sinxronizatsiya qilish
     syncLearnerToCloud(learner).catch(() => {});
   } catch {
     // ignore
@@ -73,12 +87,12 @@ export async function refreshLearnersFromCloud(): Promise<ActiveLearner[]> {
     const localList = getStoredLearners();
     const map = new Map<string, ActiveLearner>();
 
-    // 1. Mahalliy ro'yxatni joylaymiz
+    // 1. Mahalliy keshni joylaymiz
     localList.forEach((item) => {
       map.set(item.id, item);
     });
 
-    // 2. Bulutdan kelgan yangi ma'lumotlarni ustiga yozamiz
+    // 2. Bulutdan kelgan yangi ma'lumotlarni qo'shamiz
     cloudList.forEach((item) => {
       map.set(item.id, {
         ...(map.get(item.id) || {}),

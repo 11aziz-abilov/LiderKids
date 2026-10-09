@@ -7,7 +7,7 @@ import { smsService } from '@/utils/smsService';
 import { notifications } from '@/utils/notifications';
 
 import { getCurrentAcademicYear, getNextGrade } from '@/utils/academicYear';
-import { saveStoredLearner } from '@/data/leaderboardData';
+import { saveStoredLearner, getOrCreateUniqueUserId } from '@/data/leaderboardData';
 
 interface LionStage {
   title: string;
@@ -354,7 +354,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
         if (progress.profile?.isRegistered) {
           saveStoredLearner({
-            id: progress.profile.phoneNumber || progress.name,
+            id: getOrCreateUniqueUserId(),
             name: `${progress.profile.firstName} ${progress.profile.lastName}`.trim(),
             grade: progress.grade,
             gender: progress.profile.gender || 'boy',

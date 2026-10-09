@@ -1,9 +1,9 @@
 import { ActiveLearner } from '@/data/leaderboardData';
 
 // Firebase Realtime Database URL
-// Masalan: https://liderkids-default-rtdb.firebaseio.com
 export const FIREBASE_DB_URL =
-  process.env.NEXT_PUBLIC_FIREBASE_DB_URL?.replace(/\/$/, '') || '';
+  process.env.NEXT_PUBLIC_FIREBASE_DB_URL?.replace(/\/$/, '') ||
+  'https://liderkids-afad8-default-rtdb.firebaseio.com';
 
 /**
  * ID ni Firebase kalitiga mos xavfsiz formatga o'tkazish

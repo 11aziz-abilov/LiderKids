@@ -6,7 +6,7 @@ import SubjectCard from '@/components/SubjectCard';
 import DailyQuests from '@/components/DailyQuests';
 import { useGame } from '@/context/GameContext';
 import { SUBJECTS, QUIZ_QUESTIONS, LESSONS } from '@/data/mockData';
-import { getStoredLearners, ActiveLearner } from '@/data/leaderboardData';
+import { getStoredLearners, refreshLearnersFromCloud, getOrCreateUniqueUserId, ActiveLearner } from '@/data/leaderboardData';
 import { Sparkles, Trophy, Flame, Coins, Edit3, Check, Star, User, CreditCard, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -18,33 +18,42 @@ export default function HomePage() {
   const [activePeers, setActivePeers] = useState<ActiveLearner[]>([]);
 
   useEffect(() => {
-    const stored = getStoredLearners();
-    const currentId = progress.profile?.phoneNumber || progress.name;
-    const currentName = progress.profile
-      ? `${progress.profile.firstName} ${progress.profile.lastName}`.trim()
-      : progress.name;
+    const updatePeers = (stored: ActiveLearner[]) => {
+      const currentId = getOrCreateUniqueUserId();
+      const currentName = progress.profile
+        ? `${progress.profile.firstName} ${progress.profile.lastName}`.trim()
+        : progress.name;
 
-    const currentLearner: ActiveLearner = {
-      id: currentId,
-      name: currentName,
-      grade: progress.grade,
-      gender: progress.profile?.gender || 'boy',
-      region: progress.profile?.region || 'Toshkent shahri',
-      district: progress.profile?.district || '',
-      school: progress.profile?.school || '',
-      streaks: progress.streaks,
-      coins: progress.coins,
-      xp: progress.xp,
-      badge: progress.streaks >= 15 ? 'Oltin Chempion' : 'Faol O‘quvchi',
-      isCurrentUser: true,
+      const currentLearner: ActiveLearner = {
+        id: currentId,
+        name: currentName,
+        grade: progress.grade,
+        gender: progress.profile?.gender || 'boy',
+        region: progress.profile?.region || 'Toshkent shahri',
+        district: progress.profile?.district || '',
+        school: progress.profile?.school || '',
+        streaks: progress.streaks,
+        coins: progress.coins,
+        xp: progress.xp,
+        badge: progress.streaks >= 15 ? 'Oltin Chempion' : 'Faol O‘quvchi',
+        isCurrentUser: true,
+      };
+
+      const peers = stored.filter(
+        (s) => s.grade === progress.grade && s.id !== currentId
+      );
+
+      const combined = [currentLearner, ...peers].sort((a, b) => b.streaks - a.streaks);
+      setActivePeers(combined);
     };
 
-    const peers = stored.filter(
-      (s) => s.grade === progress.grade && s.id !== currentId && s.name.toLowerCase() !== currentName.toLowerCase()
-    );
+    updatePeers(getStoredLearners());
 
-    const combined = [currentLearner, ...peers].sort((a, b) => b.streaks - a.streaks);
-    setActivePeers(combined);
+    refreshLearnersFromCloud().then((cloudList) => {
+      if (cloudList && cloudList.length > 0) {
+        updatePeers(cloudList);
+      }
+    });
   }, [progress]);
 
   const handleSaveName = () => {

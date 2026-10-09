@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGame } from '@/context/GameContext';
-import { ActiveLearner, getStoredLearners, refreshLearnersFromCloud, saveStoredLearner } from '@/data/leaderboardData';
+import { ActiveLearner, getStoredLearners, refreshLearnersFromCloud, saveStoredLearner, getOrCreateUniqueUserId } from '@/data/leaderboardData';
 import FullBodyLionCharacter from '@/components/FullBodyLionCharacter';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -54,7 +54,7 @@ export default function LeaderboardPage() {
           setStoredList(cloudList);
         }
       });
-    }, 10000);
+    }, 8000);
 
     return () => clearInterval(interval);
   }, []);
@@ -65,9 +65,10 @@ export default function LeaderboardPage() {
     const fullName = progress.profile
       ? `${progress.profile.firstName} ${progress.profile.lastName}`.trim()
       : progress.name;
+    const currentUserId = getOrCreateUniqueUserId();
 
     return {
-      id: progress.profile?.phoneNumber || progress.name,
+      id: currentUserId,
       name: fullName,
       grade: progress.grade,
       gender: isGirl ? 'girl' : 'boy',
@@ -90,13 +91,13 @@ export default function LeaderboardPage() {
     };
   }, [progress]);
 
-  // Merge stored list with current user, strictly for the user's current grade (NO OTHER GRADES, NO STRANGERS!)
+  // Merge stored list with current user, strictly for the user's current grade (NO OTHER GRADES)
   const gradeStudents = useMemo(() => {
     const currentId = currentUserLearner.id;
 
-    // Filter stored list for only students in THIS GRADE, excluding duplicate of current user
+    // Filter stored list for only students in THIS GRADE, excluding the current user's own record by ID
     const peers = storedList.filter(
-      (s) => s.grade === progress.grade && s.id !== currentId && s.name.toLowerCase() !== currentUserLearner.name.toLowerCase()
+      (s) => s.grade === progress.grade && s.id !== currentId
     );
 
     // Combine current user with other active learners in this grade
