@@ -94,10 +94,14 @@ export default function LeaderboardPage() {
   // Merge stored list with current user, strictly for the user's current grade (NO OTHER GRADES)
   const gradeStudents = useMemo(() => {
     const currentId = currentUserLearner.id;
+    const currentName = currentUserLearner.name.trim().toLowerCase();
 
-    // Filter stored list for only students in THIS GRADE, excluding the current user's own record by ID
+    // Filter stored list for only other students in THIS GRADE, excluding the current user himself
     const peers = storedList.filter(
-      (s) => s.grade === progress.grade && s.id !== currentId
+      (s) =>
+        s.grade === progress.grade &&
+        s.id !== currentId &&
+        s.name.trim().toLowerCase() !== currentName
     );
 
     // Combine current user with other active learners in this grade

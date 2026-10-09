@@ -352,29 +352,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (isLoaded) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-        if (progress.profile?.isRegistered) {
-          saveStoredLearner({
-            id: getOrCreateUniqueUserId(),
-            name: `${progress.profile.firstName} ${progress.profile.lastName}`.trim(),
-            grade: progress.grade,
-            gender: progress.profile.gender || 'boy',
-            region: progress.profile.region || 'Toshkent shahri',
-            district: progress.profile.district || '',
-            school: progress.profile.school || '',
-            streaks: progress.streaks,
-            coins: progress.coins,
-            xp: progress.xp,
-            badge:
-              progress.streaks >= 30
-                ? 'Afsonaviy Lider 👑'
-                : progress.streaks >= 15
-                ? 'Oltin Chempion 🥇'
-                : progress.streaks >= 5
-                ? 'Faol O‘quvchi ⚡'
-                : 'Yosh Izlanuvchi 🌱',
-            equippedOutfit: progress.equippedItems?.outfit,
-          });
-        }
+
+        const studentName = (
+          progress.profile?.firstName
+            ? `${progress.profile.firstName} ${progress.profile.lastName}`
+            : progress.name || 'Yosh Lider'
+        ).trim();
+
+        saveStoredLearner({
+          id: getOrCreateUniqueUserId(),
+          name: studentName,
+          grade: progress.grade || 1,
+          gender: progress.profile?.gender || 'boy',
+          region: progress.profile?.region || 'Toshkent shahri',
+          district: progress.profile?.district || '',
+          school: progress.profile?.school || `${progress.grade || 1}-sinf o‘quvchisi`,
+          streaks: progress.streaks || 1,
+          coins: progress.coins || 0,
+          xp: progress.xp || 0,
+          badge:
+            (progress.streaks || 1) >= 30
+              ? 'Afsonaviy Lider 👑'
+              : (progress.streaks || 1) >= 15
+              ? 'Oltin Chempion 🥇'
+              : (progress.streaks || 1) >= 5
+              ? 'Faol O‘quvchi ⚡'
+              : 'Yosh Izlanuvchi 🌱',
+          equippedOutfit: progress.equippedItems?.outfit,
+        });
       } catch {
         // ignore
       }

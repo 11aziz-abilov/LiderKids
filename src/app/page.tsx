@@ -40,7 +40,10 @@ export default function HomePage() {
       };
 
       const peers = stored.filter(
-        (s) => s.grade === progress.grade && s.id !== currentId
+        (s) =>
+          s.grade === progress.grade &&
+          s.id !== currentId &&
+          s.name.trim().toLowerCase() !== currentName.trim().toLowerCase()
       );
 
       const combined = [currentLearner, ...peers].sort((a, b) => b.streaks - a.streaks);

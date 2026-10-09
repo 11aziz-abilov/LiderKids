@@ -38,6 +38,32 @@ export function getOrCreateUniqueUserId(): string {
 }
 
 /**
+ * O'quvchilar ro'yxatidan dublikatlarni (bir xil ID yoki bir xil ism + sinf) tozalash
+ */
+export function deduplicateLearners(list: ActiveLearner[]): ActiveLearner[] {
+  if (!Array.isArray(list)) return [];
+  const map = new Map<string, ActiveLearner>();
+
+  for (const item of list) {
+    if (!item || !item.name) continue;
+    // Bitta o'quvchi bir xil sinfda faqat bir marta bo'lishi kerak
+    const dedupeKey = `${item.name.trim().toLowerCase()}_${item.grade}`;
+
+    const existing = map.get(dedupeKey);
+    if (!existing) {
+      map.set(dedupeKey, item);
+    } else {
+      // Agar olovchalari ko'proq bo'lsa yoki yangiroq bo'lsa, yangilaymiz
+      if ((item.streaks || 0) >= (existing.streaks || 0)) {
+        map.set(dedupeKey, { ...existing, ...item });
+      }
+    }
+  }
+
+  return Array.from(map.values());
+}
+
+/**
  * Platformadan foydalanayotgan ro'yxatdan o'tgan haqiqiy o'quvchilarni yuklash (localStorage keshidan)
  */
 export function getStoredLearners(): ActiveLearner[] {
@@ -46,7 +72,14 @@ export function getStoredLearners(): ActiveLearner[] {
     const raw = localStorage.getItem(ACTIVE_LEARNERS_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    
+    // Dublikatlarni tozalab qaytaramiz
+    const cleaned = deduplicateLearners(parsed);
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(ACTIVE_LEARNERS_STORAGE_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
     return [];
   }
@@ -59,13 +92,20 @@ export function saveStoredLearner(learner: ActiveLearner) {
   if (typeof window === 'undefined') return;
   try {
     const list = getStoredLearners();
-    const existingIndex = list.findIndex((l) => l.id === learner.id);
+    const existingIndex = list.findIndex(
+      (l) =>
+        l.id === learner.id ||
+        (l.name.trim().toLowerCase() === learner.name.trim().toLowerCase() && l.grade === learner.grade)
+    );
+
     if (existingIndex >= 0) {
       list[existingIndex] = { ...list[existingIndex], ...learner };
     } else {
       list.push(learner);
     }
-    localStorage.setItem(ACTIVE_LEARNERS_STORAGE_KEY, JSON.stringify(list));
+
+    const cleaned = deduplicateLearners(list);
+    localStorage.setItem(ACTIVE_LEARNERS_STORAGE_KEY, JSON.stringify(cleaned));
 
     // Bulutli bazaga (Firebase Realtime Database) sinxronizatsiya qilish
     syncLearnerToCloud(learner).catch(() => {});
@@ -85,22 +125,9 @@ export async function refreshLearnersFromCloud(): Promise<ActiveLearner[]> {
     }
 
     const localList = getStoredLearners();
-    const map = new Map<string, ActiveLearner>();
+    const combined = [...localList, ...cloudList];
+    const merged = deduplicateLearners(combined);
 
-    // 1. Mahalliy keshni joylaymiz
-    localList.forEach((item) => {
-      map.set(item.id, item);
-    });
-
-    // 2. Bulutdan kelgan yangi ma'lumotlarni qo'shamiz
-    cloudList.forEach((item) => {
-      map.set(item.id, {
-        ...(map.get(item.id) || {}),
-        ...item,
-      });
-    });
-
-    const merged = Array.from(map.values());
     if (typeof window !== 'undefined') {
       localStorage.setItem(ACTIVE_LEARNERS_STORAGE_KEY, JSON.stringify(merged));
     }
