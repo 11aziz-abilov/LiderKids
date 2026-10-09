@@ -8,9 +8,12 @@ import { useGame } from '@/context/GameContext';
 import { sound } from '@/utils/sound';
 import { Sparkles, ArrowRight, RotateCcw, Home, BookOpen, Coins } from 'lucide-react';
 
+import { MiniGameId } from '@/types/games';
+
 interface GameBreakModalProps {
   isOpen: boolean;
   gameTitle: string;
+  gameId?: MiniGameId;
   score?: number;
   bonusCoins?: number;
   onRestart: () => void;
@@ -20,6 +23,7 @@ interface GameBreakModalProps {
 export default function GameBreakModal({
   isOpen,
   gameTitle,
+  gameId,
   score,
   bonusCoins = 10,
   onRestart,
@@ -32,7 +36,6 @@ export default function GameBreakModal({
     dailyGamesCount,
     remainingGamesToday,
     canPlayGame,
-    recordGamePlay,
   } = useGame();
   const cappedCoins = Math.min(10, Math.max(1, bonusCoins));
 
@@ -45,15 +48,6 @@ export default function GameBreakModal({
       }
     }
   }, [isOpen]);
-
-  const handleRestart = () => {
-    if (canPlayGame) {
-      const ok = recordGamePlay();
-      if (ok) {
-        onRestart();
-      }
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -87,18 +81,18 @@ export default function GameBreakModal({
           {/* Daily Games quota badge */}
           <div className="pt-1">
             <span
-              className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-xl border ${
-                dailyGamesCount >= 2
+              className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-xl border ${
+                remainingGamesToday === 0
                   ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-900'
                   : 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800'
               }`}
             >
-              <span>🎮 Bugungi o‘yinlar:</span>
-              <span>{dailyGamesCount} / 2</span>
-              {dailyGamesCount >= 2 ? (
-                <span className="text-rose-600 dark:text-rose-400 font-extrabold">(Bugungi limit to‘ldi)</span>
+              <span>🎮 Mini-o‘yinlar:</span>
+              <span>{dailyGamesCount} / 3 ta</span>
+              {remainingGamesToday === 0 ? (
+                <span className="text-rose-600 dark:text-rose-400 font-extrabold">(Barcha o‘yinlar yakunlandi)</span>
               ) : (
-                <span className="text-amber-600 dark:text-amber-400 font-bold">({remainingGamesToday} ta imkoniyat qoldi)</span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold">({remainingGamesToday} ta boshqa o‘yin qoldi)</span>
               )}
             </span>
           </div>
@@ -133,28 +127,23 @@ export default function GameBreakModal({
           </button>
 
           <div className="grid grid-cols-2 gap-2">
-            {canPlayGame ? (
-              <button
-                onClick={handleRestart}
-                className="py-2.5 px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 font-extrabold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 transition flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Yana o‘ynash ({remainingGamesToday}) 🔄</span>
-              </button>
-            ) : (
-              <div
-                className="py-2.5 px-3 bg-zinc-100/70 dark:bg-zinc-800/70 text-zinc-400 dark:text-zinc-500 font-black text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-center gap-1.5 cursor-not-allowed select-none"
-                title="Bugun faqat 2 marta o‘ynash mumkin. Limitga yetdingiz!"
-              >
-                <span>Limit tugadi (2/2) 🔒</span>
-              </div>
-            )}
+            <div
+              className="py-2.5 px-3 bg-zinc-100/70 dark:bg-zinc-800/70 text-zinc-500 dark:text-zinc-400 font-bold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-center gap-1.5 select-none"
+              title="Har bir o‘yinga kuniga 1 martadan cheklov o‘rnatilgan"
+            >
+              <RotateCcw className="w-3.5 h-3.5 opacity-60" />
+              <span>Limit to‘ldi (1/1) 🔒</span>
+            </div>
 
             <button
               onClick={onChooseAnother}
-              className="py-2.5 px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 font-extrabold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 transition flex items-center justify-center gap-1.5 cursor-pointer"
+              className={`py-2.5 px-3 font-extrabold text-xs rounded-xl border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                remainingGamesToday > 0
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400 shadow-sm'
+                  : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
+              }`}
             >
-              <span>{canPlayGame ? 'Boshqa o‘yin 🎮' : 'Menyu 🎮'}</span>
+              <span>{remainingGamesToday > 0 ? `Boshqa o‘yin (${remainingGamesToday}) 🎮` : 'Menyuga qaytish 🎮'}</span>
             </button>
           </div>
         </div>

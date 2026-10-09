@@ -97,10 +97,15 @@ interface GameContextType {
   remainingGamesToday: number;
   canPlayGame: boolean;
   maxDailyGames: number;
-  recordGamePlay: () => boolean;
+  maxPlaysPerGame: number;
+  recordGamePlay: (gameId?: string) => boolean;
+  isGameLocked: (gameId: string) => boolean;
+  getGamePlayCount: (gameId: string) => number;
 }
 
-export const MAX_DAILY_GAMES = 2;
+export const MAX_PLAYS_PER_GAME = 1;
+export const TOTAL_MINI_GAMES = 3;
+export const MAX_DAILY_GAMES = 3;
 
 export const getTodayDateString = (): string => {
   const d = new Date();
@@ -151,6 +156,7 @@ const defaultProgress: UserProgress = {
   dailyGames: {
     date: getTodayDateString(),
     count: 0,
+    gameCounts: {},
   },
 };
 
@@ -165,19 +171,55 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [smsHistory, setSmsHistory] = useState<SmsMessage[]>([]);
 
   const todayStr = getTodayDateString();
-  const dailyGamesCount = progress.dailyGames?.date === todayStr ? (progress.dailyGames.count || 0) : 0;
-  const remainingGamesToday = Math.max(0, MAX_DAILY_GAMES - dailyGamesCount);
-  const canPlayGame = dailyGamesCount < MAX_DAILY_GAMES;
+  const isDateToday = progress.dailyGames?.date === todayStr;
+  const gameCounts = isDateToday ? (progress.dailyGames?.gameCounts || {}) : {};
 
-  const recordGamePlay = useCallback((): boolean => {
+  const getGamePlayCount = useCallback((gameId: string): number => {
+    return gameCounts[gameId] || 0;
+  }, [gameCounts]);
+
+  const isGameLocked = useCallback((gameId: string): boolean => {
+    return (gameCounts[gameId] || 0) >= MAX_PLAYS_PER_GAME;
+  }, [gameCounts]);
+
+  // Jami 3 ta mini-o‘yindan nechtasi 1 martalik limitiga yetgan
+  const allGameIds = ['memory', 'puzzle', 'stars'];
+  const playedDistinctGames = allGameIds.filter((id) => (gameCounts[id] || 0) >= MAX_PLAYS_PER_GAME).length;
+  const dailyGamesCount = playedDistinctGames;
+  const remainingGamesToday = Math.max(0, TOTAL_MINI_GAMES - playedDistinctGames);
+  const canPlayGame = remainingGamesToday > 0;
+
+  const recordGamePlay = useCallback((gameId?: string): boolean => {
     const currentToday = getTodayDateString();
     let permitted = false;
 
     setProgress((prev) => {
       const isToday = prev.dailyGames?.date === currentToday;
-      const currentCount = isToday ? (prev.dailyGames?.count || 0) : 0;
+      const prevGameCounts = isToday ? (prev.dailyGames?.gameCounts || {}) : {};
+      const prevCount = isToday ? (prev.dailyGames?.count || 0) : 0;
 
-      if (currentCount >= MAX_DAILY_GAMES) {
+      if (gameId) {
+        const countForThisGame = prevGameCounts[gameId] || 0;
+        if (countForThisGame >= MAX_PLAYS_PER_GAME) {
+          permitted = false;
+          return prev;
+        }
+
+        permitted = true;
+        return {
+          ...prev,
+          dailyGames: {
+            date: currentToday,
+            count: prevCount + 1,
+            gameCounts: {
+              ...prevGameCounts,
+              [gameId]: countForThisGame + 1,
+            },
+          },
+        };
+      }
+
+      if (prevCount >= TOTAL_MINI_GAMES) {
         permitted = false;
         return prev;
       }
@@ -187,7 +229,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         dailyGames: {
           date: currentToday,
-          count: currentCount + 1,
+          count: prevCount + 1,
+          gameCounts: prevGameCounts,
         },
       };
     });
@@ -681,7 +724,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         remainingGamesToday,
         canPlayGame,
         maxDailyGames: MAX_DAILY_GAMES,
+        maxPlaysPerGame: MAX_PLAYS_PER_GAME,
         recordGamePlay,
+        isGameLocked,
+        getGamePlayCount,
       }}
     >
       {children}

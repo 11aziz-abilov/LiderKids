@@ -260,6 +260,7 @@ export default function PuzzleGame({ grade, onBackToMenu }: PuzzleGameProps) {
       {/* Break completion modal */}
       <GameBreakModal
         isOpen={isGameOver}
+        gameId="puzzle"
         gameTitle="Mini-pazl"
         score={correctlyPlacedCount * 12 + 20}
         bonusCoins={10}

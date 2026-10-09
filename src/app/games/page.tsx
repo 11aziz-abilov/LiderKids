@@ -79,24 +79,29 @@ export default function GamesPage() {
     dailyGamesCount,
     remainingGamesToday,
     canPlayGame,
+    isGameLocked,
+    getGamePlayCount,
     recordGamePlay,
   } = useGame();
   const currentGrade = progress.grade || 1;
   const isJunior = currentGrade <= 2;
 
   const [activeGame, setActiveGame] = useState<MiniGameId | null>(null);
+  const [selectedLockedGame, setSelectedLockedGame] = useState<GameInfo | null>(null);
   const [showLimitNoticeModal, setShowLimitNoticeModal] = useState(false);
 
-  const handleStartGame = (gameId: MiniGameId) => {
-    if (!canPlayGame) {
+  const handleStartGame = (game: GameInfo) => {
+    if (isGameLocked(game.id)) {
+      setSelectedLockedGame(game);
       setShowLimitNoticeModal(true);
       return;
     }
 
-    const permitted = recordGamePlay();
+    const permitted = recordGamePlay(game.id);
     if (permitted) {
-      setActiveGame(gameId);
+      setActiveGame(game.id);
     } else {
+      setSelectedLockedGame(game);
       setShowLimitNoticeModal(true);
     }
   };
@@ -114,14 +119,14 @@ export default function GamesPage() {
               </div>
               <div
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black ${
-                  dailyGamesCount >= 2
+                  remainingGamesToday === 0
                     ? 'bg-red-500/80 text-white'
                     : 'bg-white/25 text-yellow-100'
                 }`}
               >
-                {dailyGamesCount >= 2 ? <Lock className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {remainingGamesToday === 0 ? <Lock className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
                 <span>
-                  Bugungi o‘yinlar: {dailyGamesCount}/2 {dailyGamesCount >= 2 ? '(Limit to‘ldi)' : `(${remainingGamesToday} ta qoldi)`}
+                  O‘ynalgan: {dailyGamesCount}/3 ta | Har bir o‘yinga 1 martadan {remainingGamesToday === 0 ? '(Limit to‘ldi)' : `(${remainingGamesToday} ta ochiq)`}
                 </span>
               </div>
             </div>
@@ -129,7 +134,7 @@ export default function GamesPage() {
               2 Daqiqalik Mini-O‘yinlar 🎮
             </h1>
             <p className="text-orange-100 text-sm sm:text-base font-medium max-w-xl mt-1">
-              Darslar orasida miyangizni dam oldiring va yangi energiya to‘plang! Kuniga faqat 2 marta o‘ynash mumkin va har o‘yinda +10 tanga bonus beriladi!
+              Darslar orasida miyangizni dam oldiring! Har bir o‘yinga kuniga 1 martadan cheklov qo‘yilgan va har bir o‘yinda +10 tanga bonus beriladi!
             </p>
           </div>
 
@@ -196,8 +201,8 @@ export default function GamesPage() {
       ) : (
         /* Game Selection Hub */
         <div className="space-y-6">
-          {/* Daily Limit Warning Banner if limit reached */}
-          {dailyGamesCount >= 2 && (
+          {/* Daily Limit Warning Banner if all games completed */}
+          {remainingGamesToday === 0 && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -209,10 +214,10 @@ export default function GamesPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-black text-zinc-900 dark:text-white">
-                    Bugungi 2 ta o‘yin imkoniyatingiz to‘ldi (2/2)
+                    Bugungi barcha mini-o‘yinlar yakunlandi (3/3)
                   </h3>
                   <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed mt-0.5">
-                    Kuniga ko‘pi bilan 2 ta o‘yin o‘ynash me’yori ko‘zni toliqishdan saqlaydi va bilimga e’tibor qaratishga yordam beradi. Yangi imkoniyatlar ertaga yana ochiladi!
+                    Har bir o‘yin kuniga ko‘pi bilan 1 marta o‘ynaladi. Bu ko‘zni toliqishdan saqlaydi va bilimga e’tibor qaratishga yordam beradi. Yangi imkoniyatlar ertaga yana ochiladi!
                   </p>
                 </div>
               </div>
@@ -229,7 +234,7 @@ export default function GamesPage() {
             <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <span>O‘yinni tanlang</span>
               <span className="text-xs font-bold text-zinc-400">
-                (Har biri aniq 2 daqiqalik)
+                (Har biri 1 martadan, 2 daqiqa)
               </span>
             </h2>
             <Link
@@ -242,26 +247,43 @@ export default function GamesPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {GAMES_LIST.map((game) => (
-              <motion.div
-                key={game.id}
-                whileHover={{ scale: canPlayGame ? 1.02 : 1, y: canPlayGame ? -4 : 0 }}
-                whileTap={{ scale: canPlayGame ? 0.98 : 1 }}
-                onClick={() => handleStartGame(game.id)}
-                className={`bg-white dark:bg-zinc-900 rounded-3xl p-6 border-2 shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-5 ${
-                  canPlayGame
-                    ? 'border-amber-200 dark:border-zinc-800 hover:shadow-xl hover:border-amber-400 dark:hover:border-amber-600'
-                    : 'border-zinc-200 dark:border-zinc-800 opacity-80 hover:border-rose-300 dark:hover:border-rose-900'
-                }`}
-              >
-                <div className="space-y-4">
-                  {/* Icon & Title */}
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${game.gradient} text-white flex items-center justify-center text-3xl shadow-lg shadow-orange-500/20`}
-                    >
-                      {game.emoji}
+            {GAMES_LIST.map((game) => {
+              const locked = isGameLocked(game.id);
+
+              return (
+                <motion.div
+                  key={game.id}
+                  whileHover={{ scale: !locked ? 1.02 : 1, y: !locked ? -4 : 0 }}
+                  whileTap={{ scale: !locked ? 0.98 : 1 }}
+                  onClick={() => handleStartGame(game)}
+                  className={`bg-white dark:bg-zinc-900 rounded-3xl p-6 border-2 shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-5 relative overflow-hidden ${
+                    !locked
+                      ? 'border-amber-200 dark:border-zinc-800 hover:shadow-xl hover:border-amber-400 dark:hover:border-amber-600'
+                      : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/60 opacity-85 hover:border-rose-300 dark:hover:border-rose-900'
+                  }`}
+                >
+                  <div className="space-y-4">
+                    {/* Icon & Status */}
+                    <div className="flex items-center justify-between">
+                      <div
+                        className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${game.gradient} text-white flex items-center justify-center text-3xl shadow-lg shadow-orange-500/20`}
+                      >
+                        {game.emoji}
+                      </div>
+
+                      {locked ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
+                          <Lock className="w-3 h-3" />
+                          <span>1/1 o‘ynalgan</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
+                          <Sparkles className="w-3 h-3" />
+                          <span>1 imkoniyat ochiq</span>
+                        </span>
+                      )}
                     </div>
+
                     <div>
                       <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">
                         {game.title}
@@ -270,44 +292,44 @@ export default function GamesPage() {
                         {game.subtitle}
                       </span>
                     </div>
-                  </div>
 
-                  {/* Difficulty Tag */}
-                  <div className="bg-amber-50 dark:bg-zinc-800/80 p-3 rounded-2xl border border-amber-200/80 dark:border-zinc-700 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-black">
-                      <span className="text-amber-800 dark:text-amber-300">
-                        {isJunior ? '🐾 1-2 sinf formati:' : '🎯 3-4 sinf formati:'}
-                      </span>
-                      <span className="text-orange-600 dark:text-orange-400 font-bold">
-                        {isJunior ? game.juniorBadge : game.seniorBadge}
-                      </span>
+                    {/* Difficulty Tag */}
+                    <div className="bg-amber-50 dark:bg-zinc-800/80 p-3 rounded-2xl border border-amber-200/80 dark:border-zinc-700 space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px] font-black">
+                        <span className="text-amber-800 dark:text-amber-300">
+                          {isJunior ? '🐾 1-2 sinf formati:' : '🎯 3-4 sinf formati:'}
+                        </span>
+                        <span className="text-orange-600 dark:text-orange-400 font-bold">
+                          {isJunior ? game.juniorBadge : game.seniorBadge}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-snug">
+                        {isJunior ? game.juniorDesc : game.seniorDesc}
+                      </p>
                     </div>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-snug">
-                      {isJunior ? game.juniorDesc : game.seniorDesc}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>2 daqiqa</span>
                   </div>
 
-                  {canPlayGame ? (
-                    <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs rounded-xl shadow-md">
-                      <span>O‘ynash ({remainingGamesToday})</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700">
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Limit (2/2)</span>
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                  <div className="pt-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>2 daqiqa</span>
+                    </div>
+
+                    {!locked ? (
+                      <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs rounded-xl shadow-md">
+                        <span>O‘ynash (1 marta)</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700">
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Limit (1/1)</span>
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* Quick info note */}
@@ -316,9 +338,9 @@ export default function GamesPage() {
               <span className="text-3xl">🧘‍♂️</span>
               <div>
                 <strong className="text-zinc-900 dark:text-white font-black block text-sm">
-                  Pedagogik tanaffus qoidasi (kuniga 2 marta):
+                  Pedagogik tanaffus qoidasi (har bir o‘yinga 1 martadan):
                 </strong>
-                Har 20-30 daqiqa darsdan so‘ng 2 daqiqalik mini-o‘yin diqqatni oshiradi. Kuniga ko‘pi bilan 2 ta o‘yin bolalarni ekranga bog‘lanib qolishidan asraydi!
+                Har bir o‘yin kuniga 1 marta (jami 3 ta mini-o‘yin) o‘ynaladi. Bu bolalarni ekranga bog‘lanib qolishidan asraydi va darslarga e’tiborni oshiradi!
               </div>
             </div>
 
@@ -343,35 +365,53 @@ export default function GamesPage() {
               className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border-4 border-amber-300 dark:border-zinc-700 shadow-2xl text-center space-y-5 relative"
             >
               <button
-                onClick={() => setShowLimitNoticeModal(false)}
+                onClick={() => {
+                  setShowLimitNoticeModal(false);
+                  setSelectedLockedGame(null);
+                }}
                 className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-full cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-amber-400 to-orange-500 rounded-3xl flex items-center justify-center text-4xl shadow-xl shadow-amber-500/20">
-                🛑
+                {selectedLockedGame?.emoji || '🛑'}
               </div>
 
               <div className="space-y-2">
                 <span className="text-xs font-black uppercase tracking-wider bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 px-3 py-1 rounded-full">
-                  Kunlik limit yakunlandi
+                  Har bir o‘yinga 1 martalik cheklov
                 </span>
                 <h3 className="text-2xl font-black text-zinc-900 dark:text-white">
-                  Bugun faqat 2 marta o‘ynash mumkin!
+                  {selectedLockedGame
+                    ? `"${selectedLockedGame.title}" o‘yini limiti to‘ldi!`
+                    : 'Bugungi barcha o‘yinlar limiti to‘ldi!'}
                 </h3>
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  Siz bugungi <strong>2 ta o‘yin (jami 4 daqiqa)</strong> limitingizdan to‘liq foydalandingiz. Ko‘zlaringiz charchamasligi va darslarga diqqatingizni jamlash uchun o‘yinlar ertaga yana ochiladi! 🌟
+                  {selectedLockedGame ? (
+                    <>
+                      Siz <strong>"{selectedLockedGame.title}"</strong> o‘yinini bugun 1 marta o‘ynadingiz. Qoidaga ko‘ra har bir o‘yinga kuniga faqat <strong>1 marta</strong> ruxsat beriladi.
+                      {remainingGamesToday > 0
+                        ? ` Sizda hali ${remainingGamesToday} ta boshqa mini-o‘yin ochiq!`
+                        : ' Barcha mini-o‘yinlar imkoniyati tugadi.'}
+                    </>
+                  ) : (
+                    <>
+                      Har bir o‘yin uchun 1 martalik cheklovdan foydalandingiz (jami 3 ta o‘yin). Ko‘zlaringiz toliqmasligi uchun yangi imkoniyatlar ertaga yana ochiladi! 🌟
+                    </>
+                  )}
                 </p>
               </div>
 
               <div className="bg-amber-50 dark:bg-zinc-800/80 p-4 rounded-2xl border border-amber-200 dark:border-zinc-700 text-left text-xs text-zinc-700 dark:text-zinc-300 space-y-1.5">
                 <div className="font-black text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <span>Hozir nima qilish mumkin?</span>
+                  <span>Tavsiya:</span>
                 </div>
                 <p className="text-zinc-600 dark:text-zinc-400">
-                  Video darslarni ko‘rib bilim oling yoki testlarni yechib reytingdagi o‘rningizni ko‘taring!
+                  {remainingGamesToday > 0
+                    ? 'Qolgan o‘yinlardan birini tanlang yoki darslarni ko‘rib yangi bilimlar oling!'
+                    : 'Video darslarni ko‘rib bilim oling yoki testlarni yechib reytingdagi o‘rningizni oshiring!'}
                 </p>
               </div>
 
@@ -394,7 +434,10 @@ export default function GamesPage() {
                     <span>Testlar 📝</span>
                   </Link>
                   <button
-                    onClick={() => setShowLimitNoticeModal(false)}
+                    onClick={() => {
+                      setShowLimitNoticeModal(false);
+                      setSelectedLockedGame(null);
+                    }}
                     className="py-2.5 px-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-200 font-bold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700 transition cursor-pointer"
                   >
                     <span>Tushundim</span>

@@ -248,6 +248,7 @@ export default function MemoryGame({ grade, onBackToMenu }: MemoryGameProps) {
       {/* Break completion modal */}
       <GameBreakModal
         isOpen={isGameOver}
+        gameId="memory"
         gameTitle="Juftini top"
         score={matchedPairsCount * 15}
         bonusCoins={10}

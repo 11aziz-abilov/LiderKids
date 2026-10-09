@@ -275,6 +275,7 @@ export default function StarCatcherGame({ grade, onBackToMenu }: StarCatcherGame
       {/* Break completion modal */}
       <GameBreakModal
         isOpen={isGameOver}
+        gameId="stars"
         gameTitle="Yulduz ushlash"
         score={score}
         bonusCoins={10}

@@ -123,6 +123,7 @@ export interface EquippedItems {
 export interface DailyGamesRecord {
   date: string; // YYYY-MM-DD (mahalliy sana)
   count: number;
+  gameCounts?: Record<string, number>; // har bir mini-o‘yin bo‘yicha o‘ynalgan soni (masalan { memory: 1, puzzle: 0 })
 }
 
 export interface UserProgress {
