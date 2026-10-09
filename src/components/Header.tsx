@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
 import { GradeLevel } from '@/types';
-import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap, ShoppingBag, Smartphone, Gamepad2 } from 'lucide-react';
+import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap, ShoppingBag, Smartphone, Gamepad2, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Header() {
@@ -24,6 +24,7 @@ export default function Header() {
     { href: '/', label: 'Bosh sahifa', icon: Crown },
     { href: '/quiz', label: 'Testlar', icon: CheckCircle2 },
     { href: '/lessons', label: 'Darslar', icon: BookOpen },
+    { href: '/tournament', label: 'Shashka 🏁', icon: Swords },
     { href: '/games', label: 'Tanaffus 🎮', icon: Gamepad2 },
     { href: '/market', label: 'Market 🛍️', icon: ShoppingBag },
     { href: '/leaderboard', label: 'Reyting 🔥', icon: Flame },

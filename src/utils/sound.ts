@@ -182,6 +182,34 @@ class SoundEffects {
     osc.start(now);
     osc.stop(now + 0.06);
   }
+
+  // Chertish (Click)
+  playClick() {
+    this.playTap();
+  }
+
+  // Tosh surish / urish (Pop) ovozi
+  playPop() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(350, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.09);
+  }
 }
 
 export const sound = new SoundEffects();

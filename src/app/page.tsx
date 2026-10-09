@@ -7,7 +7,7 @@ import DailyQuests from '@/components/DailyQuests';
 import { useGame } from '@/context/GameContext';
 import { SUBJECTS, QUIZ_QUESTIONS, LESSONS } from '@/data/mockData';
 import { getStoredLearners, ActiveLearner } from '@/data/leaderboardData';
-import { Sparkles, Trophy, Flame, Coins, Edit3, Check, Star, User, CreditCard } from 'lucide-react';
+import { Sparkles, Trophy, Flame, Coins, Edit3, Check, Star, User, CreditCard, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
@@ -211,6 +211,33 @@ export default function HomePage() {
           </span>
         </div>
         <MascotLion />
+      </section>
+
+      {/* Shashka Tournament Promo Banner */}
+      <section className="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 rounded-3xl p-5 sm:p-6 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shrink-0 shadow-inner">
+            🏁
+          </div>
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-yellow-200">
+              <Swords className="w-3.5 h-3.5" />
+              <span>Yangi: Respublika Shashka Turniri</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black mt-0.5">
+              Tengdoshlar bilan shashkada bellashing!
+            </h3>
+            <p className="text-orange-100 text-xs sm:text-sm mt-0.5 max-w-xl">
+              Platformadagi o‘quvchilar bilan jonli shashka o‘ynang, kuboklar to‘plang va Grandmaster Qirol unvoniga erishing!
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/tournament"
+          className="px-6 py-3 bg-white text-orange-600 hover:bg-orange-50 active:scale-95 transition font-black text-xs sm:text-sm rounded-2xl shadow-md shrink-0 flex items-center gap-2"
+        >
+          <span>Turnirga kirish 🏆</span>
+        </Link>
       </section>
 
       {/* 3 Main Directions (Subjects) */}
