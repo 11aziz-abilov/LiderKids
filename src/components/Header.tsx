@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
 import { GradeLevel } from '@/types';
-import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap, ShoppingBag, Smartphone, Gamepad2, Swords } from 'lucide-react';
+import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap, ShoppingBag, Smartphone, Gamepad2, Swords, Brain } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Header() {
@@ -18,10 +18,12 @@ export default function Header() {
     setIsProfileModalOpen,
     setIsSmsModalOpen,
     smsHistory,
+    isTodayPuzzleSolved,
   } = useGame();
 
   const navLinks = [
     { href: '/', label: 'Bosh sahifa', icon: Crown },
+    { href: '/daily-puzzle', label: 'Boshqotirma 🧩', icon: Brain, badge: !isTodayPuzzleSolved ? 'Yangi' : undefined },
     { href: '/quiz', label: 'Testlar', icon: CheckCircle2 },
     { href: '/lessons', label: 'Darslar', icon: BookOpen },
     { href: '/tournament', label: 'Shashka 🏁', icon: Swords },
@@ -109,12 +111,12 @@ export default function Header() {
               <span className="font-black text-sm sm:text-base">{progress.coins}</span>
             </motion.div>
 
-            {/* Streaks / Fire -> Reyting sahifasiga o'tadi */}
-            <Link href="/leaderboard">
+            {/* Streaks / Fire -> Brend Sovrinlari & Olovchalar */}
+            <Link href="/#streak-rewards">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center gap-1.5 bg-orange-100/80 dark:bg-orange-950/60 text-orange-900 dark:text-orange-200 px-3 py-1.5 rounded-2xl border-2 border-orange-300 dark:border-orange-700 shadow-sm cursor-pointer hover:border-orange-500 transition"
-                title="Olovchalar Reytingini ko‘rish"
+                title="LiderKids Brend Sovg‘alari (Ruchka, Kepka, Stakan, Futbolka)"
               >
                 <Flame className="w-5 h-5 text-orange-500 fill-orange-500 animate-pulse" />
                 <span className="font-black text-sm sm:text-base">{progress.streaks}</span>
@@ -191,7 +193,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all whitespace-nowrap ${
+                className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all whitespace-nowrap ${
                   isActive
                     ? 'bg-amber-500 text-white shadow-sm'
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-zinc-800'
@@ -199,6 +201,9 @@ export default function Header() {
               >
                 <Icon className="w-4 h-4" />
                 <span>{link.label}</span>
+                {link.badge && (
+                  <span className="w-2 h-2 rounded-full bg-orange-500 ring-2 ring-white animate-ping ml-0.5" />
+                )}
               </Link>
             );
           })}

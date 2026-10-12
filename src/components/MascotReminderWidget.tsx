@@ -53,6 +53,17 @@ export default function MascotReminderWidget() {
   // Reminder variations featuring the Lion in different poses/roles
   const reminders: ReminderPreset[] = [
     {
+      id: 'streak-brand-rewards',
+      action: 'wave',
+      streakText: `${streaksCount}`,
+      title: 'Win Brand Prizes!',
+      titleUz: 'Brend Sovg‘alar!',
+      subtitle: '7 kunda LiderKids ruchkasi 🖊️, 1 oyda kepka 🧢, 2 oyda stakan ☕ va 100 kunda brend futbolka 👕 yutib ol! Olovchang o‘chmasin! 🔥',
+      buttonText: 'Sovrinlarni ko‘rish 🎁',
+      buttonHref: '/achievements',
+      accentBg: 'from-[#EA580C] via-[#F97316] to-[#F59E0B]',
+    },
+    {
       id: 'flex-workout',
       action: 'flex',
       streakText: `${streaksCount}`,

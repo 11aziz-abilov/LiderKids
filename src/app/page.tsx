@@ -4,18 +4,23 @@ import React, { useState, useEffect } from 'react';
 import MascotLion from '@/components/MascotLion';
 import SubjectCard from '@/components/SubjectCard';
 import DailyQuests from '@/components/DailyQuests';
-import { useGame } from '@/context/GameContext';
+import StreakRewardsSection from '@/components/StreakRewardsSection';
+import { useGame, getTodayDateString } from '@/context/GameContext';
+import { getDailyPuzzleForDate } from '@/data/dailyPuzzlesData';
 import { SUBJECTS, QUIZ_QUESTIONS, LESSONS } from '@/data/mockData';
 import { getStoredLearners, refreshLearnersFromCloud, getOrCreateUniqueUserId, ActiveLearner } from '@/data/leaderboardData';
-import { Sparkles, Trophy, Flame, Coins, Edit3, Check, Star, User, CreditCard, Swords } from 'lucide-react';
+import { Sparkles, Trophy, Flame, Coins, Edit3, Check, Star, User, CreditCard, Swords, Brain, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export default function HomePage() {
-  const { progress, setName, setIsRegistrationModalOpen, setIsProfileModalOpen } = useGame();
+  const { progress, setName, setIsRegistrationModalOpen, setIsProfileModalOpen, isTodayPuzzleSolved } = useGame();
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(progress.name);
   const [activePeers, setActivePeers] = useState<ActiveLearner[]>([]);
+
+  const todayStr = getTodayDateString();
+  const todayPuzzle = getDailyPuzzleForDate(todayStr, progress.grade);
 
   useEffect(() => {
     const updatePeers = (stored: ActiveLearner[]) => {
@@ -223,6 +228,54 @@ export default function HomePage() {
           </span>
         </div>
         <MascotLion />
+      </section>
+
+      {/* Uzluksiz Dars Sovrinlari (Streak Rewards) */}
+      <StreakRewardsSection />
+
+      {/* Kun Boshqotirmasi (Daily Puzzle Section) */}
+      <section className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border-2 border-purple-400/30">
+        <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 bg-white/10 rounded-full blur-xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shrink-0 shadow-lg border border-white/30">
+              🧩
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-xs font-black uppercase tracking-wider text-yellow-300 mb-1">
+                <Brain className="w-3.5 h-3.5" />
+                <span>Kun Boshqotirmasi (1 kunda 1 dona)</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black tracking-tight">
+                Bugungi Jumboq: {todayPuzzle.title}
+              </h3>
+              <p className="text-purple-100 text-xs sm:text-sm mt-0.5 max-w-xl font-medium">
+                {isTodayPuzzleSolved
+                  ? "Bugungi intellektual boshqotirmani muvaffaqiyatli yechdingiz! Ertaga yangi jumboq ochiladi."
+                  : `${progress.grade}-sinf uchun maxsus tuzilgan chuqur mantiqiy jumboq. To‘g‘ri yechsangiz +${todayPuzzle.rewardCoins} tanga va +${todayPuzzle.rewardXp} XP beriladi!`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+            <div className="bg-white/15 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/20 text-center">
+              <span className="text-[10px] uppercase font-bold text-purple-200 block">Mukofot</span>
+              <span className="text-base font-black text-yellow-300">+{todayPuzzle.rewardCoins} 🪙</span>
+            </div>
+
+            <Link
+              href="/daily-puzzle"
+              className={`px-6 py-3 rounded-2xl font-black text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 hover:scale-105 active:scale-95 shrink-0 ${
+                isTodayPuzzleSolved
+                  ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                  : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-orange-500/30'
+              }`}
+            >
+              <span>{isTodayPuzzleSolved ? 'Yechimni ko‘rish ✨' : 'Jumboqni yechish 🧠'}</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* Shashka Tournament Promo Banner */}

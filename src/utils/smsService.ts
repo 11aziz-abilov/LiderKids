@@ -273,6 +273,37 @@ export class SmsService {
       },
     });
   }
+
+  // 3. Send Streak Brand Prize Won SMS
+  async sendStreakPrizeWonAlert({
+    parentPhone,
+    parentName,
+    studentName,
+    prizeName,
+    periodLabel,
+    streaks,
+  }: {
+    parentPhone: string;
+    parentName: string;
+    studentName: string;
+    prizeName: string;
+    periodLabel: string;
+    streaks: number;
+  }): Promise<SmsMessage> {
+    const message = `🎉 TABRIKLAYMIZ! LiderKids platformasida farzandingiz ${studentName} ${periodLabel} (${streaks} kun) uzluksiz dars qilib "${prizeName}" brend sovg‘asini yutib oldi! 🎁 Ushbu natija bilan faxrlanamiz! LiderKids jamoasi tez orada sovg‘ani kuryer orqali yetkazib beradi! 🦁🚀`;
+
+    return this.sendSms({
+      type: 'streak_prize_won',
+      recipientPhone: parentPhone,
+      recipientName: parentName,
+      studentName,
+      message,
+      metadata: {
+        streaks,
+        prizeName,
+      },
+    });
+  }
 }
 
 export const smsService = new SmsService();

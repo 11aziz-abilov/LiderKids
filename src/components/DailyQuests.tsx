@@ -6,7 +6,7 @@ import { CheckCircle2, Circle, Flame, Coins, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function DailyQuests() {
-  const { progress } = useGame();
+  const { progress, isTodayPuzzleSolved } = useGame();
 
   const quests = [
     {
@@ -18,13 +18,20 @@ export default function DailyQuests() {
     },
     {
       id: 'q2',
+      title: 'Kun boshqotirmasini yech 🧩',
+      reward: '+50 🪙 Bonus',
+      completed: isTodayPuzzleSolved,
+      progressText: isTodayPuzzleSolved ? '1 / 1' : '0 / 1',
+    },
+    {
+      id: 'q3',
       title: 'Bitta video darsni to‘liq ko‘r',
       reward: '+1 🔥',
       completed: progress.completedLessons.length >= 1,
       progressText: `${Math.min(1, progress.completedLessons.length)} / 1`,
     },
     {
-      id: 'q3',
+      id: 'q4',
       title: 'Jami 60 tanga to‘pla',
       reward: '+20 🪙 Bonus',
       completed: progress.coins >= 60,

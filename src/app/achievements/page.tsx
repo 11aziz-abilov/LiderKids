@@ -3,6 +3,7 @@
 import React from 'react';
 import { useGame } from '@/context/GameContext';
 import { ACHIEVEMENTS } from '@/data/mockData';
+import StreakRewardsSection from '@/components/StreakRewardsSection';
 import { Trophy, Award, Lock, CheckCircle2, Sparkles, Coins, Flame, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -103,6 +104,9 @@ export default function AchievementsPage() {
           </div>
         </div>
       </div>
+
+      {/* LiderKids Brend Sovrinlari (Streak Rewards) */}
+      <StreakRewardsSection />
 
       {/* Badges Grid */}
       <div>

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { GradeLevel, UserProgress, UserProfile, MarketItem, MarketCategory, SmsMessage } from '@/types';
+import { GradeLevel, UserProgress, UserProfile, MarketItem, MarketCategory, SmsMessage, StreakPrize, StreakPrizeId, DailyPuzzleRecord } from '@/types';
+import { STREAK_PRIZES } from '@/data/streakRewardsData';
 import { sound } from '@/utils/sound';
 import { smsService } from '@/utils/smsService';
 import { notifications } from '@/utils/notifications';
@@ -81,6 +82,24 @@ interface GameContextType {
   setName: (name: string) => void;
   addCoins: (amount: number) => void;
   addStreak: (amount: number) => void;
+  setStreaksDirectly: (days: number) => void;
+  claimStreakPrize: (
+    prizeId: StreakPrizeId,
+    deliveryData: {
+      studentName: string;
+      parentPhone: string;
+      deliveryRegion: string;
+      deliveryAddress: string;
+      sizeOrVariant?: string;
+    }
+  ) => boolean;
+  celebrationPrize: StreakPrize | null;
+  setCelebrationPrize: (prize: StreakPrize | null) => void;
+  isStreakClaimModalOpen: boolean;
+  setIsStreakClaimModalOpen: (open: boolean) => void;
+  selectedPrizeToClaim: StreakPrize | null;
+  setSelectedPrizeToClaim: (prize: StreakPrize | null) => void;
+  openClaimModalForPrize: (prize: StreakPrize) => void;
   markLessonCompleted: (lessonId: string) => boolean;
   markQuizCompleted: (quizId: string) => void;
   toggleSound: () => void;
@@ -101,6 +120,17 @@ interface GameContextType {
   recordGamePlay: (gameId?: string) => boolean;
   isGameLocked: (gameId: string) => boolean;
   getGamePlayCount: (gameId: string) => number;
+  getDailyPuzzleRecord: (dateStr?: string) => DailyPuzzleRecord | null;
+  submitDailyPuzzle: (params: {
+    puzzleId: string;
+    optionIndex: number;
+    isCorrect: boolean;
+    rewardCoins: number;
+    rewardXp: number;
+    usedHint: boolean;
+  }) => boolean;
+  dailyPuzzleStreak: number;
+  isTodayPuzzleSolved: boolean;
 }
 
 export const MAX_PLAYS_PER_GAME = 1;
@@ -169,6 +199,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
   const [smsHistory, setSmsHistory] = useState<SmsMessage[]>([]);
+  const [celebrationPrize, setCelebrationPrize] = useState<StreakPrize | null>(null);
+  const [isStreakClaimModalOpen, setIsStreakClaimModalOpen] = useState(false);
+  const [selectedPrizeToClaim, setSelectedPrizeToClaim] = useState<StreakPrize | null>(null);
+
+  const openClaimModalForPrize = useCallback((prize: StreakPrize) => {
+    setSelectedPrizeToClaim(prize);
+    setIsStreakClaimModalOpen(true);
+  }, []);
 
   const todayStr = getTodayDateString();
   const isDateToday = progress.dailyGames?.date === todayStr;
@@ -417,15 +455,120 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const checkAndCelebrateMilestone = (newStreaks: number, prevProgress: UserProgress): number[] => {
+    const prevCelebrated = prevProgress.celebratedMilestones || [];
+    const milestone = STREAK_PRIZES.find(
+      (p) => newStreaks >= p.daysRequired && !prevCelebrated.includes(p.daysRequired)
+    );
+    if (milestone) {
+      setCelebrationPrize(milestone);
+      if (prevProgress.soundEnabled) {
+        sound.playVictory();
+      }
+      const parentPhone =
+        prevProgress.profile?.parentPhoneNumber ||
+        prevProgress.profile?.phoneNumber ||
+        '+998 (90) 123-45-67';
+      const parentName = prevProgress.profile?.parentName || 'Ota-ona';
+      const studentName = (
+        prevProgress.profile?.firstName
+          ? `${prevProgress.profile.firstName} ${prevProgress.profile.lastName}`
+          : prevProgress.name || 'Yosh Lider'
+      ).trim();
+
+      smsService
+        .sendStreakPrizeWonAlert({
+          parentPhone,
+          parentName,
+          studentName,
+          prizeName: milestone.name,
+          periodLabel: milestone.periodLabel,
+          streaks: newStreaks,
+        })
+        .then(() => {
+          setSmsHistory(smsService.getHistory());
+        });
+
+      return [...prevCelebrated, milestone.daysRequired];
+    }
+    return prevCelebrated;
+  };
+
   const addStreak = (amount: number = 1) => {
-    setProgress((prev) => ({
-      ...prev,
-      streaks: prev.streaks + amount,
-      xp: prev.xp + amount * 25,
-    }));
+    setProgress((prev) => {
+      const nextStreaks = prev.streaks + amount;
+      const updatedCelebrated = checkAndCelebrateMilestone(nextStreaks, prev);
+      return {
+        ...prev,
+        streaks: nextStreaks,
+        celebratedMilestones: updatedCelebrated,
+        xp: prev.xp + amount * 25,
+      };
+    });
     if (progress.soundEnabled) {
       sound.playFire();
     }
+  };
+
+  const setStreaksDirectly = (days: number) => {
+    setProgress((prev) => {
+      const nextStreaks = Math.max(0, days);
+      const updatedCelebrated = checkAndCelebrateMilestone(nextStreaks, prev);
+      return {
+        ...prev,
+        streaks: nextStreaks,
+        celebratedMilestones: updatedCelebrated,
+        xp: Math.max(prev.xp, nextStreaks * 20),
+      };
+    });
+    if (progress.soundEnabled) {
+      sound.playFire();
+    }
+  };
+
+  const claimStreakPrize = (
+    prizeId: StreakPrizeId,
+    deliveryData: {
+      studentName: string;
+      parentPhone: string;
+      deliveryRegion: string;
+      deliveryAddress: string;
+      sizeOrVariant?: string;
+    }
+  ): boolean => {
+    const prize = STREAK_PRIZES.find((p) => p.id === prizeId);
+    if (!prize) return false;
+    if (progress.streaks < prize.daysRequired) return false;
+
+    const trackingCode = `LK-${prize.daysRequired}-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const newClaim = {
+      prizeId,
+      prizeName: prize.name,
+      periodLabel: prize.periodLabel,
+      claimedAt: new Date().toISOString(),
+      studentName: deliveryData.studentName,
+      parentPhone: deliveryData.parentPhone,
+      deliveryRegion: deliveryData.deliveryRegion,
+      deliveryAddress: deliveryData.deliveryAddress,
+      sizeOrVariant: deliveryData.sizeOrVariant,
+      status: 'processing' as const,
+      trackingCode,
+    };
+
+    setProgress((prev) => ({
+      ...prev,
+      streakClaims: {
+        ...(prev.streakClaims || {}),
+        [prizeId]: newClaim,
+      },
+    }));
+
+    if (progress.soundEnabled) {
+      sound.playVictory();
+    }
+
+    return true;
   };
 
   const markLessonCompleted = (lessonId: string): boolean => {
@@ -433,12 +576,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return false; // already completed
     }
 
-    setProgress((prev) => ({
-      ...prev,
-      completedLessons: [...prev.completedLessons, lessonId],
-      streaks: prev.streaks + 1,
-      xp: prev.xp + 30,
-    }));
+    setProgress((prev) => {
+      const nextStreaks = prev.streaks + 1;
+      const updatedCelebrated = checkAndCelebrateMilestone(nextStreaks, prev);
+      return {
+        ...prev,
+        completedLessons: [...prev.completedLessons, lessonId],
+        streaks: nextStreaks,
+        celebratedMilestones: updatedCelebrated,
+        xp: prev.xp + 30,
+      };
+    });
 
     if (progress.soundEnabled) {
       sound.playFire();
@@ -691,6 +839,87 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return sms;
   };
 
+  const getDailyPuzzleRecord = useCallback((dateStr?: string): DailyPuzzleRecord | null => {
+    const targetDate = dateStr || getTodayDateString();
+    return progress.dailyPuzzleHistory?.[targetDate] || null;
+  }, [progress.dailyPuzzleHistory]);
+
+  const isTodayPuzzleSolved = Boolean(
+    progress.dailyPuzzleHistory?.[getTodayDateString()]?.solved
+  );
+
+  const dailyPuzzleStreak = progress.dailyPuzzleStreak || 0;
+
+  const submitDailyPuzzle = useCallback((params: {
+    puzzleId: string;
+    optionIndex: number;
+    isCorrect: boolean;
+    rewardCoins: number;
+    rewardXp: number;
+    usedHint: boolean;
+  }): boolean => {
+    const todayStr = getTodayDateString();
+    const existing = progress.dailyPuzzleHistory?.[todayStr];
+    if (existing?.solved) {
+      return false;
+    }
+
+    const nextRecord: DailyPuzzleRecord = {
+      date: todayStr,
+      puzzleId: params.puzzleId,
+      grade: progress.grade,
+      solved: params.isCorrect,
+      selectedOptionIndex: params.optionIndex,
+      attempts: (existing?.attempts || 0) + 1,
+      usedHint: params.usedHint,
+      solvedAt: new Date().toISOString(),
+      rewardCoins: params.isCorrect ? params.rewardCoins : 0,
+      rewardXp: params.isCorrect ? params.rewardXp : 0,
+    };
+
+    setProgress((prev) => {
+      const nextHistory = {
+        ...(prev.dailyPuzzleHistory || {}),
+        [todayStr]: nextRecord,
+      };
+
+      if (!params.isCorrect) {
+        return {
+          ...prev,
+          dailyPuzzleHistory: nextHistory,
+        };
+      }
+
+      const nextStreak = (prev.dailyPuzzleStreak || 0) + 1;
+      const nextCoins = prev.coins + params.rewardCoins;
+      const nextXp = prev.xp + params.rewardXp;
+      const nextStreaks = prev.streaks + 1;
+      const updatedCelebrated = checkAndCelebrateMilestone(nextStreaks, prev);
+
+      return {
+        ...prev,
+        coins: nextCoins,
+        xp: nextXp,
+        streaks: nextStreaks,
+        dailyPuzzleStreak: nextStreak,
+        celebratedMilestones: updatedCelebrated,
+        dailyPuzzleHistory: nextHistory,
+      };
+    });
+
+    if (params.isCorrect) {
+      if (progress.soundEnabled) {
+        sound.playVictory();
+      }
+    } else {
+      if (progress.soundEnabled) {
+        sound.playIncorrect();
+      }
+    }
+
+    return params.isCorrect;
+  }, [progress.dailyPuzzleHistory, progress.grade, progress.soundEnabled, checkAndCelebrateMilestone]);
+
   const lionStage = LION_STAGES[progress.grade] || LION_STAGES[1];
 
   return (
@@ -713,6 +942,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setName,
         addCoins,
         addStreak,
+        setStreaksDirectly,
+        claimStreakPrize,
+        celebrationPrize,
+        setCelebrationPrize,
+        isStreakClaimModalOpen,
+        setIsStreakClaimModalOpen,
+        selectedPrizeToClaim,
+        setSelectedPrizeToClaim,
+        openClaimModalForPrize,
         markLessonCompleted,
         markQuizCompleted,
         toggleSound,
@@ -733,6 +971,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         recordGamePlay,
         isGameLocked,
         getGamePlayCount,
+        getDailyPuzzleRecord,
+        submitDailyPuzzle,
+        dailyPuzzleStreak,
+        isTodayPuzzleSolved,
       }}
     >
       {children}

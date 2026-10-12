@@ -52,7 +52,39 @@ export interface Achievement {
   unlocked: boolean;
 }
 
-export type SmsType = 'inactivity_1day' | 'quiz_progress' | 'level_up' | 'system';
+export type StreakPrizeId = 'streak_pen_7' | 'streak_cap_30' | 'streak_cup_60' | 'streak_tshirt_100';
+
+export interface StreakPrize {
+  id: StreakPrizeId;
+  daysRequired: number; // 7, 30, 60, 100 kun
+  periodLabel: string; // '1 hafta', '1 oy', '2 oy', '100 kun'
+  name: string; // 'LiderKids Brend Ruchkasi', etc.
+  category: 'pen' | 'cap' | 'cup' | 'tshirt';
+  emoji: string;
+  badge: string;
+  description: string;
+  detailedFeature: string;
+  color: string;
+  border: string;
+  bgSoft: string;
+  realGiftNote: string;
+}
+
+export interface StreakPrizeClaim {
+  prizeId: StreakPrizeId;
+  prizeName: string;
+  periodLabel: string;
+  claimedAt: string;
+  studentName: string;
+  parentPhone: string;
+  deliveryRegion: string;
+  deliveryAddress: string;
+  sizeOrVariant?: string;
+  status: 'processing' | 'shipped' | 'delivered';
+  trackingCode: string;
+}
+
+export type SmsType = 'inactivity_1day' | 'quiz_progress' | 'level_up' | 'system' | 'streak_prize_won';
 
 export interface SmsMessage {
   id: string;
@@ -73,6 +105,7 @@ export interface SmsMessage {
     subjectTitle?: string;
     daysInactive?: number;
     streaks?: number;
+    prizeName?: string;
   };
 }
 
@@ -146,6 +179,10 @@ export interface UserProgress {
   equippedItems?: EquippedItems;
   smsHistory?: SmsMessage[];
   dailyGames?: DailyGamesRecord;
+  streakClaims?: Record<string, StreakPrizeClaim>;
+  celebratedMilestones?: number[];
+  dailyPuzzleHistory?: Record<string, import('./puzzle').DailyPuzzleRecord>;
+  dailyPuzzleStreak?: number;
 }
 
-
+export * from './puzzle';
