@@ -100,6 +100,30 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
     }
   }, [isAiAssistantOpen]);
 
+  // Escape tugmasi orqali yopish
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isAiAssistantOpen) {
+        closeAiAssistant();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAiAssistantOpen, closeAiAssistant]);
+
+  // Brauzer ovozlarini oldindan yuklab olish
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const loadVoices = () => {
+        const v = window.speechSynthesis.getVoices();
+        if (v && v.length > 0) setAvailableVoices(v);
+      };
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, []);
+
   // Setup Web Speech API for voice recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -174,26 +198,43 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
     }
   };
 
-  // Text to Speech
+  // Text to Speech (Sof O'zbek tilida gapirish)
   const speakText = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
     window.speechSynthesis.cancel();
 
-    // Clean text of markdown asterisks and emojies for cleaner speech
-    const cleanText = text
-      .replace(/[*_#`]/g, '')
-      .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+    // Matnni tozalash va belgilarni o'zbekcha so'zlarga o'girish
+    let cleanText = text
+      .replace(/(\d+)\s*\+\s*(\d+)/g, "$1 qo'shilgan $2")
+      .replace(/(\d+)\s*\-\s*(\d+)/g, "$1 ayrilgan $2")
+      .replace(/(\d+)\s*[\*×]\s*(\d+)/g, "$1 ko'paytirilgan $2")
+      .replace(/(\d+)\s*[\/÷]\s*(\d+)/g, "$1 bo'lingan $2")
+      .replace(/=/g, " teng ")
+      .replace(/[*_#`~>]/g, '')
+      .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 0.95; // Friendly, slightly deliberate speed for kids
-    utterance.pitch = 1.15; // Slightly cheerful, youthful pitch
+    utterance.lang = 'uz-UZ';
+    utterance.rate = 0.92; // Bolalar aniq tushunishi uchun qulay tezlik
+    utterance.pitch = 1.08; // Yoqimli va quvnoq do'stona ohang
 
-    // Try finding an Uzbek or Russian voice fallback
-    const voices = window.speechSynthesis.getVoices();
-    const uzVoice = voices.find((v) => v.lang.startsWith('uz'));
+    const voices = availableVoices.length > 0 ? availableVoices : window.speechSynthesis.getVoices();
+    // 1. O'zbekcha ovoz
+    const uzVoice = voices.find((v) => v.lang.toLowerCase().startsWith('uz'));
+    // 2. Turkcha ovoz (fonetik jihatdan o'zbek lotin harflarini eng tabiiy o'qiydi)
+    const trVoice = voices.find((v) => v.lang.toLowerCase().startsWith('tr'));
+    // 3. Natural / Online ovoz
+    const naturalVoice = voices.find((v) => v.name.includes('Natural') || v.name.includes('Online'));
+
     if (uzVoice) {
       utterance.voice = uzVoice;
+    } else if (trVoice) {
+      utterance.voice = trVoice;
+    } else if (naturalVoice) {
+      utterance.voice = naturalVoice;
     }
 
     utterance.onstart = () => {
@@ -315,13 +356,17 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
+        onClick={closeAiAssistant}
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-2xl h-[92vh] sm:h-[85vh] max-h-[760px] bg-gradient-to-b from-amber-50/95 via-white to-amber-50/80 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 rounded-3xl sm:rounded-3xl shadow-2xl border-4 border-amber-300 dark:border-amber-500/30 flex flex-col overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-2xl h-[92vh] sm:h-[85vh] max-h-[760px] bg-gradient-to-b from-amber-50/95 via-white to-amber-50/80 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 rounded-3xl sm:rounded-3xl shadow-2xl border-4 border-amber-300 dark:border-amber-500/30 flex flex-col overflow-hidden cursor-default"
         >
           {/* TOP HEADER */}
           <div className="relative px-4 sm:px-6 py-3.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-amber-950 flex items-center justify-between border-b-2 border-amber-300 shadow-md">
@@ -386,14 +431,15 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
                 <RotateCcw className="w-5 h-5" />
               </button>
 
-              {/* Close */}
+              {/* Katta va aniq Yopish tugmasi */}
               <button
                 type="button"
                 onClick={closeAiAssistant}
-                className="p-2 rounded-xl bg-amber-900/20 hover:bg-red-500 hover:text-white text-amber-950 transition"
-                title="Yopish"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-500 hover:bg-red-600 active:scale-95 text-white font-extrabold text-xs sm:text-sm shadow-md transition ml-1 cursor-pointer"
+                title="Oynani yopish (Esc)"
               >
-                <X className="w-5 h-5 stroke-[2.5]" />
+                <X className="w-4 h-4 stroke-[3]" />
+                <span>Yopish</span>
               </button>
             </div>
           </div>
