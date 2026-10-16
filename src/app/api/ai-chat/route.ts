@@ -54,14 +54,14 @@ ${context?.question ? `- Ishlayotgan savoli: "${context.question}"` : ''}
           });
         }
 
-        // Try gemini-3.8-flash first (recommended for this key), then fallbacks
-        const models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+        // Working models for this API key: gemini-3-flash-preview (fastest), then gemini-3.5-flash
+        const models = ['gemini-3-flash-preview', 'gemini-3.5-flash'];
         let replyText = '';
 
         for (const model of models) {
           try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const timeoutId = setTimeout(() => controller.abort(), 5500);
 
             const geminiRes = await fetch(
               `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
