@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import FullBodyLionCharacter, { LionAction } from './FullBodyLionCharacter';
 import { sound } from '@/utils/sound';
-import { askSherchaAi, generateOfflineKidResponse } from '@/utils/aiKidTutor';
+import { askSherchaAi, generateOfflineKidResponse, convertNumbersToUzbekWords, latinUzbekToCyrillic } from '@/utils/aiKidTutor';
 
 interface Message {
   id: string;
@@ -198,43 +198,65 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
     }
   };
 
-  // Text to Speech (Sof O'zbek tilida gapirish)
+  // Text to Speech (100% O'zbek tilida gapirish)
   const speakText = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
     window.speechSynthesis.cancel();
 
-    // Matnni tozalash va belgilarni o'zbekcha so'zlarga o'girish
-    let cleanText = text
-      .replace(/(\d+)\s*\+\s*(\d+)/g, "$1 qo'shilgan $2")
-      .replace(/(\d+)\s*\-\s*(\d+)/g, "$1 ayrilgan $2")
-      .replace(/(\d+)\s*[\*×]\s*(\d+)/g, "$1 ko'paytirilgan $2")
-      .replace(/(\d+)\s*[\/÷]\s*(\d+)/g, "$1 bo'lingan $2")
-      .replace(/=/g, " teng ")
-      .replace(/[*_#`~>]/g, '')
+    // 1. Avval barcha sonlarni va arifmetik amallarni sof o'zbekcha so'zlarga aylantiramiz
+    // (Masalan: "2 + 17 - 11 = 8" -> "ikki qo'shilgan o'n yetti ayrilgan o'n bir teng sakkiz")
+    const wordsConverted = convertNumbersToUzbekWords(text);
+
+    // 2. Belgilardan va ortiqcha emojilardan tozalash
+    let cleanText = wordsConverted
+      .replace(/[*_#`~>•]/g, '')
       .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
       .replace(/\s+/g, ' ')
       .trim();
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'uz-UZ';
-    utterance.rate = 0.92; // Bolalar aniq tushunishi uchun qulay tezlik
-    utterance.pitch = 1.08; // Yoqimli va quvnoq do'stona ohang
+    utterance.rate = 0.92;
+    utterance.pitch = 1.05;
 
     const voices = availableVoices.length > 0 ? availableVoices : window.speechSynthesis.getVoices();
-    // 1. O'zbekcha ovoz
-    const uzVoice = voices.find((v) => v.lang.toLowerCase().startsWith('uz'));
-    // 2. Turkcha ovoz (fonetik jihatdan o'zbek lotin harflarini eng tabiiy o'qiydi)
+
+    // Ovoz tanlash strategiyasi:
+    // 1. Tizimda o'rnatilgan rasmiy O'zbekcha ovoz (Edge/Windows da Madina/Sardor)
+    const uzVoice = voices.find(
+      (v) => v.lang.toLowerCase().includes('uz') || v.name.toLowerCase().includes('uzbek')
+    );
+
+    // 2. Turkcha ovoz (Lotin alifbosi fonetikasi o'zbek tiliga deyarli 100% mos keladi)
     const trVoice = voices.find((v) => v.lang.toLowerCase().startsWith('tr'));
-    // 3. Natural / Online ovoz
-    const naturalVoice = voices.find((v) => v.name.includes('Natural') || v.name.includes('Online'));
+
+    // 3. Ozarbayjoncha / Qozoqcha ovoz
+    const azVoice = voices.find(
+      (v) => v.lang.toLowerCase().startsWith('az') || v.lang.toLowerCase().startsWith('kk')
+    );
+
+    // 4. Ruscha ovoz (O'zbekistondagi Windows kompyuterlarda doim bo'ladi)
+    const ruVoice = voices.find((v) => v.lang.toLowerCase().startsWith('ru'));
 
     if (uzVoice) {
       utterance.voice = uzVoice;
+      utterance.lang = uzVoice.lang;
     } else if (trVoice) {
       utterance.voice = trVoice;
-    } else if (naturalVoice) {
-      utterance.voice = naturalVoice;
+      utterance.lang = trVoice.lang;
+    } else if (azVoice) {
+      utterance.voice = azVoice;
+      utterance.lang = azVoice.lang;
+    } else if (ruVoice) {
+      // Ruscha ovoz lotincha o'qisa buzilishi mumkin, shuning uchun kirillcha o'zbekchaga o'girib beramiz
+      // Natijada ruscha sintezator xuddi mahalliy o'zbek spikeri kabi o'qiydi!
+      utterance.voice = ruVoice;
+      utterance.lang = ruVoice.lang;
+      utterance.text = latinUzbekToCyrillic(cleanText);
+    } else {
+      // Agar faqat boshqa ovoz bo'lsa, inglizcha son aytmasligi uchun barcha sonlar o'zbekcha so'zlarga aylantirilgan
+      utterance.lang = 'uz-UZ';
     }
 
     utterance.onstart = () => {
@@ -547,6 +569,13 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
             >
               <span>🧩</span>
               <span>Jumboq ber</span>
+            </button>
+            <button
+              onClick={() => handleQuickQuestion("Javobini ayt-chi, sirini och! 💡")}
+              className="px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-400 dark:border-amber-700 text-xs font-black text-amber-900 dark:text-amber-200 hover:border-amber-600 shrink-0 transition shadow-xs hover:bg-amber-200 flex items-center gap-1"
+            >
+              <span>💡</span>
+              <span>Javobini ayt</span>
             </button>
             <button
               onClick={() => handleQuickQuestion("Tez hisoblash sirini o'rgat, karra jadvali va qo'shish qanday oson bo'ladi? ➕")}

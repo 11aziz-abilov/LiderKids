@@ -29,7 +29,8 @@ MUHIM QOIDALAR:
 3. To'g'ridan-to'g'ri va aniq javob ber: Bola bergan savolga birinchi jumladanoq aniq va sodda javobni tushuntir.
 4. Emojilar: Quvnoq emojilardan foydalan (🦁, 🌟, 💡, 🍎, 👑, ✨, 🚀, 🎯, 🪙).
 5. Matematika/Misol berilsa: Aniq javobini ko'rsat va uni qanday oson hisoblashni (1-2 qadamda) o'zbek tilida erinmasdan tushuntir.
-6. Ruhlantirish: Bolani doim maqtov va rag'bat bilan qo'llab-quvvatla ("Barakalla!", "Sen buni ajoyib uddalaysan!").
+6. JUMBOQ VA TOPISHMOQLAR: Agar bolaga jumboq, topishmoq yoki mantiqiy savol bersang, ASLO JAVOBINI BIRGA YOZMA! Faqat savolning o'zini ber va boladan "O'ylab ko'r-chi, javobing nima?" deb so'ra. Bola javob so'ramaguncha yoki taxminini aytmaguncha javobni ochma!
+7. Ruhlantirish: Bolani doim maqtov va rag'bat bilan qo'llab-quvvatla ("Barakalla!", "Sen buni ajoyib uddalaysan!").
 `;
 
 /**
@@ -189,14 +190,35 @@ Yana qaysi hayvon haqida bilishni xohlaysan? 🐾`;
 Prezident maktabiga kirganingda astronomiya va fizikani yanada chuqur o'rganasan! 🔭`;
   }
 
-  // 8. Jumboq
+  // 8. Jumboq va topishmoqlar (Faqat savol beriladi, bola so'ramaguncha javob yashiriladi!)
   if (query.includes('jumboq') || query.includes('topishmoq') || query.includes('boshqotirma') || query.includes('savol ber')) {
     const riddles = [
-      `Senga bir qiziq jumboq aytaman, top-chi! 🦁🧩\n\n"Bir oilada 5 nafar o'g'il bor. Har bir o'g'ilning 1 tadan singlisi bor. Bu oilada jami nechta bola bor?"\n\nJavob: **6 ta bola**! Chunki 1 ta singil 5 ta o'g'ilning hammasiga umumiy singil bo'ladi! 😉👑`,
-      `Qani, detektiv bilimdonim, buni top-chi! 🦁🕵️‍♂️\n\n"Stol ustida 4 ta yonib turgan sham bor edi. Shamol esib, ulardan 2 tasini o'chirib qo'ydi. Ertalab stolda nechta sham qoladi?"\n\nJavob: **2 ta**! Chunki o'chmagan 2 ta sham erib tugaydi, o'chgan 2 tasi esa stolda qoladi! 🕯️✨`,
-      `Mana senga Prezident maktabi uslubidagi mantiqiy savol! 🦁🎯\n\n"Qaysi idishga hech qachon suv quyib to'ldirib bo'lmaydi?"\n\nJavob: **Teshik idishga** yoki **G'alvirga**! 😄💧`
+      `Mana senga Prezident maktabi uslubidagi ajoyib mantiqiy savol! 🦁🎯\n\n❓ **«Qaysi idishga hech qachon suv quyib to‘ldirib bo‘lmaydi?»**\n\nQani, bilimdonim, yaxshilab mulohaza qilib ko‘r va o‘z taxminingni yoz! 🧠\n(Agar topa olmasang, «Javobini ayt» deb yozsang, sirini ochaman! 😉)`,
+      `Senga bir qiziq oilaviy jumboq aytaman, top-chi! 🦁🧩\n\n❓ **«Bir oilada 5 nafar o‘g‘il bor. Har bir o‘g‘ilning 1 tadan singlisi bor. Bu oilada jami nechta bola bor?»**\n\nO‘ylab ko‘r va menga javobingni yoz-chi! 👨‍👩‍👧‍👦\n(Javobni bilish uchun «Javobini ayt» deb yozishing mumkin!)`,
+      `Qani, detektiv bilimdonim, buni top-chi! 🦁🕵️‍♂️\n\n❓ **«Stol ustida 4 ta yonib turgan sham bor edi. Shamol esib, ulardan 2 tasini o‘chirib qo‘ydi. Ertalab stolda nechta sham qoladi?»**\n\nJavobingni kutaman, faqat yaxshilab mulohaza qil! 🕯️✨\n(Topa olmasang, «Javobini ayt» deb so‘ra!)`,
+      `Prezident maktabiga xos diqqat sinovi! 🦁⚡\n\n❓ **«Qorong‘i sovuq xonada bitta gugurt cho‘pi, sham, kerosin chiroq va o‘tinli pechka bor. Birinchi navbatda nimani yoqish kerak?»**\n\nQani, topa olasanmi? Javobingni kutaman! 🔥`
     ];
     return riddles[Math.floor(Math.random() * riddles.length)];
+  }
+
+  // 8.1. Bola jumboqning javobini so'raganda
+  if (query.includes('javob') || query.includes('javobi') || query.includes('topolmadim') || query.includes('yechim') || query.includes('sirini och') || query.includes('taslim')) {
+    return `Keling, bu ajoyib jumboqning sirini ochamiz! 🦁💡
+
+✨ **Jumboqlarning to‘g‘ri yechimlari:**
+1️⃣ *Teshik idish yoki g‘alvir:* Chunki suv uning teshiklaridan oqib ketadi! 😄💧
+2️⃣ *Oila jumbog‘i:* Jami **6 ta bola**! Chunki 1 ta singil barcha 5 nafar o‘g‘ilga umumiy singil hisoblanadi! 👨‍👩‍👧‍👦
+3️⃣ *Shamlar jumbog‘i:* Stolda **2 ta sham** qoladi! Chunki o‘chmagan 2 ta sham oxirigacha erib tugaydi, o‘chgan 2 tasi esa erimay qoladi! 🕯️
+4️⃣ *Gugurt jumbog‘i:* Birinchi navbatda **gugurt cho‘pini** yoqish kerak! Aks holda qolganlarini yoqib bo‘lmaydi! 🔥
+
+Barakalla, har bir jumboq seni yanada ziyrak va aqlli qiladi! Yana bitta yangi jumboq beraymi? 🚀👑`;
+  }
+
+  // 8.2. Bola taxmin qilganda (to'g'ri topsa)
+  if (query.includes('teshik') || query.includes('galvir') || query.includes("g'alvir") || query.includes('elak') || query.includes('gugurt')) {
+    return `URAAA! Qoyilmaqom, to‘ppa-to‘g‘ri topding, chempion! 🦁🎉🎊
+Sen haqiqiy zukko va topqir bolajonsan! Prezident maktabiga mana shunday diqqatli liderlar kerak!
+Yana bitta yangi jumboq berishimni xohlaysanmi? 🧩✨`;
   }
 
   // 9. Motivatsiya va tushkunlik
@@ -344,4 +366,106 @@ ${context?.question ? `- Ishlayotgan savoli: "${context.question}"` : ''}
     reply: offlineText,
     source: 'offline-smart',
   };
+}
+
+/**
+ * Raqamlarni sof o'zbek tilidagi so'zlarga aylantirish (TTS inglizcha 'one, two, eight' deb yubormasligi uchun)
+ */
+export function convertNumbersToUzbekWords(text: string): string {
+  const ones = ['', 'bir', 'ikki', 'uch', "to'rt", 'besh', 'olti', 'yetti', 'sakkiz', "to'qqiz"];
+  const tens = ['', "o'n", 'yigirma', "o'ttiz", 'qirq', 'ellik', 'oltmish', 'yetmish', 'sakson', "to'qson"];
+
+  function numToUz(n: number): string {
+    if (n === 0) return 'nol';
+    if (n < 0) return 'minus ' + numToUz(-n);
+    if (n < 10) return ones[n];
+    if (n < 100) {
+      const t = Math.floor(n / 10);
+      const rem = n % 10;
+      return tens[t] + (rem > 0 ? ' ' + ones[rem] : '');
+    }
+    if (n < 1000) {
+      const h = Math.floor(n / 100);
+      const rem = n % 100;
+      const hStr = (h === 1 ? '' : ones[h] + ' ') + 'yuz';
+      return hStr + (rem > 0 ? ' ' + numToUz(rem) : '');
+    }
+    if (n < 1000000) {
+      const th = Math.floor(n / 1000);
+      const rem = n % 1000;
+      return numToUz(th) + ' ming' + (rem > 0 ? ' ' + numToUz(rem) : '');
+    }
+    return n.toString();
+  }
+
+  // Raqamli emojilar (1️⃣, 2️⃣, 3️⃣ ...)
+  let processed = text
+    .replace(/1️⃣/g, 'birinchi.')
+    .replace(/2️⃣/g, 'ikkinchi.')
+    .replace(/3️⃣/g, 'uchinchi.')
+    .replace(/4️⃣/g, "to'rtinchi.")
+    .replace(/5️⃣/g, 'beshinchi.');
+
+  // Arifmetik belgilar
+  processed = processed
+    .replace(/\s*\+\s*/g, " qo'shilgan ")
+    .replace(/\s*[\-–—]\s*/g, " ayrilgan ")
+    .replace(/\s*[\*×xX]\s*/g, " ko'paytirilgan ")
+    .replace(/\s*[\/÷]\s*/g, " bo'lingan ")
+    .replace(/\s*=\s*/g, " teng ");
+
+  // Barcha raqamlarni so'zlarga o'girish (masalan "8" -> "sakkiz", "17" -> "o'n yetti")
+  processed = processed.replace(/\b\d+\b/g, (match) => {
+    const num = parseInt(match, 10);
+    return isNaN(num) ? match : numToUz(num);
+  });
+
+  return processed;
+}
+
+/**
+ * Ruscha TTS ovozlari uchun lotinchadan kirillchaga o'girish (eng tabiiy o'zbekcha talaffuz beradi)
+ */
+export function latinUzbekToCyrillic(str: string): string {
+  const map: [RegExp, string][] = [
+    [/o['`’]/gi, 'ў'],
+    [/g['`’]/gi, 'ғ'],
+    [/sh/gi, 'ш'],
+    [/ch/gi, 'ч'],
+    [/yo/gi, 'ё'],
+    [/yu/gi, 'ю'],
+    [/ya/gi, 'я'],
+    [/ye/gi, 'е'],
+    [/a/gi, 'а'],
+    [/b/gi, 'б'],
+    [/d/gi, 'д'],
+    [/e/gi, 'э'],
+    [/f/gi, 'ф'],
+    [/g/gi, 'г'],
+    [/h/gi, 'ҳ'],
+    [/i/gi, 'и'],
+    [/j/gi, 'ж'],
+    [/k/gi, 'к'],
+    [/l/gi, 'л'],
+    [/m/gi, 'м'],
+    [/n/gi, 'н'],
+    [/o/gi, 'о'],
+    [/p/gi, 'п'],
+    [/q/gi, 'қ'],
+    [/r/gi, 'р'],
+    [/s/gi, 'с'],
+    [/t/gi, 'т'],
+    [/u/gi, 'у'],
+    [/v/gi, 'в'],
+    [/x/gi, 'х'],
+    [/y/gi, 'й'],
+    [/z/gi, 'з'],
+    [/'/g, 'ъ'],
+  ];
+
+  let result = str;
+  for (const [regex, cyr] of map) {
+    result = result.replace(regex, cyr);
+  }
+  return result;
 }
