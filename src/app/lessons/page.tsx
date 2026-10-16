@@ -23,7 +23,7 @@ function LessonsContent() {
   const searchParams = useSearchParams();
   const subjectParam = searchParams.get('subject') as SubjectId | null;
 
-  const { progress, markLessonCompleted } = useGame();
+  const { progress, markLessonCompleted, openAiAssistant } = useGame();
   const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(
     subjectParam || 'all'
   );
@@ -291,6 +291,24 @@ function LessonsContent() {
                           ? 'Dars yakunlangan (Qayta ko‘rilmoqda)'
                           : 'Darsni yakunlash (+1 🔥)'}
                       </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openAiAssistant({
+                          question: `${activeLesson.title}: ${activeLesson.description}`,
+                          subject: activeLesson.subjectId,
+                          topic: activeLesson.learningPoints?.join(', ') || activeLesson.title,
+                          grade: activeLesson.grade,
+                          lessonId: activeLesson.id,
+                        })
+                      }
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-amber-950 shadow-md transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                      title="Shercha AI ushbu dars mavzusini sodda tushuntirib beradi"
+                    >
+                      <span>🦁</span>
+                      <span>Sherchadan tushuntirish so‘rash</span>
                     </button>
 
                     <Link

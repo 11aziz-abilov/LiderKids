@@ -19,6 +19,7 @@ export default function Header() {
     setIsSmsModalOpen,
     smsHistory,
     isTodayPuzzleSolved,
+    openAiAssistant,
   } = useGame();
 
   const navLinks = [
@@ -135,6 +136,18 @@ export default function Header() {
               title={progress.soundEnabled ? "Ovoz yoqilgan" : "Ovoz o‘chirilgan"}
             >
               {progress.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </motion.button>
+
+            {/* Shercha AI Tezkor Yordamchi tugmasi */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => openAiAssistant()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-amber-950 font-black text-xs sm:text-sm border-2 border-amber-300 dark:border-amber-500/50 shadow-sm hover:shadow-amber-400/30 transition cursor-pointer"
+              title="Shercha AI yordamchisidan tushunmagan narsangizni so'rang"
+            >
+              <span className="text-base select-none">🦁</span>
+              <span className="hidden md:inline">Shercha AI</span>
             </motion.button>
 
             {/* Ota-onalar SMS Markazi */}

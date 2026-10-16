@@ -40,6 +40,7 @@ export default function DailyPuzzlePage() {
     submitDailyPuzzle,
     dailyPuzzleStreak,
     isTodayPuzzleSolved,
+    openAiAssistant,
   } = useGame();
 
   const currentGrade = progress.grade || 1;
@@ -410,9 +411,26 @@ export default function DailyPuzzlePage() {
               >
                 <div className="flex items-start gap-2.5">
                   <span className="text-2xl">🦁💬</span>
-                  <p className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-100 italic">
-                    "{puzzle.hint}"
-                  </p>
+                  <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-100 italic">
+                      "{puzzle.hint}"
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openAiAssistant({
+                          question: `${puzzle.title}: ${puzzle.story} Savol: ${puzzle.questionPrompt}`,
+                          subject: 'Mantiqiy Boshqotirma',
+                          topic: puzzle.hint,
+                          grade: activeGrade,
+                        })
+                      }
+                      className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-amber-950 font-black text-xs shadow-xs transition hover:scale-105 active:scale-95 cursor-pointer"
+                    >
+                      <span>🦁</span>
+                      <span>Shercha bilan mantiqiy fikrlash</span>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}

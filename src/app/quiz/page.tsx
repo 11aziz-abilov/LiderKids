@@ -38,6 +38,7 @@ function QuizContent() {
     sendQuizReportSms,
     setIsSmsModalOpen,
     updateLastActiveDate,
+    openAiAssistant,
   } = useGame();
 
   const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(
@@ -384,12 +385,31 @@ function QuizContent() {
               {currentQ.question}
             </h3>
 
-            {currentQ.hint && !isAnswered && (
-              <div className="mt-3 flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/40 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-900/60 w-fit">
-                <HelpCircle className="w-4 h-4" />
-                <span>Yordam: {currentQ.hint}</span>
-              </div>
-            )}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {currentQ.hint && !isAnswered && (
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/40 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-900/60 w-fit">
+                  <HelpCircle className="w-4 h-4" />
+                  <span>Yordam: {currentQ.hint}</span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() =>
+                  openAiAssistant({
+                    question: currentQ.question,
+                    subject: currentQ.subjectId,
+                    topic: currentQ.hint || currentQ.explanation,
+                    grade: currentQ.grade,
+                  })
+                }
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-amber-950 font-black text-xs shadow-sm transition hover:scale-105 active:scale-95 cursor-pointer"
+                title="Shercha AI bilan savolni birgalikda tahlil qilish"
+              >
+                <span>🦁</span>
+                <span>Sherchadan tushuntirish so‘rash</span>
+              </button>
+            </div>
           </div>
 
           {/* Options Grid */}
@@ -472,6 +492,22 @@ function QuizContent() {
                     <p className="text-sm font-semibold mt-1">
                       {currentQ.explanation}
                     </p>
+                    <div className="mt-2.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openAiAssistant({
+                            question: currentQ.question,
+                            subject: currentQ.subjectId,
+                            topic: currentQ.explanation,
+                            grade: currentQ.grade,
+                          })
+                        }
+                        className="inline-flex items-center gap-1.5 text-xs font-black text-amber-800 dark:text-amber-300 bg-white/80 dark:bg-zinc-800 px-3 py-1.5 rounded-xl border border-amber-300 dark:border-zinc-700 hover:bg-amber-100 transition shadow-xs cursor-pointer"
+                      >
+                        <span>🦁 Shercha bilan batafsil suhbatlashish →</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>

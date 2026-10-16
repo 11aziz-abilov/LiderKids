@@ -131,6 +131,11 @@ interface GameContextType {
   }) => boolean;
   dailyPuzzleStreak: number;
   isTodayPuzzleSolved: boolean;
+  isAiAssistantOpen: boolean;
+  setIsAiAssistantOpen: (open: boolean) => void;
+  aiAssistantContext: { subject?: string; topic?: string; question?: string; grade?: number; lessonId?: string } | null;
+  openAiAssistant: (ctx?: { subject?: string; topic?: string; question?: string; grade?: number; lessonId?: string }) => void;
+  closeAiAssistant: () => void;
 }
 
 export const MAX_PLAYS_PER_GAME = 1;
@@ -202,6 +207,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [celebrationPrize, setCelebrationPrize] = useState<StreakPrize | null>(null);
   const [isStreakClaimModalOpen, setIsStreakClaimModalOpen] = useState(false);
   const [selectedPrizeToClaim, setSelectedPrizeToClaim] = useState<StreakPrize | null>(null);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
+  const [aiAssistantContext, setAiAssistantContext] = useState<{
+    subject?: string;
+    topic?: string;
+    question?: string;
+    grade?: number;
+    lessonId?: string;
+  } | null>(null);
+
+  const openAiAssistant = useCallback(
+    (ctx?: { subject?: string; topic?: string; question?: string; grade?: number; lessonId?: string }) => {
+      if (ctx) {
+        setAiAssistantContext(ctx);
+      }
+      setIsAiAssistantOpen(true);
+    },
+    []
+  );
+
+  const closeAiAssistant = useCallback(() => {
+    setIsAiAssistantOpen(false);
+  }, []);
 
   const openClaimModalForPrize = useCallback((prize: StreakPrize) => {
     setSelectedPrizeToClaim(prize);
@@ -975,6 +1002,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         submitDailyPuzzle,
         dailyPuzzleStreak,
         isTodayPuzzleSolved,
+        isAiAssistantOpen,
+        setIsAiAssistantOpen,
+        aiAssistantContext,
+        openAiAssistant,
+        closeAiAssistant,
       }}
     >
       {children}

@@ -9,6 +9,8 @@ import AcademicYearPromotionModal from '@/components/AcademicYearPromotionModal'
 import MascotReminderWidget from '@/components/MascotReminderWidget';
 import ParentSmsModal from '@/components/ParentSmsModal';
 import GlobalStreakModals from '@/components/GlobalStreakModals';
+import SherchaAiAssistantModal from '@/components/SherchaAiAssistantModal';
+import FloatingAiAssistantButton from '@/components/FloatingAiAssistantButton';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -49,6 +51,8 @@ export default function RootLayout({
           <AcademicYearPromotionModal />
           <MascotReminderWidget />
           <GlobalStreakModals />
+          <SherchaAiAssistantModal />
+          <FloatingAiAssistantButton />
           <Header />
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
             {children}
