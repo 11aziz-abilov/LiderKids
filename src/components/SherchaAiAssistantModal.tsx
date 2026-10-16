@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import FullBodyLionCharacter, { LionAction } from './FullBodyLionCharacter';
 import { sound } from '@/utils/sound';
+import { askSherchaAi, generateOfflineKidResponse } from '@/utils/aiKidTutor';
 
 interface Message {
   id: string;
@@ -242,24 +243,21 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
     setCurrentAction('study');
 
     try {
-      const response = await fetch('/api/ai-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: newMessages.map((m) => ({
-            role: m.sender,
-            content: m.text,
-          })),
-          context: aiAssistantContext || undefined,
-          studentName: progress.name || 'Yosh Lider',
-          grade: progress.grade || 1,
-        }),
+      // askSherchaAi: static export (Vercel va Capacitor) da ham, har qanday brauzerda ham 100% ishlaydi!
+      const data = await askSherchaAi({
+        userText: text,
+        history: newMessages.map((m) => ({
+          sender: m.sender,
+          text: m.text,
+        })),
+        context: aiAssistantContext || undefined,
+        studentName: progress.name || 'Yosh Lider',
+        grade: progress.grade || 1,
       });
 
-      const data = await response.json();
       const replyText =
         data.reply ||
-        "Ajoyib savol! Keling, buni birgalikda o'rganamiz. Qaysi qismini tushuntirib beray? 🦁✨";
+        generateOfflineKidResponse(text, aiAssistantContext || undefined);
 
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
@@ -278,15 +276,19 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
       }
     } catch (error) {
       console.error('AI chat error:', error);
+      const fallbackReply = generateOfflineKidResponse(text, aiAssistantContext || undefined);
       const fallbackMsg: Message = {
         id: `ai-${Date.now()}`,
         sender: 'assistant',
-        text: "Men doim yoningdaman, chempion! 🦁 Keling, savolni boshqacharoq shaklda ko'rib chiqamiz. Menga yana bir bor so'rab ko'r-chi! 🌟",
+        text: fallbackReply,
         timestamp: 'Hozir',
         source: 'offline-smart',
       };
       setMessages((prev) => [...prev, fallbackMsg]);
-      setCurrentAction('idle');
+      setCurrentAction('wave');
+      if (ttsEnabled && !isAutomatedContext) {
+        speakText(fallbackReply);
+      }
     } finally {
       setIsLoading(false);
     }

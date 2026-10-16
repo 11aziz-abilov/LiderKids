@@ -33,6 +33,66 @@ MUHIM QOIDALAR:
 `;
 
 /**
+ * Har qanday arifmetik ifodani (masalan "2+11-8", "15 * 3", "100 - 45 + 10")
+ * xavfsiz hisoblab, bolaga qadam-baqadam tushuntirib beruvchi funksiya
+ */
+export function evaluateKidMathExpression(query: string): string | null {
+  const cleanExpr = query
+    .replace(/[xX×]/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/karra/gi, '*')
+    .replace(/plyus/gi, '+')
+    .replace(/minus/gi, '-')
+    .replace(/qo['`’]?shish/gi, '+')
+    .replace(/ayirish/gi, '-')
+    .replace(/ko['`’]?paytirish/gi, '*')
+    .replace(/bo['`’]?lish/gi, '/');
+
+  const mathMatch = cleanExpr.match(/(\(?\d+\.?\d*\)?\s*[\+\-\*\/]\s*)+[\(?\d+\.?\d*\)?]+/);
+  if (!mathMatch) return null;
+
+  const rawMath = mathMatch[0].trim();
+  if (!/^[0-9+\-*/().\s]+$/.test(rawMath)) return null;
+
+  try {
+    if (/\/\s*0(?!\d)/.test(rawMath)) {
+      return `Ehtiyot bo'l, aziz bilimdonim! 🦁 Matematikada hech qanday sonni **0 ga bo'lib bo'lmaydi**! Bu qat'iy qoida! ✨`;
+    }
+
+    const calcFunc = new Function(`"use strict"; return (${rawMath})`);
+    const result = calcFunc();
+
+    if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
+      return null;
+    }
+
+    const rounded = Math.round(result * 100) / 100;
+
+    const prettyExpr = rawMath
+      .replace(/\*/g, ' × ')
+      .replace(/\//g, ' ÷ ')
+      .replace(/\+/g, ' + ')
+      .replace(/\-/g, ' - ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return `Barakalla, chempion! 🦁🔢
+
+Misolimiz: **${prettyExpr}**
+Yechim natijasi: **${rounded}**! 🎉
+
+💡 **Sherchaning qadamma-qadam tushuntirishi:**
+${prettyExpr.includes('+') && prettyExpr.includes('-')
+  ? `1️⃣ Ketma-ketlik bo'yicha amallarni bajaramiz.\n2️⃣ Qadam-baqadam hisoblaganimizda to'g'ri natija **${rounded}** chiqadi!`
+  : `Matematikada amallarni to'g'ri tartibda bajarsak, har doim eng to'g'ri natija chiqadi!`}
+
+Qoyilmaqom! Sen matematikani juda tez o'rganyapsan! Yana biror misol yechamizmi? 🚀👑`;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Agar internet yoki Gemini API kaliti bo'lmasa ham, bolaning har qanday savoliga
  * to'liq va mehr bilan o'zbek tilida javob beruvchi aqlli bilim bazasi
  */
@@ -57,52 +117,10 @@ ${context.topic ? `✨ **Kichik sir:** ${context.topic}` : ''}
 Sen albatta to'g'ri javobni topasan! Variantlardan birini tanlab ko'r-chi! 🚀👑`;
   }
 
-  // 2. Matematik hisoblashlar (Arifmetik misollar avtomatik hisoblanadi!)
-  // Masalan: "5 + 8", "12 * 4", "100 - 35", "56 / 7", "25 va 15 yig'indisi"
-  const mathRegex = /(\d+)\s*([\+\-\*\/xX×÷]|qo['`’]?shish|ayirish|ko['`’]?paytirish|bo['`’]?lish|plyus|minus|karra)\s*(\d+)/i;
-  const match = query.match(mathRegex);
-
-  if (match) {
-    const num1 = parseInt(match[1], 10);
-    const opRaw = match[2].toLowerCase();
-    const num2 = parseInt(match[3], 10);
-
-    let result = 0;
-    let opName = '';
-    let explanation = '';
-
-    if (opRaw === '+' || opRaw.includes('qo') || opRaw.includes('plyus')) {
-      result = num1 + num2;
-      opName = "qo'shish";
-      explanation = `${num1} ga ${num2} ni qo'shsak, **${result}** bo'ladi! 🍎🍏 Barmoqlarimizda yoki 10 gacha yaxlitlab hisoblasak judayam oson chiqadi!`;
-    } else if (opRaw === '-' || opRaw.includes('ayir') || opRaw.includes('minus')) {
-      result = num1 - num2;
-      opName = 'ayirish';
-      explanation = `${num1} dan ${num2} ni ayirsak, **${result}** qoladi! 🎯 Tasavvur qil: ${num1} ta sharing bor edi, ${num2} tasi uchib ketdi — qo'lingda ${result} ta qoldi!`;
-    } else if (opRaw === '*' || opRaw === 'x' || opRaw === '×' || opRaw.includes('ko') || opRaw.includes('karra')) {
-      result = num1 * num2;
-      opName = "ko'paytirish";
-      explanation = `${num1} × ${num2} = **${result}** bo'ladi! ✖️⚡ Bu degani ${num1} ta ${num2} ni bir-biriga qo'shish (tezkor hisob siri)!`;
-    } else if (opRaw === '/' || opRaw === '÷' || opRaw.includes('bo')) {
-      if (num2 === 0) {
-        return `Ehtiyot bo'l, do'stim! 🦁 Hech qanday sonni 0 ga bo'lib bo'lmaydi! Bu matematika qoidasi! ✨`;
-      }
-      result = Math.floor(num1 / num2);
-      const remainder = num1 % num2;
-      opName = "bo'lish";
-      explanation = remainder === 0
-        ? `${num1} ni ${num2} ga bo'lsak, **${result}** bo'ladi! ➗ Do'stlaring bilan teng taqsimlab oldingiz!`
-        : `${num1} ni ${num2} ga bo'lsak, **${result}** bo'ladi va **${remainder}** qoldiq qoladi!`;
-    }
-
-    if (explanation) {
-      return `Barakalla, matematik dahom! 🦁🔢
-
-${explanation}
-
-🌟 **Natija:** **${result}**
-Sen bilan hisob-kitob qilish judayam zavqli! Yana qanday misol yechamiz? 🚀`;
-    }
+  // 2. To'g'ridan-to'g'ri arifmetik hisob-kitoblar (masalan: "2+11-8", "15*4", "100-35")
+  const mathEvaluation = evaluateKidMathExpression(query);
+  if (mathEvaluation) {
+    return mathEvaluation;
   }
 
   // 3. Ko'paytirish jadvali
@@ -154,12 +172,12 @@ U yerga kirishning 4 ta oltin siri bor:
 Men senga ishonaman, sen albatta Prezident maktabi o'quvchisi bo'lasan! 🚀`;
   }
 
-  // 7. Hayvonlar, Koinot, Tabiat haqidagi bolalar savollari
+  // 7. Hayvonlar va Koinot
   if (query.includes('hayvon') || query.includes('sher') || query.includes('fil') || query.includes('kit') || query.includes('dinozavr')) {
     return `Tabiat olami ajoyib mo'jizalarga to'la, do'stim! 🦁🌍
 - **Dunyodagi eng katta hayvon** — bu Moviy Kit (Ko'k kit) 🐋. U 30 ta fildan ham og'irroq!
-- **Eng tez yuguruvchi hayvon** — Gepard 🐆 (mashinalardek 100 km/soat tezlikda yuguradi!).
-- **Hayvonlar qiroli** esa albatta Sher! 👑🦁 Chunki u jasur, kuchli va o'z oilasini doimo himoya qiladi — xuddi sendek bo'lajak lider!
+- **Eng tez yuguruvchi hayvon** — Gepard 🐆 (100 km/soat tezlikda yuguradi!).
+- **Hayvonlar qiroli** esa albatta Sher! 👑🦁 Chunki u jasur, kuchli va o'z oilasini doimo himoya qiladi.
 Yana qaysi hayvon haqida bilishni xohlaysan? 🐾`;
   }
 
@@ -174,7 +192,7 @@ Prezident maktabiga kirganingda astronomiya va fizikani yanada chuqur o'rganasan
   // 8. Jumboq
   if (query.includes('jumboq') || query.includes('topishmoq') || query.includes('boshqotirma') || query.includes('savol ber')) {
     const riddles = [
-      `Senga bir qiziq jumboq aytaman, top-chi! 🦁🧩\n\n"Bir oilada 5 nafar o'g'il bor. Har bir o'g'ilning 1 tadan singlisi bor. Bu oilada jami nechta bola bor?"\n\nO'ylab ko'r va menga javobingni yoz! (Kichik sir: singil hammaga umumiy bo'ladi! Demak, 5 o'g'il + 1 singil = 6 ta bola! 😉)`,
+      `Senga bir qiziq jumboq aytaman, top-chi! 🦁🧩\n\n"Bir oilada 5 nafar o'g'il bor. Har bir o'g'ilning 1 tadan singlisi bor. Bu oilada jami nechta bola bor?"\n\nJavob: **6 ta bola**! Chunki 1 ta singil 5 ta o'g'ilning hammasiga umumiy singil bo'ladi! 😉👑`,
       `Qani, detektiv bilimdonim, buni top-chi! 🦁🕵️‍♂️\n\n"Stol ustida 4 ta yonib turgan sham bor edi. Shamol esib, ulardan 2 tasini o'chirib qo'ydi. Ertalab stolda nechta sham qoladi?"\n\nJavob: **2 ta**! Chunki o'chmagan 2 ta sham erib tugaydi, o'chgan 2 tasi esa stolda qoladi! 🕯️✨`,
       `Mana senga Prezident maktabi uslubidagi mantiqiy savol! 🦁🎯\n\n"Qaysi idishga hech qachon suv quyib to'ldirib bo'lmaydi?"\n\nJavob: **Teshik idishga** yoki **G'alvirga**! 😄💧`
     ];
@@ -196,7 +214,7 @@ Keyin platformamizdagi **«Tanaffus 🎮»** bo'limida 2 daqiqa mini-o'yin o'yna
 Men — **Shercha (Qirol Sherzod)**, LiderKids platformasidagi aqlli do'sting va ustozingman!
 
 Mendan xohlagan narsangni so'rashing mumkin:
-➕ Matematika misollari (masalan "15 + 28 nechchi?" yoki "7 * 8")
+➕ Matematika misollari (masalan "2+11-8" yoki "7 * 8")
 🧩 Qiziqarli mantiqiy jumboqlar
 👑 Prezident maktabiga tayyorgarlik sirlari
 🌍 Koinot, hayvonlar va tabiat qiziqarliklari!
@@ -217,12 +235,113 @@ Menga qanday savoling bor? Menga yoz yoki mikrofonga gapir! 🎤✨`;
 Bugun darslarni yakunlab, olovchangni oshirib oldingmi? Olg'a! 🚀`;
   }
 
-  // 12. Boshqa har qanday savolga aniq va sodda javob berish
-  return `Barakalla, ajoyib savol berding, kichik dahom! 🦁💡
-"${userQuery}" haqida bilish juda muhim va qiziq!
+  // 12. Boshqa har qanday savolga
+  return `Barakalla, ajoyib savol berding, mening bilimdonim! 🦁💡
+"${userQuery}" haqida bilish juda qiziq!
 
 Buni sodda qilib tushuntiraman:
 🌟 Har qanday jumboq yoki yangi narsani o'rganishda avval uning asosiy qismlarini tushunib olish kerak.
-Agar bu matematik misol bo'lsa (masalan "25 + 14"), menga sonlarini yoz, darhol hisoblab tushuntiraman!
+Agar bu matematik misol bo'lsa (masalan "25 + 14 - 9"), menga sonlarini yoz, darhol hisoblab tushuntiraman!
 Agar darsdagi biror mavzu bo'lsa, qaysi fandan ekanligini ayt — birgalikda o'rganamiz! 🚀🧠`;
+}
+
+/**
+ * Universal Client & Server AI query runner
+ * Brauzerda ham (static export / Capacitor / Vercel), serverda ham ishlaydi!
+ */
+export async function askSherchaAi(params: {
+  userText: string;
+  history?: Array<{ sender: 'user' | 'assistant'; text: string }>;
+  context?: AiAssistantContextData;
+  studentName?: string;
+  grade?: number;
+}): Promise<{ reply: string; source: 'gemini' | 'offline-smart' }> {
+  const { userText, history = [], context, studentName = 'Bilimdon', grade = 1 } = params;
+
+  // 1. Agar foydalanuvchi to'g'ridan-to'g'ri hisoblash misoli yozgan bo'lsa (masalan "2+11-8"):
+  const mathQuick = evaluateKidMathExpression(userText);
+  if (mathQuick) {
+    return {
+      reply: mathQuick,
+      source: 'offline-smart',
+    };
+  }
+
+  // 2. Gemini API orqali so'rash
+  const apiKey =
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+    process.env.GEMINI_API_KEY ||
+    '';
+
+  if (apiKey) {
+    const studentInfoPrompt = `
+Hozir sen bilan gaplashayotgan bola ma'lumoti:
+- Ismi: ${studentName}
+- Sinfe: ${grade}-sinf o'quvchisi
+${context?.subject ? `- Fan: ${context.subject}` : ''}
+${context?.topic ? `- Mavzu: ${context.topic}` : ''}
+${context?.question ? `- Ishlayotgan savoli: "${context.question}"` : ''}
+`;
+
+    const fullSystemPrompt = `${SHERCHA_SYSTEM_PROMPT}\n${studentInfoPrompt}`;
+
+    const contents = history.map((m) => ({
+      role: m.sender === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.text }],
+    }));
+
+    contents.push({
+      role: 'user',
+      parts: [{ text: userText }],
+    });
+
+    const models = ['gemini-3-flash-preview', 'gemini-3.5-flash'];
+
+    for (const model of models) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: fullSystemPrompt }] },
+              contents,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 800,
+              },
+            }),
+          }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (geminiRes.ok) {
+          const data = await geminiRes.json();
+          const candidate = data.candidates?.[0];
+          const text = candidate?.content?.parts?.[0]?.text;
+          if (text && text.trim().length > 0) {
+            return {
+              reply: text.trim(),
+              source: 'gemini',
+            };
+          }
+        }
+      } catch (err) {
+        console.warn(`Gemini model ${model} fetch error:`, err);
+      }
+    }
+  }
+
+  // 3. Agar Gemini ulanmasa yoki javob bermasa: Aqlli Offline Shercha
+  const offlineText = generateOfflineKidResponse(userText, context);
+  return {
+    reply: offlineText,
+    source: 'offline-smart',
+  };
 }
