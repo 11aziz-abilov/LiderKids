@@ -31,36 +31,7 @@ export default function FloatingAiAssistantButton() {
   if (isAiAssistantOpen) return null;
 
   return (
-    <div className="fixed bottom-6 right-5 sm:right-6 z-40 flex items-end gap-2 pointer-events-auto">
-      {/* Speech bubble */}
-      <AnimatePresence>
-        {showBubble && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, x: 10 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="hidden sm:flex items-center gap-2 bg-white/95 dark:bg-zinc-800/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-xl border-2 border-amber-300 dark:border-amber-500/50 mb-2 cursor-pointer max-w-xs"
-            onClick={() => {
-              if (progress.soundEnabled) sound.playClick();
-              openAiAssistant();
-            }}
-          >
-            <span className="text-xs font-black text-amber-950 dark:text-amber-200">
-              {bubblePhrases[bubbleTextIndex]}
-            </span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowBubble(false);
-              }}
-              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+    <div className="fixed bottom-6 left-5 sm:left-6 z-40 flex items-end gap-2 pointer-events-auto">
       {/* Main Avatar Button */}
       <motion.button
         whileHover={{ scale: 1.08 }}
@@ -102,6 +73,35 @@ export default function FloatingAiAssistantButton() {
           <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white" />
         </span>
       </motion.button>
+
+      {/* Speech bubble on the right side of the avatar */}
+      <AnimatePresence>
+        {showBubble && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, x: -10 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="hidden sm:flex items-center gap-2 bg-white/95 dark:bg-zinc-800/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-xl border-2 border-amber-300 dark:border-amber-500/50 mb-2 cursor-pointer max-w-xs"
+            onClick={() => {
+              if (progress.soundEnabled) sound.playClick();
+              openAiAssistant();
+            }}
+          >
+            <span className="text-xs font-black text-amber-950 dark:text-amber-200">
+              {bubblePhrases[bubbleTextIndex]}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowBubble(false);
+              }}
+              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
