@@ -14,7 +14,6 @@ import {
   BookOpen,
   X,
   Award,
-  Gamepad2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -76,33 +75,6 @@ function LessonsContent() {
         </div>
       </div>
 
-      {/* Mini-Games Break Banner */}
-      <div className="bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-amber-500/10 dark:from-purple-950/40 dark:to-zinc-850 p-4 sm:p-5 rounded-3xl border-2 border-purple-200 dark:border-purple-900/50 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-md text-white shrink-0">
-            🎮
-          </div>
-          <div>
-            <h3 className="text-sm sm:text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <span>Darslar oralig‘ida tanaffus: 3 ta Mini-o‘yin!</span>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
-                2 daqiqa
-              </span>
-            </h3>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              Juftini top, Mini-pazl va Yulduz ushlash — {progress.grade}-sinf uchun maxsus moslashtirilgan!
-            </p>
-          </div>
-        </div>
-
-        <Link
-          href="/games"
-          className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-md transition shrink-0 hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer"
-        >
-          <Gamepad2 className="w-4 h-4" />
-          <span>Tanaffusga o‘tish 🎯</span>
-        </Link>
-      </div>
 
       {/* Subject Filter Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-4 rounded-2xl border-2 border-amber-200 dark:border-zinc-800 shadow-sm">
@@ -310,14 +282,6 @@ function LessonsContent() {
                       <span>🦁</span>
                       <span>Sherchadan tushuntirish so‘rash</span>
                     </button>
-
-                    <Link
-                      href="/games"
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-md transition-transform hover:scale-105 active:scale-95"
-                    >
-                      <Gamepad2 className="w-4 h-4" />
-                      <span>2 daqiqa tanaffus 🎮</span>
-                    </Link>
                   </div>
                 </div>
               </div>

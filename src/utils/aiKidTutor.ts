@@ -227,7 +227,7 @@ Yana bitta yangi jumboq berishimni xohlaysanmi? 🧩✨`;
 Bilasanmi, hatto dunyodagi eng zo'r olimlar ham ko'p marta xato qilishgan. Xato — bu seni yanada kuchli qiladigan saboq!
 
 ✨ Hozir ozgina chuqur nafas ol, bir qultum toza suv ich va o'rningdan turib 5 marta sakrab ol! 🏃‍♂️💧
-Keyin platformamizdagi **«Tanaffus 🎮»** bo'limida 2 daqiqa mini-o'yin o'ynab kel. Kayfiyating ko'tarilgach, yana birga dars qilamiz! Men doim sen bilanman! 🔥👑`;
+Keyin biroz dam ol yoki boshqotirma yechib ko'r. Kayfiyating ko'tarilgach, yana birga dars qilamiz! Men doim sen bilanman! 🔥👑`;
   }
 
   // 10. Salomlashish
