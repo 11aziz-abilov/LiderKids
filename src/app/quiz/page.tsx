@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
 import { QUIZ_QUESTIONS, SUBJECTS } from '@/data/mockData';
-import { SubjectId, QuizQuestion, SmsMessage } from '@/types';
+import { SubjectId, QuizQuestion, SmsMessage, GradeLevel, DifficultyLevel } from '@/types';
 import { sound } from '@/utils/sound';
 import { smsService } from '@/utils/smsService';
 import { triggerConfetti } from '@/components/ConfettiEffect';
@@ -22,6 +22,11 @@ import {
   Smartphone,
   MessageSquare,
   Check,
+  BookOpen,
+  GraduationCap,
+  Layers,
+  BarChart3,
+  Filter,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -41,9 +46,12 @@ function QuizContent() {
     openAiAssistant,
   } = useGame();
 
+  const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(progress.grade || 4);
   const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(
     subjectParam || 'all'
   );
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | 'all'>('all');
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
@@ -53,14 +61,22 @@ function QuizContent() {
   const [floatingCoin, setFloatingCoin] = useState(false);
   const [sentSms, setSentSms] = useState<SmsMessage | null>(null);
 
-  // Filter questions for the current student's grade and subject
+  // Sync selectedGrade when student's profile grade changes
+  useEffect(() => {
+    if (progress.grade) {
+      setSelectedGrade(progress.grade);
+    }
+  }, [progress.grade]);
+
+  // Filter questions for the selected grade, subject, and difficulty level
   const filteredQuestions: QuizQuestion[] = QUIZ_QUESTIONS.filter((q) => {
-    const gradeMatch = q.grade === progress.grade;
-    if (selectedSubject === 'all') return gradeMatch;
-    return gradeMatch && q.subjectId === selectedSubject;
+    const gradeMatch = q.grade === selectedGrade;
+    const subjectMatch = selectedSubject === 'all' || q.subjectId === selectedSubject;
+    const difficultyMatch = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
+    return gradeMatch && subjectMatch && difficultyMatch;
   });
 
-  // Reset quiz state when subject or grade changes
+  // Reset quiz state when subject, grade, or difficulty changes
   useEffect(() => {
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
@@ -68,9 +84,14 @@ function QuizContent() {
     setScore(0);
     setEarnedCoins(0);
     setQuizFinished(false);
-  }, [selectedSubject, progress.grade]);
+    setSentSms(null);
+  }, [selectedSubject, selectedGrade, selectedDifficulty]);
 
   const currentQ = filteredQuestions[currentQuestionIndex];
+
+  // Coin reward based on question difficulty: Oson (30), O'rta (50), Qiyin (80)
+  const questionCoins =
+    currentQ?.difficulty === 'qiyin' ? 80 : currentQ?.difficulty === 'o‘rta' ? 50 : 30;
 
   const handleSelectOption = (index: number) => {
     if (isAnswered || !currentQ) return;
@@ -82,8 +103,8 @@ function QuizContent() {
 
     if (isCorrect) {
       setScore((prev) => prev + 1);
-      setEarnedCoins((prev) => prev + 50);
-      addCoins(50);
+      setEarnedCoins((prev) => prev + questionCoins);
+      addCoins(questionCoins);
       markQuizCompleted(currentQ.id);
 
       if (progress.soundEnabled) {
@@ -114,13 +135,17 @@ function QuizContent() {
       updateLastActiveDate();
 
       const currentSubInfo = SUBJECTS.find((s) => s.id === selectedSubject);
-      const subjectTitle = currentSubInfo ? currentSubInfo.title : 'Barcha fanlar';
+      const subjectTitle = currentSubInfo
+        ? currentSubInfo.title
+        : selectedSubject === 'all'
+        ? 'Barcha fanlar'
+        : selectedSubject;
 
       sendQuizReportSms({
         score,
         totalQuestions: filteredQuestions.length,
         earnedCoins,
-        subjectTitle,
+        subjectTitle: `${selectedGrade}-sinf • ${subjectTitle}`,
       }).then((sms) => {
         if (sms) setSentSms(sms);
       });
@@ -137,55 +162,64 @@ function QuizContent() {
     setSentSms(null);
   };
 
-  // If no questions match for this grade
-  if (!currentQ && !quizFinished) {
-    return (
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-10 border-4 border-amber-200 dark:border-zinc-800 text-center space-y-4">
-        <span className="text-5xl">🦁</span>
-        <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
-          Ushbu fan bo‘yicha hozircha savollar tayyorlanmoqda!
-        </h2>
-        <p className="text-zinc-500">
-          Iltimos, boshqa fanni yoki barcha fanlarni tanlab ko‘ring.
-        </p>
-        <button
-          onClick={() => setSelectedSubject('all')}
-          className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-2xl shadow-md"
-        >
-          Barcha fanlarni tanlash
-        </button>
-      </div>
-    );
-  }
+  const gradesList: GradeLevel[] = [1, 2, 3, 4];
+  const difficultyList: { id: DifficultyLevel | 'all'; label: string; icon: string; color: string }[] = [
+    { id: 'all', label: 'Barchasi', icon: '⚡', color: 'border-zinc-300 dark:border-zinc-700' },
+    { id: 'oson', label: 'Oson', icon: '🟢', color: 'border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300' },
+    { id: 'o‘rta', label: 'O‘rta', icon: '🟡', color: 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300' },
+    { id: 'qiyin', label: 'Qiyin', icon: '🔴', color: 'border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300' },
+  ];
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16">
-      {/* Subject Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 sm:p-4 rounded-2xl border-2 border-amber-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🎯</span>
-          <span className="text-sm font-black text-zinc-800 dark:text-zinc-200">
-            Fan bo‘yicha:
-          </span>
+  // Render Filter Card
+  const renderFilterCard = () => (
+    <div className="bg-white dark:bg-zinc-900 p-4 sm:p-5 rounded-3xl border-2 border-amber-200 dark:border-zinc-800 shadow-sm space-y-4">
+      {/* 1. SINF KESIMI */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-black text-zinc-800 dark:text-zinc-200">
+          <GraduationCap className="w-4 h-4 text-amber-500" />
+          <span>Sinfni tanlang:</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {gradesList.map((g) => (
+            <button
+              key={g}
+              onClick={() => setSelectedGrade(g)}
+              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                selectedGrade === g
+                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 scale-105'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              }`}
+            >
+              {g}-sinf
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. FAN KESIMI */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-black text-zinc-800 dark:text-zinc-200">
+          <Layers className="w-4 h-4 text-emerald-500" />
+          <span>Fan bo‘yicha:</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setSelectedSubject('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
               selectedSubject === 'all'
-                ? 'bg-amber-500 text-white shadow-md'
+                ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
                 : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
             }`}
           >
-            Hammasi
+            Barchasi
           </button>
           {SUBJECTS.map((s) => (
             <button
               key={s.id}
               onClick={() => setSelectedSubject(s.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
                 selectedSubject === s.id
-                  ? 'bg-amber-500 text-white shadow-md'
+                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
                   : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
               }`}
             >
@@ -194,6 +228,69 @@ function QuizContent() {
           ))}
         </div>
       </div>
+
+      {/* 3. QIYINCHILIK DARAJASI */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-black text-zinc-800 dark:text-zinc-200">
+          <BarChart3 className="w-4 h-4 text-violet-500" />
+          <span>Qiyinchilik darajasi:</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {difficultyList.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => setSelectedDifficulty(d.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                selectedDifficulty === d.id
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-orange-500/20 scale-105'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-transparent'
+              }`}
+            >
+              <span>{d.icon}</span>
+              <span>{d.label}</span>
+            </button>
+          ))}
+
+          {/* Question count badge */}
+          <span className="ml-1 text-[11px] font-black px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80">
+            {filteredQuestions.length} ta savol
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // If no questions match the current combination
+  if (!currentQ && !quizFinished) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 pb-16">
+        {renderFilterCard()}
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-10 border-4 border-amber-200 dark:border-zinc-800 text-center space-y-4">
+          <span className="text-5xl">🦁</span>
+          <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
+            Tanlangan filtrlarga mos savol topilmadi!
+          </h2>
+          <p className="text-zinc-500">
+            {selectedGrade}-sinf uchun boshqa fan yoki qiyinchilik darajasini tanlab ko‘ring.
+          </p>
+          <button
+            onClick={() => {
+              setSelectedSubject('all');
+              setSelectedDifficulty('all');
+            }}
+            className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-2xl shadow-md transition cursor-pointer"
+          >
+            Barcha savollarni ko‘rsatish
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 pb-16">
+      {/* Filters (Sinflar, Fanlar, Qiyinchilik) */}
+      {renderFilterCard()}
 
       {/* QUIZ FINISHED RESULTS SCREEN */}
       {quizFinished ? (
@@ -208,7 +305,7 @@ function QuizContent() {
 
           <div className="space-y-2">
             <span className="text-xs font-black tracking-widest uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 px-4 py-1 rounded-full">
-              Prezident Maktabi Sari Katta Qadam!
+              {selectedGrade}-sinf • Prezident Maktabi Sari Katta Qadam!
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white">
               Ofarin, {progress.name}!
@@ -258,45 +355,49 @@ function QuizContent() {
                     <span>Ota-onaga SMS hisobot</span>
                     {sentSms?.status === 'sent' ? (
                       <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-extrabold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
-                        ✓ Real SMS Yuborildi
-                      </span>
-                    ) : sentSms?.status === 'failed' ? (
-                      <span className="text-[10px] bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-extrabold px-2 py-0.5 rounded-full border border-red-300">
-                        ⚠️ Eskiz API xatosi
+                        ✓ Yuborildi
                       </span>
                     ) : (
-                      <span className="text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-extrabold px-2 py-0.5 rounded-full border border-amber-300">
-                        Tizim jurnalida qayd etildi
+                      <span className="text-[10px] bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-extrabold px-2 py-0.5 rounded-full border border-blue-300 dark:border-blue-700">
+                        {smsService.getConfig().eskizToken ? 'Eskiz API' : 'Simulyatsiya'}
                       </span>
                     )}
                   </h4>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Qabul qiluvchi: <span className="font-bold text-zinc-700 dark:text-zinc-300">{progress.profile?.parentPhoneNumber || progress.profile?.phoneNumber || '+998 (90) 123-45-67'}</span> ({progress.profile?.parentName || 'Ota-ona'})
+                    {progress.profile?.parentPhoneNumber
+                      ? `${progress.profile?.parentName || 'Ota-ona'} (${progress.profile?.parentPhoneNumber}) raqamiga`
+                      : 'Ota-ona raqami kiritilmagan'}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-zinc-900/90 rounded-2xl p-3.5 border border-blue-100 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
-              <span className="font-bold text-blue-600 dark:text-blue-400">SMS Matni: </span>
-              {sentSms?.message || `LiderKids: Farzandingiz ${progress.name} testni ${score}/${filteredQuestions.length} (${filteredQuestions.length > 0 ? Math.round((score / filteredQuestions.length) * 100) : 100}%) natija bilan yakunladi! +${earnedCoins}🪙, Joriy darajasi: ${progress.grade}-sinf.`}
-            </div>
-
-            {sentSms?.status !== 'sent' && (
-              <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/50">
-                💡 <strong>Haqiqiy telefon raqamga SMS borishi uchun:</strong> Pastdagi <span className="font-black">«📲 Telefonimdan SMS jo‘natish»</span> tugmasini bosing (telefoningizning SMS ilovasi ochiladi) yoki avtomatik yuborish uchun Eskiz.uz hisobingizni ulang.
-              </p>
+            {sentSms && (
+              <div className="bg-white dark:bg-zinc-900 p-3.5 rounded-2xl border border-blue-100 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300 font-medium space-y-1">
+                <div className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                  SMS matni:
+                </div>
+                <div className="italic font-mono text-[11px] bg-zinc-50 dark:bg-zinc-800/60 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                  {sentSms.message}
+                </div>
+              </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => {
-                  const text = sentSms?.message || `LiderKids: ${progress.name} test natijasi: ${score}/${filteredQuestions.length}`;
-                  const phone = progress.profile?.parentPhoneNumber || progress.profile?.phoneNumber || '+998 (90) 123-45-67';
-                  smsService.openDeviceSms(phone, text);
+                  const currentSubInfo = SUBJECTS.find((s) => s.id === selectedSubject);
+                  const subjectTitle = currentSubInfo
+                    ? currentSubInfo.title
+                    : selectedSubject === 'all'
+                    ? 'Barcha fanlar'
+                    : selectedSubject;
+                  const customText = `Hurmatli ota-ona! Farzandingiz ${progress.name} LiderKids platformasida ${selectedGrade}-sinf ${subjectTitle} testini topshirdi. Natija: ${score}/${filteredQuestions.length} (${Math.round((score / filteredQuestions.length) * 100)}%). Ball: +${earnedCoins} tanga.`;
+                  const smsUrl = `sms:${progress.profile?.parentPhoneNumber || ''}?body=${encodeURIComponent(customText)}`;
+                  window.location.href = smsUrl;
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black rounded-xl shadow-md transition hover:scale-105 active:scale-95"
+                className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-sm transition active:scale-95 cursor-pointer"
               >
                 <Smartphone className="w-4 h-4" />
                 <span>📲 Telefonimdan Real SMS jo‘natish</span>
@@ -305,7 +406,7 @@ function QuizContent() {
               <button
                 type="button"
                 onClick={() => setIsSmsModalOpen(true)}
-                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <span>SMS Markazi & Eskiz sozlamalari</span>
                 <span>→</span>
@@ -317,7 +418,7 @@ function QuizContent() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <button
               onClick={handleRestart}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold rounded-2xl shadow-lg transition-transform hover:scale-105"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold rounded-2xl shadow-lg transition-transform hover:scale-105 cursor-pointer"
             >
               <RotateCcw className="w-5 h-5" />
               <span>Yana yechish</span>
@@ -343,7 +444,7 @@ function QuizContent() {
                 exit={{ opacity: 0 }}
                 className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 flex items-center gap-2 bg-amber-400 text-amber-950 font-black px-6 py-3 rounded-full shadow-2xl border-2 border-yellow-200 text-2xl"
               >
-                <span>+10</span>
+                <span>+{questionCoins}</span>
                 <span>🪙</span>
               </motion.div>
             )}
@@ -357,7 +458,7 @@ function QuizContent() {
               </span>
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-3 py-1 rounded-xl border border-amber-200 dark:border-amber-800">
-                  <Sparkles className="w-4 h-4" /> To‘g‘ri javob: +10 🪙
+                  <Sparkles className="w-4 h-4" /> To‘g‘ri javob: +{questionCoins} 🪙
                 </span>
               </div>
             </div>
@@ -376,11 +477,54 @@ function QuizContent() {
 
           {/* Question Text Card */}
           <div className="bg-amber-50/60 dark:bg-zinc-800/40 p-6 sm:p-8 rounded-2xl border-2 border-amber-200 dark:border-zinc-700/80 mb-6">
-            {currentQ.imageOrEmoji && (
-              <div className="text-4xl sm:text-5xl mb-4 select-none animate-pulse">
-                {currentQ.imageOrEmoji}
+            {/* Meta badges: Subject, Grade, Difficulty, Topic */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className="text-xs font-black px-3 py-1 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1.5">
+                <span>{currentQ.imageOrEmoji || '📚'}</span>
+                <span>{SUBJECTS.find((s) => s.id === currentQ.subjectId)?.title || 'Fan'}</span>
+              </span>
+
+              <span className="text-xs font-black px-3 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                {currentQ.grade}-sinf
+              </span>
+
+              {currentQ.difficulty && (
+                <span
+                  className={`text-xs font-black px-3 py-1 rounded-xl border flex items-center gap-1.5 ${
+                    currentQ.difficulty === 'oson'
+                      ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                      : currentQ.difficulty === 'o‘rta'
+                      ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                      : 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-700'
+                  }`}
+                >
+                  <span>
+                    {currentQ.difficulty === 'oson' ? '🟢 Oson' : currentQ.difficulty === 'o‘rta' ? '🟡 O‘rta' : '🔴 Qiyin'}
+                  </span>
+                  <span className="text-[10px] opacity-75 font-semibold">({currentQ.difficultyLevel || 1}-daraja)</span>
+                </span>
+              )}
+
+              {currentQ.topic && (
+                <span className="text-xs font-bold px-3 py-1 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+                  Mavzu: {currentQ.topic}
+                </span>
+              )}
+            </div>
+
+            {/* Reading Passage (if available, e.g. for Reading questions) */}
+            {currentQ.passage && (
+              <div className="bg-sky-50 dark:bg-sky-950/40 p-4 sm:p-5 rounded-2xl border-2 border-sky-300 dark:border-sky-800 mb-5 text-left shadow-xs">
+                <div className="flex items-center gap-2 text-xs font-black text-sky-800 dark:text-sky-300 uppercase tracking-wider mb-2">
+                  <BookOpen className="w-4 h-4" />
+                  <span>O‘qish matni (Reading Passage):</span>
+                </div>
+                <p className="text-sm sm:text-base text-zinc-800 dark:text-zinc-200 leading-relaxed font-medium">
+                  {currentQ.passage}
+                </p>
               </div>
             )}
+
             <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-zinc-900 dark:text-zinc-100 leading-snug">
               {currentQ.question}
             </h3>
@@ -389,7 +533,7 @@ function QuizContent() {
               {currentQ.hint && !isAnswered && (
                 <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/40 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-900/60 w-fit">
                   <HelpCircle className="w-4 h-4" />
-                  <span>Yordam: {currentQ.hint}</span>
+                  <span>{currentQ.hint}</span>
                 </div>
               )}
 
@@ -443,7 +587,7 @@ function QuizContent() {
                   whileTap={!isAnswered ? { scale: 0.98 } : {}}
                   onClick={() => handleSelectOption(index)}
                   disabled={isAnswered}
-                  className={`p-4 sm:p-5 rounded-2xl flex items-center justify-between text-left font-extrabold text-base sm:text-lg transition-all ${btnStyle}`}
+                  className={`p-4 sm:p-5 rounded-2xl flex items-center justify-between text-left font-extrabold text-base sm:text-lg transition-all cursor-pointer ${btnStyle}`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-sm font-black text-zinc-700 dark:text-zinc-300">
@@ -523,7 +667,7 @@ function QuizContent() {
             >
               <button
                 onClick={handleNextQuestion}
-                className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-base sm:text-lg rounded-2xl shadow-lg transition-transform hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-base sm:text-lg rounded-2xl shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <span>
                   {currentQuestionIndex + 1 < filteredQuestions.length

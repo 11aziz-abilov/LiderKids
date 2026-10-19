@@ -18,6 +18,8 @@ export interface SubjectInfo {
   totalQuestions: number;
 }
 
+export type DifficultyLevel = 'oson' | 'o‘rta' | 'qiyin';
+
 export interface QuizQuestion {
   id: string;
   subjectId: SubjectId;
@@ -28,6 +30,10 @@ export interface QuizQuestion {
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
+  topic?: string;
+  difficulty?: DifficultyLevel;
+  difficultyLevel?: 1 | 2 | 3;
+  passage?: string | null;
 }
 
 export interface Lesson {
