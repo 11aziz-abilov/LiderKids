@@ -3,13 +3,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { SubjectInfo } from '@/types';
-import { Calculator, Lightbulb, Brain, ArrowRight, PlayCircle, HelpCircle } from 'lucide-react';
+import { Calculator, Lightbulb, Brain, Languages, Globe, ArrowRight, PlayCircle, HelpCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const iconMap = {
   Calculator,
   Lightbulb,
   Brain,
+  Languages,
+  Globe,
 };
 
 export default function SubjectCard({

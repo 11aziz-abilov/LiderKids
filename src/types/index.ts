@@ -1,6 +1,6 @@
 export type GradeLevel = 1 | 2 | 3 | 4;
 
-export type SubjectId = 'math' | 'logic' | 'critical';
+export type SubjectId = 'math' | 'logic' | 'critical' | 'english';
 
 export interface SubjectInfo {
   id: SubjectId;
