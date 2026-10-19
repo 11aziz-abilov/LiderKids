@@ -1,6 +1,6 @@
 import { GradeLevel } from '@/types';
 
-export type MiniGameId = 'memory' | 'puzzle' | 'stars';
+export type MiniGameId = 'memory' | 'puzzle' | 'stars' | 'checkers';
 
 export type GameDifficultyGroup = 'junior' | 'senior'; // junior: 1-2 sinflar, senior: 3-4 sinflar
 

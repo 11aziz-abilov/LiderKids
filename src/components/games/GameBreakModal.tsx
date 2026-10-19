@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { triggerConfetti } from '@/components/ConfettiEffect';
-import { useGame } from '@/context/GameContext';
+import { useGame, TOTAL_MINI_GAMES } from '@/context/GameContext';
 import { sound } from '@/utils/sound';
 import { Sparkles, ArrowRight, RotateCcw, Home, BookOpen, Coins } from 'lucide-react';
 
@@ -88,7 +88,7 @@ export default function GameBreakModal({
               }`}
             >
               <span>🎮 Mini-o‘yinlar:</span>
-              <span>{dailyGamesCount} / 3 ta</span>
+              <span>{dailyGamesCount} / {TOTAL_MINI_GAMES} ta</span>
               {remainingGamesToday === 0 ? (
                 <span className="text-rose-600 dark:text-rose-400 font-extrabold">(Barcha o‘yinlar yakunlandi)</span>
               ) : (

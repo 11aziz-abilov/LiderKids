@@ -139,8 +139,8 @@ interface GameContextType {
 }
 
 export const MAX_PLAYS_PER_GAME = 1;
-export const TOTAL_MINI_GAMES = 3;
-export const MAX_DAILY_GAMES = 3;
+export const TOTAL_MINI_GAMES = 4;
+export const MAX_DAILY_GAMES = 4;
 
 export const getTodayDateString = (): string => {
   const d = new Date();
@@ -247,8 +247,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return (gameCounts[gameId] || 0) >= MAX_PLAYS_PER_GAME;
   }, [gameCounts]);
 
-  // Jami 3 ta mini-o‘yindan nechtasi 1 martalik limitiga yetgan
-  const allGameIds = ['memory', 'puzzle', 'stars'];
+  // Jami 4 ta mini-o‘yindan nechtasi 1 martalik limitiga yetgan
+  const allGameIds = ['memory', 'puzzle', 'stars', 'checkers'];
   const playedDistinctGames = allGameIds.filter((id) => (gameCounts[id] || 0) >= MAX_PLAYS_PER_GAME).length;
   const dailyGamesCount = playedDistinctGames;
   const remainingGamesToday = Math.max(0, TOTAL_MINI_GAMES - playedDistinctGames);

@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useGame } from '@/context/GameContext';
+import { useGame, TOTAL_MINI_GAMES } from '@/context/GameContext';
 import { GradeLevel } from '@/types';
 import { MiniGameId, getDifficultyGroup } from '@/types/games';
 import MemoryGame from '@/components/games/MemoryGame';
 import PuzzleGame from '@/components/games/PuzzleGame';
 import StarCatcherGame from '@/components/games/StarCatcherGame';
+import CheckersGame from '@/components/games/CheckersGame';
 import {
   Sparkles,
   Gamepad2,
@@ -70,6 +71,17 @@ const GAMES_LIST: GameInfo[] = [
     juniorDesc: 'Ob‘ektlar sekin tushadi, savatchani qulay surib barchasini tuting!',
     seniorDesc: 'Faqat 🌟 oltin yulduzlarni tanlab oling va bulutlardan qoching!',
   },
+  {
+    id: 'checkers',
+    title: 'Shashka',
+    subtitle: 'Strategiya va mantiqiy rejalashtirish',
+    emoji: '⚪⚫',
+    gradient: 'from-emerald-500 via-teal-500 to-cyan-600',
+    juniorBadge: '6x6 Kichik taxta & Oson rejim',
+    seniorBadge: '8x8 Klassik shashka & Aqlli AI',
+    juniorDesc: 'Kichik taxtada oson qadamlar, raqib toshlarini yeb shoh darajasiga yeting!',
+    seniorDesc: '8x8 to‘liq taxtada Prezident maktabiga xos mantiqiy strategiya bilan g‘alaba qozoning!',
+  },
 ];
 
 export default function GamesPage() {
@@ -126,7 +138,7 @@ export default function GamesPage() {
               >
                 {remainingGamesToday === 0 ? <Lock className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
                 <span>
-                  O‘ynalgan: {dailyGamesCount}/3 ta | Har bir o‘yinga 1 martadan {remainingGamesToday === 0 ? '(Limit to‘ldi)' : `(${remainingGamesToday} ta ochiq)`}
+                  O‘ynalgan: {dailyGamesCount}/{TOTAL_MINI_GAMES} ta | Har bir o‘yinga 1 martadan {remainingGamesToday === 0 ? '(Limit to‘ldi)' : `(${remainingGamesToday} ta ochiq)`}
                 </span>
               </div>
             </div>
@@ -197,6 +209,13 @@ export default function GamesPage() {
               onBackToMenu={() => setActiveGame(null)}
             />
           )}
+
+          {activeGame === 'checkers' && (
+            <CheckersGame
+              grade={currentGrade}
+              onBackToMenu={() => setActiveGame(null)}
+            />
+          )}
         </div>
       ) : (
         /* Game Selection Hub */
@@ -214,7 +233,7 @@ export default function GamesPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-black text-zinc-900 dark:text-white">
-                    Bugungi barcha mini-o‘yinlar yakunlandi (3/3)
+                    Bugungi barcha mini-o‘yinlar yakunlandi ({TOTAL_MINI_GAMES}/{TOTAL_MINI_GAMES})
                   </h3>
                   <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed mt-0.5">
                     Har bir o‘yin kuniga ko‘pi bilan 1 marta o‘ynaladi. Bu ko‘zni toliqishdan saqlaydi va bilimga e’tibor qaratishga yordam beradi. Yangi imkoniyatlar ertaga yana ochiladi!
@@ -246,7 +265,7 @@ export default function GamesPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {GAMES_LIST.map((game) => {
               const locked = isGameLocked(game.id);
 
@@ -340,7 +359,7 @@ export default function GamesPage() {
                 <strong className="text-zinc-900 dark:text-white font-black block text-sm">
                   Pedagogik tanaffus qoidasi (har bir o‘yinga 1 martadan):
                 </strong>
-                Har bir o‘yin kuniga 1 marta (jami 3 ta mini-o‘yin) o‘ynaladi. Bu bolalarni ekranga bog‘lanib qolishidan asraydi va darslarga e’tiborni oshiradi!
+                Har bir o‘yin kuniga 1 marta (jami {TOTAL_MINI_GAMES} ta mini-o‘yin) o‘ynaladi. Bu bolalarni ekranga bog‘lanib qolishidan asraydi va darslarga e’tiborni oshiradi!
               </div>
             </div>
 
@@ -397,7 +416,7 @@ export default function GamesPage() {
                     </>
                   ) : (
                     <>
-                      Har bir o‘yin uchun 1 martalik cheklovdan foydalandingiz (jami 3 ta o‘yin). Ko‘zlaringiz toliqmasligi uchun yangi imkoniyatlar ertaga yana ochiladi! 🌟
+                      Har bir o‘yin uchun 1 martalik cheklovdan foydalandingiz (jami {TOTAL_MINI_GAMES} ta o‘yin). Ko‘zlaringiz toliqmasligi uchun yangi imkoniyatlar ertaga yana ochiladi! 🌟
                     </>
                   )}
                 </p>
