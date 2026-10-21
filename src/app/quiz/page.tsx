@@ -46,7 +46,7 @@ function QuizContent() {
     openAiAssistant,
   } = useGame();
 
-  const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(progress.grade || 4);
+  const userGrade: GradeLevel = progress.grade || 4;
   const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(
     subjectParam || 'all'
   );
@@ -61,16 +61,9 @@ function QuizContent() {
   const [floatingCoin, setFloatingCoin] = useState(false);
   const [sentSms, setSentSms] = useState<SmsMessage | null>(null);
 
-  // Sync selectedGrade when student's profile grade changes
-  useEffect(() => {
-    if (progress.grade) {
-      setSelectedGrade(progress.grade);
-    }
-  }, [progress.grade]);
-
-  // Filter questions for the selected grade, subject, and difficulty level
+  // Filter questions for the user's grade, subject, and difficulty level
   const filteredQuestions: QuizQuestion[] = QUIZ_QUESTIONS.filter((q) => {
-    const gradeMatch = q.grade === selectedGrade;
+    const gradeMatch = q.grade === userGrade;
     const subjectMatch = selectedSubject === 'all' || q.subjectId === selectedSubject;
     const difficultyMatch = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
     return gradeMatch && subjectMatch && difficultyMatch;
@@ -85,7 +78,7 @@ function QuizContent() {
     setEarnedCoins(0);
     setQuizFinished(false);
     setSentSms(null);
-  }, [selectedSubject, selectedGrade, selectedDifficulty]);
+  }, [selectedSubject, userGrade, selectedDifficulty]);
 
   const currentQ = filteredQuestions[currentQuestionIndex];
 
@@ -145,7 +138,7 @@ function QuizContent() {
         score,
         totalQuestions: filteredQuestions.length,
         earnedCoins,
-        subjectTitle: `${selectedGrade}-sinf • ${subjectTitle}`,
+        subjectTitle: `${userGrade}-sinf • ${subjectTitle}`,
       }).then((sms) => {
         if (sms) setSentSms(sms);
       });
@@ -162,7 +155,6 @@ function QuizContent() {
     setSentSms(null);
   };
 
-  const gradesList: GradeLevel[] = [1, 2, 3, 4];
   const difficultyList: { id: DifficultyLevel | 'all'; label: string; icon: string; color: string }[] = [
     { id: 'all', label: 'Barchasi', icon: '⚡', color: 'border-zinc-300 dark:border-zinc-700' },
     { id: 'oson', label: 'Oson', icon: '🟢', color: 'border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300' },
@@ -173,30 +165,7 @@ function QuizContent() {
   // Render Filter Card
   const renderFilterCard = () => (
     <div className="bg-white dark:bg-zinc-900 p-4 sm:p-5 rounded-3xl border-2 border-amber-200 dark:border-zinc-800 shadow-sm space-y-4">
-      {/* 1. SINF KESIMI */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-        <div className="flex items-center gap-2 text-xs sm:text-sm font-black text-zinc-800 dark:text-zinc-200">
-          <GraduationCap className="w-4 h-4 text-amber-500" />
-          <span>Sinfni tanlang:</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          {gradesList.map((g) => (
-            <button
-              key={g}
-              onClick={() => setSelectedGrade(g)}
-              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
-                selectedGrade === g
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 scale-105'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              {g}-sinf
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 2. FAN KESIMI */}
+      {/* 1. FAN KESIMI */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center gap-2 text-xs sm:text-sm font-black text-zinc-800 dark:text-zinc-200">
           <Layers className="w-4 h-4 text-emerald-500" />
@@ -229,7 +198,7 @@ function QuizContent() {
         </div>
       </div>
 
-      {/* 3. QIYINCHILIK DARAJASI */}
+      {/* 2. QIYINCHILIK DARAJASI */}
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex items-center gap-2 text-xs sm:text-sm font-black text-zinc-800 dark:text-zinc-200">
           <BarChart3 className="w-4 h-4 text-violet-500" />
@@ -251,9 +220,10 @@ function QuizContent() {
             </button>
           ))}
 
-          {/* Question count badge */}
-          <span className="ml-1 text-[11px] font-black px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80">
-            {filteredQuestions.length} ta savol
+          {/* User Grade & Question count badge */}
+          <span className="ml-1 text-[11px] font-black px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 flex items-center gap-1.5">
+            <GraduationCap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>{userGrade}-sinf • {filteredQuestions.length} ta savol</span>
           </span>
         </div>
       </div>
@@ -271,7 +241,7 @@ function QuizContent() {
             Tanlangan filtrlarga mos savol topilmadi!
           </h2>
           <p className="text-zinc-500">
-            {selectedGrade}-sinf uchun boshqa fan yoki qiyinchilik darajasini tanlab ko‘ring.
+            {userGrade}-sinf uchun boshqa fan yoki qiyinchilik darajasini tanlab ko‘ring.
           </p>
           <button
             onClick={() => {
@@ -305,7 +275,7 @@ function QuizContent() {
 
           <div className="space-y-2">
             <span className="text-xs font-black tracking-widest uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 px-4 py-1 rounded-full">
-              {selectedGrade}-sinf • Prezident Maktabi Sari Katta Qadam!
+              {userGrade}-sinf • Prezident Maktabi Sari Katta Qadam!
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white">
               Ofarin, {progress.name}!
@@ -393,7 +363,7 @@ function QuizContent() {
                     : selectedSubject === 'all'
                     ? 'Barcha fanlar'
                     : selectedSubject;
-                  const customText = `Hurmatli ota-ona! Farzandingiz ${progress.name} LiderKids platformasida ${selectedGrade}-sinf ${subjectTitle} testini topshirdi. Natija: ${score}/${filteredQuestions.length} (${Math.round((score / filteredQuestions.length) * 100)}%). Ball: +${earnedCoins} tanga.`;
+                  const customText = `Hurmatli ota-ona! Farzandingiz ${progress.name} LiderKids platformasida ${userGrade}-sinf ${subjectTitle} testini topshirdi. Natija: ${score}/${filteredQuestions.length} (${Math.round((score / filteredQuestions.length) * 100)}%). Ball: +${earnedCoins} tanga.`;
                   const smsUrl = `sms:${progress.profile?.parentPhoneNumber || ''}?body=${encodeURIComponent(customText)}`;
                   window.location.href = smsUrl;
                 }}
