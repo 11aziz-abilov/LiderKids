@@ -82,9 +82,9 @@ function QuizContent() {
 
   const currentQ = filteredQuestions[currentQuestionIndex];
 
-  // Coin reward based on question difficulty: Oson (30), O'rta (50), Qiyin (80)
+  // Coin reward based on question difficulty: Oson (1), O'rta (2), Qiyin (3)
   const questionCoins =
-    currentQ?.difficulty === 'qiyin' ? 80 : currentQ?.difficulty === 'o‘rta' ? 50 : 30;
+    currentQ?.difficulty === 'qiyin' ? 3 : currentQ?.difficulty === 'o‘rta' ? 2 : 1;
 
   const handleSelectOption = (index: number) => {
     if (isAnswered || !currentQ) return;
