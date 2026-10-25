@@ -204,6 +204,11 @@ export default function HomePage() {
             <span className="font-mono text-zinc-800 dark:text-zinc-200">
               Karta: {progress.profile.cardNumber.slice(0, 4)} ••••
             </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1 font-mono text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 px-2 py-0.5 rounded-lg border border-sky-200 dark:border-sky-800">
+              <span>🤖 Bot kodi:</span>
+              <span className="font-black">{progress.profile.botSyncCode || '748291'}</span>
+            </span>
           </div>
           <button
             onClick={() => setIsProfileModalOpen(true)}

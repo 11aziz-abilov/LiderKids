@@ -136,6 +136,7 @@ export interface UserProfile {
   smsNotificationsEnabled?: boolean;
   lastActiveDate?: string;
   lastInactivitySmsSentDate?: string;
+  botSyncCode?: string; // Telegram botga ulash uchun 6 xonali shaxsiy kod (masalan, "749201")
 }
 
 export type MarketCategory = 'outfit' | 'backpack' | 'hat' | 'accessory';

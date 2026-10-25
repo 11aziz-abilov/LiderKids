@@ -19,7 +19,11 @@ import {
   Trophy,
   Sparkles,
   LogOut,
-  Calendar
+  Calendar,
+  Copy,
+  RefreshCw,
+  Bot,
+  ExternalLink,
 } from 'lucide-react';
 
 import { UZBEKISTAN_REGIONS } from '@/data/regionsData';
@@ -36,11 +40,20 @@ export default function ProfileModal() {
     updateProfile,
     advanceAcademicYearManually,
     resetProgress,
-    lionStage
+    lionStage,
+    refreshBotSyncCode,
   } = useGame();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   const profile = progress.profile;
+  const botCode = profile?.botSyncCode || '748291';
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   // Editable fields
   const [firstName, setFirstName] = useState(profile?.firstName || '');
@@ -402,6 +415,87 @@ export default function ProfileModal() {
                 )}
               </div>
             )}
+          </div>
+
+          {/* Telegram Botga Ulash Kodi (6 xonali maxsus kod) */}
+          <div className="bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 dark:from-sky-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border-2 border-sky-300 dark:border-sky-700 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-blue-600 text-white flex items-center justify-center text-lg shadow-md shrink-0">
+                  🤖
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 flex-wrap">
+                    <span>Telegram Botga Ulash Kodi</span>
+                    <span className="bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300 text-[10px] px-2 py-0.5 rounded-full font-black">
+                      LiderKids Nazorat
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                    Ota-onalar haftalik dars va test natijalarini bot orqali ko‘rishlari uchun
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 6 xonali raqamlar katakchalari va boshqaruv */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 bg-white dark:bg-zinc-800 rounded-xl border border-sky-200 dark:border-zinc-700 shadow-sm">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                {botCode.split('').map((digit, idx) => (
+                  <span
+                    key={idx}
+                    className="w-8 h-10 sm:w-9 sm:h-11 rounded-lg bg-sky-50 dark:bg-zinc-700 text-sky-900 dark:text-sky-100 border border-sky-300 dark:border-zinc-600 flex items-center justify-center font-mono text-xl sm:text-2xl font-black shadow-inner"
+                  >
+                    {digit}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleCopyCode(botCode)}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                    copiedCode
+                      ? 'bg-emerald-500 text-white shadow-md'
+                      : 'bg-sky-500 hover:bg-sky-600 text-white shadow-sm'
+                  }`}
+                  title="Kodni nusxalash"
+                >
+                  {copiedCode ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Nusxalandi!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Nusxalash</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => refreshBotSyncCode()}
+                  className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 transition active:scale-90 cursor-pointer"
+                  title="Yangi 6 xonali kod olish"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Bot manzili va ko'rsatma */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-zinc-600 dark:text-zinc-400 pt-0.5">
+              <div className="flex items-center gap-1">
+                <span className="font-extrabold text-sky-700 dark:text-sky-300">Bot:</span>
+                <span className="font-mono font-black text-zinc-800 dark:text-zinc-200">@LiderKidsNazoratBot</span>
+              </div>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 italic">
+                Botga kirib ushbu 6 xonali kodni yuboring
+              </span>
+            </div>
           </div>
 
           {/* Ota-onalar SMS Markazi Kartasi */}

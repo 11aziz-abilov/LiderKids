@@ -145,11 +145,16 @@ interface GameContextType {
   saveWeeklyExamResult: (result: WeeklyExamResult) => void;
   getWeeklyExamResult: (weekId?: string) => WeeklyExamResult | null;
   weakTopics: WeakTopicRecord[];
+  refreshBotSyncCode: () => string;
 }
 
 export const MAX_PLAYS_PER_GAME = 1;
 export const TOTAL_MINI_GAMES = 4;
 export const MAX_DAILY_GAMES = 4;
+
+export const generateBotSyncCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 export const getTodayDateString = (): string => {
   const d = new Date();
@@ -182,6 +187,7 @@ const defaultProfile: UserProfile = {
   registeredAt: new Date().toISOString(),
   smsNotificationsEnabled: true,
   lastActiveDate: new Date().toISOString(),
+  botSyncCode: '748291',
 };
 
 const defaultProgress: UserProgress = {
@@ -358,6 +364,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             const currentYearInfo = getCurrentAcademicYear();
             parsedProgress.profile.academicYear = currentYearInfo.academicYear;
             parsedProgress.profile.academicYearEndDate = currentYearInfo.endDate.toISOString();
+          }
+          if (!parsedProgress.profile.botSyncCode) {
+            parsedProgress.profile.botSyncCode = generateBotSyncCode();
           }
         }
 
@@ -789,6 +798,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           academicYearEndDate: endDate.toISOString(),
           isRegistered: true,
           registeredAt: prev.profile?.registeredAt || new Date().toISOString(),
+          botSyncCode: profileData.botSyncCode || prev.profile?.botSyncCode || generateBotSyncCode(),
         },
       };
 
@@ -806,6 +816,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       sound.playVictory();
     }
   };
+
+  const refreshBotSyncCode = useCallback((): string => {
+    const newCode = generateBotSyncCode();
+    setProgress((prev) => {
+      if (!prev.profile) return prev;
+      const nextProf = {
+        ...prev.profile,
+        botSyncCode: newCode,
+      };
+      try {
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProf));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...prev, profile: nextProf }));
+      } catch {}
+      return {
+        ...prev,
+        profile: nextProf,
+      };
+    });
+    return newCode;
+  }, []);
 
   const updateProfile = (profileData: Partial<UserProfile>) => {
     setProgress((prev) => {
@@ -1156,6 +1186,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         saveWeeklyExamResult,
         getWeeklyExamResult,
         weakTopics,
+        refreshBotSyncCode,
       }}
     >
       {children}

@@ -71,6 +71,7 @@ export function generateParentWeeklyReport(
     `━━━━━━━━━━━━━━━━━━━━━━━━`,
     `👤 *O‘quvchi:* ${studentName}`,
     `🎓 *Sinfi:* ${grade}-sinf (Prezident maktabiga tayyorlov)`,
+    `🔑 *Botga ulanish kodi:* \`${progress.profile?.botSyncCode || '748291'}\``,
     `📅 *Hafta davri:* ${periodLabel}`,
     `🆔 *Hafta kodi:* \`${currentWeekId}\``,
     ``,
