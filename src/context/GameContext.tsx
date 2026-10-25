@@ -1,7 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { GradeLevel, UserProgress, UserProfile, MarketItem, MarketCategory, SmsMessage, StreakPrize, StreakPrizeId, DailyPuzzleRecord } from '@/types';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { GradeLevel, SubjectId, UserProgress, UserProfile, MarketItem, MarketCategory, SmsMessage, StreakPrize, StreakPrizeId, DailyPuzzleRecord } from '@/types';
+import { ScheduledLessonProgressItem, WeeklyExamResult, WeakTopicRecord } from '@/types/schedule';
+import { DayOfWeekKey, getWeekId, getTashkentTodayDateString } from '@/utils/tashkentTime';
 import { STREAK_PRIZES } from '@/data/streakRewardsData';
 import { sound } from '@/utils/sound';
 import { smsService } from '@/utils/smsService';
@@ -136,6 +138,13 @@ interface GameContextType {
   aiAssistantContext: { subject?: string; topic?: string; question?: string; grade?: number; lessonId?: string } | null;
   openAiAssistant: (ctx?: { subject?: string; topic?: string; question?: string; grade?: number; lessonId?: string }) => void;
   closeAiAssistant: () => void;
+  // Haftalik dars jadvali va imtihon tizimi
+  currentWeekId: string;
+  markScheduledLessonCompleted: (lessonId: string, dayKey: DayOfWeekKey, subjectId: SubjectId, targetWeekId?: string) => boolean;
+  isScheduledLessonCompleted: (lessonId: string, weekId?: string) => boolean;
+  saveWeeklyExamResult: (result: WeeklyExamResult) => void;
+  getWeeklyExamResult: (weekId?: string) => WeeklyExamResult | null;
+  weakTopics: WeakTopicRecord[];
 }
 
 export const MAX_PLAYS_PER_GAME = 1;
@@ -193,6 +202,9 @@ const defaultProgress: UserProgress = {
     count: 0,
     gameCounts: {},
   },
+  scheduledLessonsProgress: {},
+  weeklyExamHistory: {},
+  weakTopics: [],
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -621,6 +633,136 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
+  const currentWeekId = useMemo(() => getWeekId(), []);
+
+  const isScheduledLessonCompleted = useCallback(
+    (lessonId: string, weekId?: string): boolean => {
+      const targetWeek = weekId || currentWeekId;
+      const progressKey = `${targetWeek}_${lessonId}`;
+      const item = progress.scheduledLessonsProgress?.[progressKey];
+      return !!item?.isCompleted;
+    },
+    [currentWeekId, progress.scheduledLessonsProgress]
+  );
+
+  const markScheduledLessonCompleted = useCallback(
+    (
+      lessonId: string,
+      dayKey: DayOfWeekKey,
+      subjectId: SubjectId,
+      targetWeekId?: string
+    ): boolean => {
+      const targetWeek = targetWeekId || currentWeekId;
+      const progressKey = `${targetWeek}_${lessonId}`;
+
+      if (progress.scheduledLessonsProgress?.[progressKey]?.isCompleted) {
+        return false; // Allaqachon yakunlangan
+      }
+
+      setProgress((prev) => {
+        const nextStreaks = prev.streaks + 1;
+        const updatedCelebrated = checkAndCelebrateMilestone(nextStreaks, prev);
+        const prevScheduled = prev.scheduledLessonsProgress || {};
+
+        const updatedScheduled: Record<string, ScheduledLessonProgressItem> = {
+          ...prevScheduled,
+          [progressKey]: {
+            lessonId,
+            weekId: targetWeek,
+            dayKey,
+            subjectId,
+            completedAt: new Date().toISOString(),
+            isCompleted: true,
+          },
+        };
+
+        const alreadyInGeneral = prev.completedLessons.includes(lessonId);
+        const updatedCompleted = alreadyInGeneral
+          ? prev.completedLessons
+          : [...prev.completedLessons, lessonId];
+
+        return {
+          ...prev,
+          completedLessons: updatedCompleted,
+          scheduledLessonsProgress: updatedScheduled,
+          streaks: nextStreaks,
+          celebratedMilestones: updatedCelebrated,
+          coins: prev.coins + 20, // Har bir dars uchun +20 tanga
+          xp: prev.xp + 40, // +40 XP
+        };
+      });
+
+      if (progress.soundEnabled) {
+        sound.playCorrect();
+      }
+
+      return true;
+    },
+    [currentWeekId, progress.scheduledLessonsProgress, progress.soundEnabled]
+  );
+
+  const saveWeeklyExamResult = useCallback((result: WeeklyExamResult) => {
+    setProgress((prev) => {
+      const prevExamHistory = prev.weeklyExamHistory || {};
+      const updatedHistory = {
+        ...prevExamHistory,
+        [result.weekId]: result,
+      };
+
+      // Zaif mavzularni yangilash
+      const prevWeak = [...(prev.weakTopics || [])];
+      result.weakTopics.forEach((topicName) => {
+        const existingIdx = prevWeak.findIndex(
+          (w) => w.topic.toLowerCase() === topicName.toLowerCase() && w.grade === result.grade
+        );
+
+        if (existingIdx >= 0) {
+          prevWeak[existingIdx] = {
+            ...prevWeak[existingIdx],
+            mistakeCount: prevWeak[existingIdx].mistakeCount + 1,
+            lastTestedAt: result.completedAt,
+          };
+        } else {
+          // Qaysi fan ekanligini aniqlaymiz (agar topilsa)
+          let matchedSubj: SubjectId = 'math';
+          if (topicName.toLowerCase().includes('english') || topicName.toLowerCase().includes('reading')) matchedSubj = 'english';
+          else if (topicName.toLowerCase().includes('mantiq') || topicName.toLowerCase().includes('taroz')) matchedSubj = 'logic';
+          else if (topicName.toLowerCase().includes('fazov') || topicName.toLowerCase().includes('kub')) matchedSubj = 'critical';
+
+          prevWeak.push({
+            topic: topicName,
+            subjectId: matchedSubj,
+            grade: result.grade,
+            mistakeCount: 1,
+            lastTestedAt: result.completedAt,
+          });
+        }
+      });
+
+      return {
+        ...prev,
+        weeklyExamHistory: updatedHistory,
+        weakTopics: prevWeak,
+        coins: prev.coins + result.rewardCoins,
+        xp: prev.xp + result.rewardXp,
+      };
+    });
+
+    if (progress.soundEnabled) {
+      sound.playVictory();
+    }
+  }, [progress.soundEnabled]);
+
+  const getWeeklyExamResult = useCallback(
+    (weekId?: string): WeeklyExamResult | null => {
+      const targetWeek = weekId || currentWeekId;
+      return progress.weeklyExamHistory?.[targetWeek] || null;
+    },
+    [currentWeekId, progress.weeklyExamHistory]
+  );
+
+  const weakTopics = useMemo(() => progress.weakTopics || [], [progress.weakTopics]);
+
   const markQuizCompleted = (quizId: string) => {
     if (!progress.completedQuizzes.includes(quizId)) {
       setProgress((prev) => ({
@@ -1007,6 +1149,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         aiAssistantContext,
         openAiAssistant,
         closeAiAssistant,
+        // Haftalik dars va imtihon
+        currentWeekId,
+        markScheduledLessonCompleted,
+        isScheduledLessonCompleted,
+        saveWeeklyExamResult,
+        getWeeklyExamResult,
+        weakTopics,
       }}
     >
       {children}

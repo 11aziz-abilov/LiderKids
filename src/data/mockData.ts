@@ -1,5 +1,6 @@
 import { SubjectInfo, QuizQuestion, Lesson, Achievement } from '@/types';
 import { ALL_QUIZ_QUESTIONS } from './quizQuestionsData';
+import { SCHEDULED_LESSONS } from './weeklyScheduleConfig';
 
 export const SUBJECTS: SubjectInfo[] = [
   {
@@ -207,6 +208,7 @@ export const LESSONS: Lesson[] = [
       'Odd-one-out va so‘z boyligini oshirish mashqlari',
     ],
   },
+  ...SCHEDULED_LESSONS,
 ];
 
 export const ACHIEVEMENTS: Achievement[] = [

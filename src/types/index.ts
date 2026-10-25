@@ -189,6 +189,10 @@ export interface UserProgress {
   celebratedMilestones?: number[];
   dailyPuzzleHistory?: Record<string, import('./puzzle').DailyPuzzleRecord>;
   dailyPuzzleStreak?: number;
+  scheduledLessonsProgress?: Record<string, import('./schedule').ScheduledLessonProgressItem>;
+  weeklyExamHistory?: Record<string, import('./schedule').WeeklyExamResult>;
+  weakTopics?: import('./schedule').WeakTopicRecord[];
 }
 
 export * from './puzzle';
+export * from './schedule';

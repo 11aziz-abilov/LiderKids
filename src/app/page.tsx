@@ -5,6 +5,7 @@ import MascotLion from '@/components/MascotLion';
 import SubjectCard from '@/components/SubjectCard';
 import DailyQuests from '@/components/DailyQuests';
 import StreakRewardsSection from '@/components/StreakRewardsSection';
+import TodayLessonsWidget from '@/components/schedule/TodayLessonsWidget';
 import { useGame, getTodayDateString } from '@/context/GameContext';
 import { getDailyPuzzleForDate } from '@/data/dailyPuzzlesData';
 import { SUBJECTS, QUIZ_QUESTIONS, LESSONS } from '@/data/mockData';
@@ -213,6 +214,9 @@ export default function HomePage() {
           </button>
         </div>
       )}
+
+      {/* Bugungi Darslar & Haftalik Jadval */}
+      <TodayLessonsWidget />
 
       {/* Mascot Section */}
       <section>
