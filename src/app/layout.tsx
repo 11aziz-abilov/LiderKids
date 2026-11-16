@@ -6,7 +6,6 @@ import Header from '@/components/Header';
 import RegistrationModal from '@/components/RegistrationModal';
 import ProfileModal from '@/components/ProfileModal';
 import AcademicYearPromotionModal from '@/components/AcademicYearPromotionModal';
-import MascotReminderWidget from '@/components/MascotReminderWidget';
 import ParentSmsModal from '@/components/ParentSmsModal';
 import GlobalStreakModals from '@/components/GlobalStreakModals';
 import SherchaAiAssistantModal from '@/components/SherchaAiAssistantModal';
@@ -49,7 +48,6 @@ export default function RootLayout({
           <ProfileModal />
           <ParentSmsModal />
           <AcademicYearPromotionModal />
-          <MascotReminderWidget />
           <GlobalStreakModals />
           <SherchaAiAssistantModal />
           <FloatingAiAssistantButton />

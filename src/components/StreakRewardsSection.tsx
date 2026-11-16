@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { STREAK_PRIZES, getNextStreakPrize } from '@/data/streakRewardsData';
 import { StreakPrize } from '@/types';
@@ -16,6 +16,14 @@ export default function StreakRewardsSection() {
   } = useGame();
 
   const [showTester, setShowTester] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsAdmin(window.location.search.includes('admin=true'));
+    }
+  }, []);
+
   const currentStreak = progress.streaks || 0;
   const nextPrize = getNextStreakPrize(currentStreak);
 
@@ -204,17 +212,19 @@ export default function StreakRewardsSection() {
           </span>
         </div>
 
-        {/* Tester Button toggle */}
-        <button
-          onClick={() => setShowTester(!showTester)}
-          className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-950/50 hover:bg-amber-200 px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-800 shrink-0 transition"
-        >
-          {showTester ? '✕ Sinov panelini yopish' : '🧪 Olovchani sinab ko‘rish'}
-        </button>
+        {/* Tester Button toggle — Strictly hidden from pupils */}
+        {isAdmin && (
+          <button
+            onClick={() => setShowTester(!showTester)}
+            className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-950/50 hover:bg-amber-200 px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-800 shrink-0 transition cursor-pointer"
+          >
+            {showTester ? '✕ [Admin] Sinov panelini yopish' : '🧪 [Admin] Olovchani sinab ko‘rish'}
+          </button>
+        )}
       </div>
 
       {/* Simulator Toolbar for testing milestones */}
-      {showTester && (
+      {isAdmin && showTester && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}

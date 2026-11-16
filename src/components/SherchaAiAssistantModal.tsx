@@ -379,7 +379,7 @@ Qaysi dars yoki masalani tushunmading? Menga yoz yoki mikrofonni bosib gapir —
   return (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
+        className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
         onClick={closeAiAssistant}
       >
         <motion.div

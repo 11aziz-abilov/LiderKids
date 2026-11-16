@@ -116,15 +116,16 @@ export interface SmsMessage {
 }
 
 export interface UserProfile {
+  id?: string;
   firstName: string;
   lastName: string;
   grade: GradeLevel;
   gender: 'boy' | 'girl';
   phoneNumber: string;
   parentPhoneNumber?: string;
-  cardNumber: string;
-  cardExpiry: string;
-  cardHolder: string;
+  cardNumber?: string;
+  cardExpiry?: string;
+  cardHolder?: string;
   parentName: string;
   region: string;
   district: string;
@@ -136,7 +137,8 @@ export interface UserProfile {
   smsNotificationsEnabled?: boolean;
   lastActiveDate?: string;
   lastInactivitySmsSentDate?: string;
-  botSyncCode?: string; // Telegram botga ulash uchun 6 xonali shaxsiy kod (masalan, "749201")
+  botSyncCode?: string; // Telegram botga ulash uchun 6 xonali kod
+  isBotLinked?: boolean; // Telegram bot ulanganligi holati
 }
 
 export type MarketCategory = 'outfit' | 'backpack' | 'hat' | 'accessory';

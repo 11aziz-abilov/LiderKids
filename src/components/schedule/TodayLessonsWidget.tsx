@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import {
   WEEKLY_DAYS_CONFIG,
@@ -44,6 +44,11 @@ export default function TodayLessonsWidget() {
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const tashkentDate = getTashkentDate();
   const dayKey = tashkentDate.dayKey;
@@ -89,7 +94,7 @@ export default function TodayLessonsWidget() {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-                {formatTashkentDateUz(tashkentDate.dateString)} • {progress.grade}-sinf haftalik rejasi
+                {mounted ? formatTashkentDateUz(tashkentDate.dateString) : 'Haftalik reja'} • {progress.grade}-sinf haftalik rejasi
               </p>
             </div>
           </div>

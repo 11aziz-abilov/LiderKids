@@ -57,11 +57,11 @@ export default function Header() {
 
           {/* Sinf ko'rsatkichi (O'quv yili davomida faqat o'zining sinfi ko'rinadi) */}
           {progress.profile?.isRegistered ? (
-            <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-yellow-500/10 dark:bg-zinc-800/90 px-3.5 py-1.5 rounded-2xl border-2 border-amber-300 dark:border-zinc-700 shadow-sm">
-              <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-black text-xs shadow-sm">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-yellow-500/10 dark:bg-zinc-800/90 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-2xl border-2 border-amber-300 dark:border-zinc-700 shadow-sm shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-black text-xs shadow-sm">
                 {progress.grade}
               </div>
-              <div className="flex flex-col">
+              <div className="hidden sm:flex flex-col">
                 <span className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200 leading-tight">
                   {progress.grade}-sinf o‘quvchisi
                 </span>
@@ -140,27 +140,22 @@ export default function Header() {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openAiAssistant()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-amber-950 font-black text-xs sm:text-sm border-2 border-amber-300 dark:border-amber-500/50 shadow-sm hover:shadow-amber-400/30 transition cursor-pointer"
-              title="Shercha AI yordamchisidan tushunmagan narsangizni so'rang"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-amber-950 font-black text-xs sm:text-sm border-2 border-amber-300 dark:border-amber-500/50 shadow-sm hover:shadow-amber-400/30 transition cursor-pointer"
+              title="Shercha AI yordamchisidan so'rang"
             >
               <span className="text-base select-none">🦁</span>
               <span className="hidden md:inline">Shercha AI</span>
             </motion.button>
 
-            {/* Ota-onalar SMS Markazi */}
+            {/* Ota-onalar Nazorat Markazi (Telegram Bot) */}
             <motion.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => setIsSmsModalOpen(true)}
-              className="relative p-2 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition shadow-sm"
-              title="Ota-onalar SMS Markazi (1 kun kirmasa ogohlantirish & Test natijalari hisoboti)"
+              className="relative p-2 rounded-2xl border-2 border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 hover:bg-sky-100 transition shadow-sm cursor-pointer"
+              title="Ota-onalar Nazorat Markazi (Telegram Bot)"
             >
               <Smartphone className="w-5 h-5" />
-              {smsHistory.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white rounded-full text-[9px] font-black flex items-center justify-center animate-pulse">
-                  {smsHistory.length > 9 ? '9+' : smsHistory.length}
-                </span>
-              )}
             </motion.button>
 
             {/* Profile / Ro'yxatdan o'tish */}

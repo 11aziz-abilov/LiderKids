@@ -6,7 +6,6 @@ import { GradeLevel } from '@/types';
 import { triggerConfetti } from './ConfettiEffect';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  CreditCard,
   Phone,
   User,
   GraduationCap,
@@ -15,13 +14,9 @@ import {
   Sparkles,
   ChevronRight,
   ChevronLeft,
-  CheckCircle,
   Coins,
-  Lock,
   X,
-  HelpCircle
 } from 'lucide-react';
-
 import { UZBEKISTAN_REGIONS } from '@/data/regionsData';
 
 export default function RegistrationModal() {
@@ -29,10 +24,10 @@ export default function RegistrationModal() {
     isRegistrationModalOpen,
     setIsRegistrationModalOpen,
     registerUser,
-    progress
+    progress,
   } = useGame();
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   // Form Fields
   const [firstName, setFirstName] = useState('');
@@ -46,35 +41,10 @@ export default function RegistrationModal() {
   const [parentName, setParentName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardHolder, setCardHolder] = useState('');
-
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isRegistrationModalOpen) return null;
-
-  // Format Card Number (XXXX XXXX XXXX XXXX)
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
-    const formatted = raw.replace(/(\d{4})/g, '$1 ').trim();
-    setCardNumber(formatted);
-    if (errors.cardNumber) setErrors((prev) => ({ ...prev, cardNumber: '' }));
-  };
-
-  // Format Expiry (MM/YY)
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let raw = e.target.value.replace(/\D/g, '').slice(0, 4);
-    if (raw.length >= 2) {
-      let month = parseInt(raw.slice(0, 2), 10);
-      if (month > 12) month = 12;
-      if (month === 0) month = 1;
-      const monthStr = month < 10 ? `0${month}` : `${month}`;
-      raw = `${monthStr}/${raw.slice(2)}`;
-    }
-    setCardExpiry(raw);
-    if (errors.cardExpiry) setErrors((prev) => ({ ...prev, cardExpiry: '' }));
-  };
 
   // Format Phone (+998 (XX) XXX-XX-XX)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,18 +64,6 @@ export default function RegistrationModal() {
     setPhoneNumber(clean.length > 0 ? formatted : '');
     if (errors.phoneNumber) setErrors((prev) => ({ ...prev, phoneNumber: '' }));
   };
-
-  // Detect Card Provider
-  const getCardType = (digits: string) => {
-    const cleaned = digits.replace(/\s/g, '');
-    if (cleaned.startsWith('8600')) return { name: 'UZCARD', color: 'from-blue-600 to-indigo-800' };
-    if (cleaned.startsWith('9860')) return { name: 'HUMO', color: 'from-amber-500 to-orange-600' };
-    if (cleaned.startsWith('4')) return { name: 'VISA', color: 'from-cyan-600 to-blue-700' };
-    if (cleaned.startsWith('5')) return { name: 'MASTERCARD', color: 'from-rose-600 to-amber-700' };
-    return { name: 'LIDER CARD', color: 'from-amber-600 via-orange-600 to-yellow-600' };
-  };
-
-  const cardType = getCardType(cardNumber);
 
   // Validate Step 1
   const validateStep1 = () => {
@@ -127,44 +85,32 @@ export default function RegistrationModal() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Validate Step 3
-  const validateStep3 = () => {
-    const newErrors: Record<string, string> = {};
-    const rawCard = cardNumber.replace(/\s/g, '');
-    if (rawCard.length !== 16) newErrors.cardNumber = 'Karta raqami 16 ta raqamdan iborat bo‘lishi kerak';
-    if (cardExpiry.length < 5) newErrors.cardExpiry = 'Amal qilish muddatini kiriting (MM/YY)';
-    if (!cardHolder.trim()) newErrors.cardHolder = 'Karta egasining ismini kiriting';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1) {
       if (validateStep1()) setStep(2);
     } else if (step === 2) {
-      if (validateStep2()) setStep(3);
-    } else if (step === 3) {
-      if (validateStep3()) {
-        // Complete Registration!
-        registerUser({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          grade,
-          gender,
-          region,
-          district: district.trim(),
-          school: school.trim() || undefined,
-          parentName: parentName.trim(),
-          phoneNumber,
-          parentPhoneNumber: phoneNumber,
-          cardNumber: cardNumber.trim(),
-          cardExpiry: cardExpiry.trim(),
-          cardHolder: cardHolder.trim().toUpperCase(),
-          smsNotificationsEnabled: true,
-          lastActiveDate: new Date().toISOString(),
-        });
-        setStep(4);
-        triggerConfetti();
+      if (validateStep2()) {
+        setIsSubmitting(true);
+        try {
+          await registerUser({
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            grade,
+            gender,
+            region,
+            district: district.trim(),
+            school: school.trim() || undefined,
+            parentName: parentName.trim(),
+            phoneNumber,
+            parentPhoneNumber: phoneNumber,
+            smsNotificationsEnabled: true,
+            lastActiveDate: new Date().toISOString(),
+          });
+          setStep(3);
+          triggerConfetti();
+        } finally {
+          setIsSubmitting(false);
+        }
       }
     }
   };
@@ -174,7 +120,7 @@ export default function RegistrationModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -183,10 +129,10 @@ export default function RegistrationModal() {
       >
         {/* Modal Top Header */}
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-6 py-5 text-white relative">
-          {step !== 4 && (
+          {step !== 3 && (
             <button
               onClick={() => setIsRegistrationModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition"
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition cursor-pointer"
               title="Keyinroq to‘ldirish"
             >
               <X className="w-5 h-5" />
@@ -202,39 +148,39 @@ export default function RegistrationModal() {
                 <span className="text-xs font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
                   LiderKids Platformasi
                 </span>
-                <span className="flex items-center gap-1 text-xs font-bold text-yellow-200">
-                  <Coins className="w-3.5 h-3.5 fill-yellow-300" />
-                  +500 Tanga Bonus!
+                <span className="text-xs font-bold text-yellow-200">
+                  Prezident Maktabiga Tayyorlov
                 </span>
               </div>
               <h2 className="text-2xl font-black tracking-tight mt-0.5">
-                {step === 4 ? "Ro‘yxatdan o‘tdingiz! 🎉" : "O‘quvchini Ro‘yxatdan O‘tkazish"}
+                {step === 3 ? "Ro‘yxatdan o‘tdingiz! 🎉" : "O‘quvchini Ro‘yxatdan O‘tkazish"}
               </h2>
             </div>
           </div>
 
           {/* Stepper indicator */}
-          {step !== 4 && (
-            <div className="mt-4 flex items-center justify-between text-xs font-extrabold text-amber-100">
+          {step !== 3 && (
+            <div className="mt-4 flex items-center justify-start gap-4 text-xs font-extrabold text-amber-100">
               <div className="flex items-center gap-1.5">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${step >= 1 ? 'bg-white text-orange-600' : 'bg-white/30 text-white'}`}>
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${
+                    step >= 1 ? 'bg-white text-orange-600' : 'bg-white/30 text-white'
+                  }`}
+                >
                   1
                 </div>
-                <span>O‘quvchi</span>
+                <span>1-qadam: O‘quvchi</span>
               </div>
-              <div className="w-8 h-0.5 bg-white/40" />
+              <div className="w-10 h-0.5 bg-white/40" />
               <div className="flex items-center gap-1.5">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${step >= 2 ? 'bg-white text-orange-600' : 'bg-white/30 text-white'}`}>
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${
+                    step >= 2 ? 'bg-white text-orange-600' : 'bg-white/30 text-white'
+                  }`}
+                >
                   2
                 </div>
-                <span>Aloqa</span>
-              </div>
-              <div className="w-8 h-0.5 bg-white/40" />
-              <div className="flex items-center gap-1.5">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${step >= 3 ? 'bg-white text-orange-600' : 'bg-white/30 text-white'}`}>
-                  3
-                </div>
-                <span>Karta</span>
+                <span>2-qadam: Ota-ona aloqasi</span>
               </div>
             </div>
           )}
@@ -255,7 +201,7 @@ export default function RegistrationModal() {
                 <div className="bg-amber-50 dark:bg-zinc-800/60 p-3.5 rounded-2xl border border-amber-200 dark:border-zinc-700 flex items-start gap-3">
                   <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-xs sm:text-sm text-amber-900 dark:text-amber-200 font-medium">
-                    Prezident maktabiga tayyorlov sarguzashtiga xush kelibsiz! O‘quvchi ma‘lumotlarini kiriting va birinchi qadamni tashlang.
+                    Prezident maktabiga tayyorlov platformasiga xush kelibsiz! O‘quvchi ma‘lumotlarini kiriting va yangi bilimlarni boshlang.
                   </p>
                 </div>
 
@@ -316,7 +262,7 @@ export default function RegistrationModal() {
                     <button
                       type="button"
                       onClick={() => setGender('boy')}
-                      className={`py-3 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm ${
+                      className={`py-3 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm cursor-pointer ${
                         gender === 'boy'
                           ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/20 scale-[1.02]'
                           : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-blue-300'
@@ -328,7 +274,7 @@ export default function RegistrationModal() {
                     <button
                       type="button"
                       onClick={() => setGender('girl')}
-                      className={`py-3 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm ${
+                      className={`py-3 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm cursor-pointer ${
                         gender === 'girl'
                           ? 'border-pink-500 bg-pink-500 text-white shadow-md shadow-pink-500/20 scale-[1.02]'
                           : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-pink-300'
@@ -353,7 +299,7 @@ export default function RegistrationModal() {
                           type="button"
                           key={g}
                           onClick={() => setGrade(g)}
-                          className={`py-2.5 px-3 rounded-2xl border-2 text-center transition flex flex-col items-center gap-1 ${
+                          className={`py-2.5 px-3 rounded-2xl border-2 text-center transition flex flex-col items-center gap-1 cursor-pointer ${
                             isSelected
                               ? 'border-orange-500 bg-orange-500 text-white shadow-md shadow-orange-500/20'
                               : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-400 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
@@ -367,18 +313,10 @@ export default function RegistrationModal() {
                       );
                     })}
                   </div>
-                  {/* Academic year lock explanation */}
-                  <div className="mt-2.5 bg-amber-100/70 dark:bg-amber-950/50 p-2.5 rounded-xl border border-amber-300 dark:border-amber-700/60 text-[11px] font-bold text-amber-950 dark:text-amber-200 flex items-start gap-2">
-                    <span className="text-base shrink-0">🔒</span>
-                    <span className="leading-snug">
-                      Tanlangan sinf joriy o‘quv yili davomida (25-maygacha) qat‘iy belgilanadi va boshqa sinflar ko‘rinmaydi. O‘quv yili tugagach avtomatik keyingi sinfga o‘tiladi.
-                    </span>
-                  </div>
                 </div>
 
                 {/* Region & District */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Viloyat */}
                   <div>
                     <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
                       Viloyat <span className="text-red-500">*</span>
@@ -404,7 +342,6 @@ export default function RegistrationModal() {
                     </div>
                   </div>
 
-                  {/* Tuman / Shahar */}
                   <div>
                     <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
                       Tuman / Shahar <span className="text-red-500">*</span>
@@ -432,7 +369,7 @@ export default function RegistrationModal() {
                   </div>
                 </div>
 
-                {/* Maktab */}
+                {/* School */}
                 <div>
                   <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
                     Maktab raqami yoki nomi (Ixtiyoriy)
@@ -463,7 +400,7 @@ export default function RegistrationModal() {
                 <div className="bg-sky-50 dark:bg-sky-950/40 p-3.5 rounded-2xl border border-sky-200 dark:border-sky-800 flex items-start gap-3">
                   <ShieldCheck className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
                   <p className="text-xs sm:text-sm text-sky-900 dark:text-sky-200 font-medium">
-                    Test natijalari, o‘quvchining yutuqlari va sertifikatlar ota-onaga SMS yoki Telegram orqali yuboriladi.
+                    Test natijalari, o‘quvchining yutuqlari va haftalik hisobotlar Telegram bot orqali ota-onaga yuboriladi.
                   </p>
                 </div>
 
@@ -493,7 +430,7 @@ export default function RegistrationModal() {
                 {/* Phone Number */}
                 <div>
                   <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
-                    Telefon Raqam (SMS va Natijalar uchun) <span className="text-red-500">*</span>
+                    Telefon Raqam (Kirish va Telegram Bot uchun) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400" />
@@ -509,148 +446,16 @@ export default function RegistrationModal() {
                   </div>
                   {errors.phoneNumber && <p className="text-xs text-red-500 mt-1 font-semibold">{errors.phoneNumber}</p>}
                   <p className="text-[11px] text-zinc-400 mt-1 font-medium">
-                    O‘zbekiston aloqa operatorlari raqami (+998)
+                    O‘zbekiston aloqa operatorlari raqami (+998). Natijalar xavfsiz saqlanadi.
                   </p>
                 </div>
               </motion.div>
             )}
 
-            {/* STEP 3: Payment Card Details */}
+            {/* STEP 3: Success Celebration */}
             {step === 3 && (
               <motion.div
                 key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-5"
-              >
-                {/* Live Bank Card Preview */}
-                <div
-                  className={`relative w-full rounded-2xl p-5 text-white shadow-xl bg-gradient-to-tr ${cardType.color} overflow-hidden transition-all duration-300 border border-white/20`}
-                >
-                  {/* Decorative background glow */}
-                  <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                  <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-black/20 rounded-full blur-xl pointer-events-none" />
-
-                  {/* Top card row */}
-                  <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black tracking-widest uppercase bg-black/25 px-2.5 py-0.5 rounded-md">
-                        {cardType.name}
-                      </span>
-                      <span className="text-[10px] font-bold text-amber-200">LiderKids Pay</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 opacity-80">
-                      <div className="w-2.5 h-2.5 rounded-full bg-white/60" />
-                      <div className="w-3.5 h-3.5 rounded-full border-2 border-white/80" />
-                    </div>
-                  </div>
-
-                  {/* Chip Icon */}
-                  <div className="my-4 relative z-10 flex items-center justify-between">
-                    <div className="w-10 h-7 rounded-md bg-gradient-to-br from-yellow-200 to-amber-400 border border-amber-500 shadow-inner flex items-center justify-center">
-                      <div className="w-6 h-4 border border-amber-600/50 rounded-sm grid grid-cols-2 gap-0.5">
-                        <div className="border-r border-amber-600/40" />
-                        <div />
-                      </div>
-                    </div>
-                    <Lock className="w-4 h-4 text-white/70" />
-                  </div>
-
-                  {/* Card Number */}
-                  <div className="font-mono text-lg sm:text-xl font-black tracking-widest relative z-10">
-                    {cardNumber || '•••• •••• •••• ••••'}
-                  </div>
-
-                  {/* Bottom row: Holder & Expiry */}
-                  <div className="mt-3 flex items-center justify-between text-xs relative z-10 uppercase font-semibold">
-                    <div>
-                      <div className="text-[9px] text-white/70 tracking-wider">Karta Egasi</div>
-                      <div className="font-bold tracking-wide truncate max-w-[180px]">
-                        {cardHolder || (firstName ? `${firstName} ${lastName}`.toUpperCase() : 'ISMI FAMILIYASI')}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[9px] text-white/70 tracking-wider">Amal Qilish</div>
-                      <div className="font-mono font-bold tracking-wider">{cardExpiry || 'MM/YY'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Inputs */}
-                <div className="space-y-3">
-                  {/* Card Number Input */}
-                  <div>
-                    <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
-                      Karta Raqami (Uzcard / Humo / Visa) <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <CreditCard className="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400" />
-                      <input
-                        type="text"
-                        value={cardNumber}
-                        onChange={handleCardNumberChange}
-                        placeholder="8600 0000 0000 0000"
-                        className={`w-full pl-10 pr-3 py-2.5 rounded-xl border-2 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold text-zinc-800 dark:text-zinc-100 outline-none font-mono transition ${
-                          errors.cardNumber ? 'border-red-400 bg-red-50/50' : 'border-zinc-200 dark:border-zinc-700 focus:border-amber-500'
-                        }`}
-                      />
-                    </div>
-                    {errors.cardNumber && <p className="text-xs text-red-500 mt-1 font-semibold">{errors.cardNumber}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Expiry */}
-                    <div>
-                      <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
-                        Amal Qilish Muddati <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={cardExpiry}
-                        onChange={handleExpiryChange}
-                        placeholder="MM/YY (Masalan: 12/28)"
-                        className={`w-full px-3.5 py-2.5 rounded-xl border-2 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold text-zinc-800 dark:text-zinc-100 outline-none font-mono transition ${
-                          errors.cardExpiry ? 'border-red-400 bg-red-50/50' : 'border-zinc-200 dark:border-zinc-700 focus:border-amber-500'
-                        }`}
-                      />
-                      {errors.cardExpiry && <p className="text-xs text-red-500 mt-1 font-semibold">{errors.cardExpiry}</p>}
-                    </div>
-
-                    {/* Cardholder */}
-                    <div>
-                      <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
-                        Karta Egasi <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={cardHolder}
-                        onChange={(e) => {
-                          setCardHolder(e.target.value.toUpperCase());
-                          if (errors.cardHolder) setErrors((prev) => ({ ...prev, cardHolder: '' }));
-                        }}
-                        placeholder="AZIZBEK KARIMOV"
-                        className={`w-full px-3.5 py-2.5 rounded-xl border-2 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold text-zinc-800 dark:text-zinc-100 outline-none transition uppercase ${
-                          errors.cardHolder ? 'border-red-400 bg-red-50/50' : 'border-zinc-200 dark:border-zinc-700 focus:border-amber-500'
-                        }`}
-                      />
-                      {errors.cardHolder && <p className="text-xs text-red-500 mt-1 font-semibold">{errors.cardHolder}</p>}
-                    </div>
-                  </div>
-
-                  {/* Security Note */}
-                  <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 pt-1">
-                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>256-bit shifrlangan xavfsiz tizim. Kurs to‘lovlari va g‘oliblik mukofotlari uchun.</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* STEP 4: Success Celebration */}
-            {step === 4 && (
-              <motion.div
-                key="step4"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="text-center py-6 space-y-4"
@@ -668,26 +473,29 @@ export default function RegistrationModal() {
                   </p>
                 </div>
 
-                {/* Reward Callout */}
-                <div className="bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-950/60 dark:to-orange-950/60 border-2 border-amber-300 dark:border-amber-700 p-4 rounded-2xl max-w-sm mx-auto shadow-sm">
+                <div className="bg-amber-50 dark:bg-zinc-800 border-2 border-amber-300 dark:border-zinc-700 p-4 rounded-2xl max-w-sm mx-auto shadow-sm">
                   <div className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-1">
-                    🎁 Boshlang‘ich Sovg‘a Qutisi
+                    🌟 Boshlang‘ich Holat
                   </div>
                   <div className="flex items-center justify-center gap-6">
-                    <div className="flex items-center gap-1.5 font-black text-lg text-amber-900 dark:text-amber-200">
-                      <span className="text-2xl">🪙</span>
-                      <span>+100 Tanga</span>
+                    <div className="flex items-center gap-1.5 font-black text-base text-amber-900 dark:text-amber-200">
+                      <span>🪙</span>
+                      <span>0 Tanga</span>
                     </div>
-                    <div className="flex items-center gap-1.5 font-black text-lg text-orange-900 dark:text-orange-200">
-                      <span className="text-2xl">⚡</span>
-                      <span>+50 XP</span>
+                    <div className="flex items-center gap-1.5 font-black text-base text-orange-900 dark:text-orange-200">
+                      <span>🔥</span>
+                      <span>0 Olovcha</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 font-black text-base text-amber-900 dark:text-amber-200">
+                      <span>⭐</span>
+                      <span>0 XP</span>
                     </div>
                   </div>
                 </div>
 
                 <button
                   onClick={handleFinish}
-                  className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-base rounded-2xl shadow-lg shadow-orange-500/30 transition-all hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-base rounded-2xl shadow-lg shadow-orange-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   🚀 Sarguzashtni Boshlash!
                 </button>
@@ -697,13 +505,13 @@ export default function RegistrationModal() {
         </div>
 
         {/* Modal Footer Controls */}
-        {step !== 4 && (
+        {step !== 3 && (
           <div className="bg-zinc-50 dark:bg-zinc-800/80 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
             {step > 1 ? (
               <button
                 type="button"
-                onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+                onClick={() => setStep((s) => (s - 1) as 1 | 2)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Orqaga</span>
@@ -712,7 +520,7 @@ export default function RegistrationModal() {
               <button
                 type="button"
                 onClick={() => setIsRegistrationModalOpen(false)}
-                className="text-xs font-extrabold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition"
+                className="text-xs font-extrabold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition cursor-pointer"
               >
                 Keyinroq to‘ldirish
               </button>
@@ -720,10 +528,11 @@ export default function RegistrationModal() {
 
             <button
               type="button"
+              disabled={isSubmitting}
               onClick={handleNext}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-orange-500/20 hover:scale-105 active:scale-95 transition"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-orange-500/20 hover:scale-105 active:scale-95 transition cursor-pointer disabled:opacity-60"
             >
-              <span>{step === 3 ? "Tasdiqlash & Ro‘yxatdan o‘tish" : "Keyingisi"}</span>
+              <span>{isSubmitting ? 'Saqlanmoqda...' : step === 2 ? "Ro‘yxatdan o‘tish" : "Keyingisi"}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

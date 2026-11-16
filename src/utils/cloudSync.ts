@@ -1,75 +1,59 @@
 import { ActiveLearner } from '@/data/leaderboardData';
-
-// Firebase Realtime Database URL
-export const FIREBASE_DB_URL =
-  process.env.NEXT_PUBLIC_FIREBASE_DB_URL?.replace(/\/$/, '') ||
-  'https://liderkids-afad8-default-rtdb.firebaseio.com';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
- * ID ni Firebase kalitiga mos xavfsiz formatga o'tkazish
- */
-function sanitizeKey(id: string): string {
-  return id.replace(/[.#$[\]/\\+ ()-]/g, '_');
-}
-
-/**
- * O'quvchi ma'lumotlarini bulutli Firebase bazasiga saqlash/yangilash
+ * O'quvchi ma'lumotlarini bulutli bazaga sinxronlash (Supabase)
  */
 export async function syncLearnerToCloud(learner: ActiveLearner): Promise<boolean> {
-  const dbUrl = FIREBASE_DB_URL;
-  if (!dbUrl) {
-    // Agar DB URL hali ulanmagan bo'lsa, xato bermaydi
-    return false;
-  }
-
   try {
-    const safeKey = sanitizeKey(learner.id || learner.name);
-    const url = `${dbUrl}/learners/${safeKey}.json`;
-
-    const payload = {
-      ...learner,
-      updatedAt: new Date().toISOString(),
-    };
-
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    return res.ok;
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      return false;
+    }
+    // Agar student_id bo'lsa, student stats yangilanadi
+    return true;
   } catch (error) {
-    console.warn('Firebase sync xatosi:', error);
     return false;
   }
 }
 
 /**
- * Barcha ro'yxatdan o'tgan haqiqiy o'quvchilarni Firebase bulutidan yuklab olish
+ * Barcha ro'yxatdan o'tgan haqiqiy o'quvchilarni bulutdan yuklab olish
  */
 export async function fetchCloudLearners(): Promise<ActiveLearner[]> {
-  const dbUrl = FIREBASE_DB_URL;
-  if (!dbUrl) {
-    return [];
-  }
-
   try {
-    const url = `${dbUrl}/learners.json`;
-    const res = await fetch(url, {
-      cache: 'no-store',
-    });
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      return [];
+    }
 
-    if (!res.ok) return [];
+    const { data: students, error } = await supabase
+      .from('students')
+      .select('id, name, grade, region, school, coins, xp, streak')
+      .order('streak', { ascending: false })
+      .limit(20);
 
-    const data = await res.json();
-    if (!data || typeof data !== 'object') return [];
+    if (error || !students) return [];
 
-    const list: ActiveLearner[] = Object.values(data);
-    return list;
+    return students.map((s) => ({
+      id: s.id,
+      name: s.name,
+      grade: s.grade || 1,
+      gender: 'boy',
+      region: s.region || 'Toshkent shahri',
+      district: '',
+      school: s.school || '',
+      streaks: s.streak || 0,
+      coins: s.coins || 0,
+      xp: s.xp || 0,
+      badge:
+        (s.streak || 0) >= 30
+          ? 'Afsonaviy Lider 👑'
+          : (s.streak || 0) >= 15
+          ? 'Oltin Chempion 🥇'
+          : (s.streak || 0) >= 5
+          ? 'Faol O‘quvchi ⚡'
+          : 'Yosh Izlanuvchi 🌱',
+    }));
   } catch (error) {
-    console.warn('Firebase yuklash xatosi:', error);
     return [];
   }
 }

@@ -145,7 +145,14 @@ interface GameContextType {
   saveWeeklyExamResult: (result: WeeklyExamResult) => void;
   getWeeklyExamResult: (weekId?: string) => WeeklyExamResult | null;
   weakTopics: WeakTopicRecord[];
-  refreshBotSyncCode: () => string;
+  refreshBotSyncCode: () => Promise<string>;
+  checkBotLinkStatus: () => Promise<void>;
+  syncResultToDb: (params: {
+    subject: string;
+    type: 'quiz' | 'lesson' | 'puzzle';
+    correct: number;
+    total: number;
+  }) => Promise<void>;
 }
 
 export const MAX_PLAYS_PER_GAME = 1;
@@ -164,45 +171,44 @@ export const getTodayDateString = (): string => {
   return `${year}-${month}-${day}`;
 };
 
-const STORAGE_KEY = 'liderkids_progress_v1';
-const PROFILE_KEY = 'liderkids_user_profile_v1';
+const STORAGE_KEY = 'liderkids_progress_v2';
+const PROFILE_KEY = 'liderkids_user_profile_v2';
 
-const defaultProfile: UserProfile = {
-  firstName: 'Yosh',
-  lastName: 'Lider',
+const emptyProfile: UserProfile = {
+  id: '',
+  firstName: '',
+  lastName: '',
   gender: 'boy',
   grade: 1,
-  phoneNumber: '+998 (90) 123-45-67',
-  parentPhoneNumber: '+998 (90) 123-45-67',
-  parentName: 'Ota-ona',
+  phoneNumber: '',
+  parentPhoneNumber: '',
+  parentName: '',
   region: 'Toshkent shahri',
-  district: 'Yunusobod tumani',
-  school: '1-maktab',
-  cardNumber: '8600 0000 0000 0000',
-  cardExpiry: '12/28',
-  cardHolder: 'YOSH LIDER',
+  district: '',
+  school: '',
   academicYear: '2026-2027',
   academicYearEndDate: new Date(2027, 4, 25, 23, 59, 59).toISOString(),
-  isRegistered: true,
-  registeredAt: new Date().toISOString(),
+  isRegistered: false,
+  registeredAt: '',
   smsNotificationsEnabled: true,
-  lastActiveDate: new Date().toISOString(),
-  botSyncCode: '748291',
+  lastActiveDate: '',
+  botSyncCode: '',
+  isBotLinked: false,
 };
 
 const defaultProgress: UserProgress = {
-  name: 'Yosh Lider',
+  name: 'O‘quvchi',
   grade: 1,
-  coins: 500, // boshlang'ich bonus market uchun
-  streaks: 2,
-  xp: 70,
+  coins: 0,
+  streaks: 0,
+  xp: 0,
   completedLessons: [],
   completedQuizzes: [],
   soundEnabled: true,
-  unlockedAchievements: ['first-step'],
-  inventory: ['backpack_red'],
-  equippedItems: { backpack: 'backpack_red' },
-  profile: defaultProfile,
+  unlockedAchievements: [],
+  inventory: [],
+  equippedItems: {},
+  profile: emptyProfile,
   dailyGames: {
     date: getTodayDateString(),
     count: 0,
@@ -325,112 +331,92 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setSmsHistory(smsService.getHistory());
   }, []);
 
-  // Load from localStorage on client mount: foydalanuvchi to'g'ridan-to'g'ri o'z profiliga kiradi!
+  // Load from database & localStorage on client mount
   useEffect(() => {
-    try {
-      setSmsHistory(smsService.getHistory());
+    async function initProfile() {
+      try {
+        setSmsHistory(smsService.getHistory());
 
-      const saved = localStorage.getItem(STORAGE_KEY);
-      let parsedProgress: any = null;
+        const saved = localStorage.getItem(STORAGE_KEY);
+        let parsedProgress: any = null;
 
-      if (saved) {
-        parsedProgress = JSON.parse(saved);
-      } else {
-        // Fallback profile key tekshirish
-        const savedProfile = localStorage.getItem(PROFILE_KEY);
-        if (savedProfile) {
-          const parsedProf = JSON.parse(savedProfile);
-          parsedProgress = {
-            ...defaultProgress,
-            profile: parsedProf,
-            name: `${parsedProf.firstName} ${parsedProf.lastName}`.trim(),
-            grade: parsedProf.grade || 1,
-          };
+        if (saved) {
+          parsedProgress = JSON.parse(saved);
         }
-      }
 
-      if (parsedProgress) {
-        if (!parsedProgress.profile) {
-          parsedProgress.profile = defaultProfile;
+        // Check if saved profile is old demo profile "Yosh Lider" without real DB id
+        const isOldDemo =
+          parsedProgress?.profile?.firstName === 'Yosh' &&
+          parsedProgress?.profile?.lastName === 'Lider' &&
+          !parsedProgress?.profile?.id;
+
+        const storedStudentId = localStorage.getItem('liderkids_student_id') || (!isOldDemo ? parsedProgress?.profile?.id : null);
+
+        if (storedStudentId) {
+          // Fetch real fresh data from Supabase
+          try {
+            const res = await fetch(`/api/auth/student?studentId=${storedStudentId}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.student) {
+                const s = data.student;
+                const { academicYear, endDate } = getCurrentAcademicYear();
+                const loadedProgress: UserProgress = {
+                  ...defaultProgress,
+                  ...(parsedProgress || {}),
+                  name: s.name,
+                  grade: s.grade || 1,
+                  coins: s.coins ?? 0,
+                  xp: s.xp ?? 0,
+                  streaks: s.streak ?? 0,
+                  profile: {
+                    id: s.id,
+                    firstName: s.name.split(' ')[0] || s.name,
+                    lastName: s.name.split(' ').slice(1).join(' ') || '',
+                    grade: s.grade || 1,
+                    gender: parsedProgress?.profile?.gender || 'boy',
+                    phoneNumber: s.parent_phone || '',
+                    parentPhoneNumber: s.parent_phone || '',
+                    parentName: s.parent_name || 'Ota-ona',
+                    region: s.region || 'Toshkent shahri',
+                    district: s.school || '',
+                    school: s.school || '',
+                    academicYear,
+                    academicYearEndDate: endDate.toISOString(),
+                    isRegistered: true,
+                    registeredAt: s.created_at || new Date().toISOString(),
+                    smsNotificationsEnabled: true,
+                    lastActiveDate: new Date().toISOString(),
+                    isBotLinked: s.isBotLinked || false,
+                  },
+                };
+
+                setProgress(loadedProgress);
+                setIsLoaded(true);
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn('Supabase profile yuklash xatosi:', e);
+          }
+        }
+
+        if (parsedProgress && !isOldDemo && parsedProgress.profile?.isRegistered) {
+          setProgress((prev) => ({ ...prev, ...parsedProgress }));
         } else {
-          parsedProgress.profile.isRegistered = true;
-          if (!parsedProgress.profile.parentPhoneNumber) {
-            parsedProgress.profile.parentPhoneNumber = parsedProgress.profile.phoneNumber || '+998 (90) 123-45-67';
-          }
-          if (parsedProgress.profile.smsNotificationsEnabled === undefined) {
-            parsedProgress.profile.smsNotificationsEnabled = true;
-          }
-          if (!parsedProgress.profile.academicYear || parsedProgress.profile.academicYear === '2025-2026') {
-            const currentYearInfo = getCurrentAcademicYear();
-            parsedProgress.profile.academicYear = currentYearInfo.academicYear;
-            parsedProgress.profile.academicYearEndDate = currentYearInfo.endDate.toISOString();
-          }
-          if (!parsedProgress.profile.botSyncCode) {
-            parsedProgress.profile.botSyncCode = generateBotSyncCode();
-          }
+          // New visitor: Show registration modal, 0 coins, 0 streak, 0 xp
+          setProgress(defaultProgress);
+          setIsRegistrationModalOpen(true);
         }
-
-        // --- 1 KUN KIRMASH (INACTIVITY) NAZORATI VA SMS YUBORISH ---
-        const lastActive = parsedProgress.profile?.lastActiveDate;
-        const now = Date.now();
-        const todayStr = new Date().toISOString().slice(0, 10);
-
-        if (lastActive) {
-          const lastActiveTime = new Date(lastActive).getTime();
-          const diffHours = (now - lastActiveTime) / (1000 * 60 * 60);
-          const lastSmsSentDate = parsedProgress.profile?.lastInactivitySmsSentDate;
-
-          // Agar oxirgi kirishdan beri 24 soat (1 kun) o'tgan bo'lsa va bugun SMS jo'natilmagan bo'lsa:
-          if (diffHours >= 24 && lastSmsSentDate !== todayStr && parsedProgress.profile?.smsNotificationsEnabled !== false) {
-            const parentPhone = parsedProgress.profile?.parentPhoneNumber || parsedProgress.profile?.phoneNumber || '+998 (90) 123-45-67';
-            const parentName = parsedProgress.profile?.parentName || 'Ota-ona';
-            const studentName = parsedProgress.name || `${parsedProgress.profile?.firstName || 'Yosh'} ${parsedProgress.profile?.lastName || 'Lider'}`.trim();
-            const daysInactive = Math.max(1, Math.floor(diffHours / 24));
-
-            smsService.sendInactivityAlert({
-              parentPhone,
-              parentName,
-              studentName,
-              streaks: parsedProgress.streaks || 1,
-              daysInactive,
-            }).then(() => {
-              setSmsHistory(smsService.getHistory());
-            });
-
-            parsedProgress.profile.lastInactivitySmsSentDate = todayStr;
-          }
-        }
-
-        // Oxirgi faollik vaqtini hozirga yangilash
-        if (parsedProgress.profile) {
-          parsedProgress.profile.lastActiveDate = new Date().toISOString();
-        }
-
-        if (parsedProgress.profile?.academicYearEndDate) {
-          const endDate = new Date(parsedProgress.profile.academicYearEndDate);
-          const nowDate = new Date();
-          if (nowDate > endDate && parsedProgress.grade < 4) {
-            const nextYearInfo = getCurrentAcademicYear(nowDate);
-            const fromGrade = parsedProgress.grade;
-            const toGrade = getNextGrade(fromGrade);
-            parsedProgress.grade = toGrade;
-            parsedProgress.profile.grade = toGrade;
-            parsedProgress.profile.academicYear = nextYearInfo.academicYear;
-            parsedProgress.profile.academicYearEndDate = nextYearInfo.endDate.toISOString();
-            parsedProgress.academicYearPromotionNotice = {
-              fromGrade,
-              toGrade,
-              year: nextYearInfo.academicYear,
-            };
-          }
-        }
-        setProgress((prev) => ({ ...prev, ...parsedProgress }));
+      } catch {
+        setProgress(defaultProgress);
+        setIsRegistrationModalOpen(true);
+      } finally {
+        setIsLoaded(true);
       }
-    } catch {
-      // ignore
-    } finally {
-      setIsLoaded(true);
     }
+
+    initProfile();
   }, []);
 
   // Save to localStorage whenever state changes
@@ -639,6 +625,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (progress.soundEnabled) {
       sound.playFire();
     }
+    syncResultToDb({
+      subject: 'general',
+      type: 'lesson',
+      correct: 1,
+      total: 1,
+    });
     return true;
   };
 
@@ -704,6 +696,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (progress.soundEnabled) {
         sound.playCorrect();
       }
+
+      syncResultToDb({
+        subject: subjectId,
+        type: 'lesson',
+        correct: 1,
+        total: 1,
+      });
 
       return true;
     },
@@ -781,34 +780,182 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const registerUser = (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt' | 'academicYear' | 'academicYearEndDate'>) => {
+  const syncResultToDb = useCallback(
+    async (params: {
+      subject: string;
+      type: 'quiz' | 'lesson' | 'puzzle';
+      correct: number;
+      total: number;
+    }) => {
+      const studentId = progress.profile?.id;
+      if (!studentId) return;
+
+      try {
+        const res = await fetch('/api/results', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId,
+            subject: params.subject,
+            type: params.type,
+            correct: params.correct,
+            total: params.total,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.student) {
+            setProgress((prev) => ({
+              ...prev,
+              coins: data.student.coins,
+              xp: data.student.xp,
+              streaks: data.student.streak,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn('syncResultToDb error:', err);
+      }
+    },
+    [progress.profile?.id]
+  );
+
+  const checkBotLinkStatus = useCallback(async () => {
+    const studentId = progress.profile?.id;
+    if (!studentId) return;
+    try {
+      const res = await fetch(`/api/auth/student?studentId=${studentId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.student) {
+          setProgress((prev) => ({
+            ...prev,
+            coins: data.student.coins,
+            xp: data.student.xp,
+            streaks: data.student.streak,
+            profile: prev.profile
+              ? {
+                  ...prev.profile,
+                  isBotLinked: Boolean(data.student.isBotLinked),
+                }
+              : undefined,
+          }));
+        }
+      }
+    } catch {}
+  }, [progress.profile?.id]);
+
+  const refreshBotSyncCode = useCallback(async (): Promise<string> => {
+    const studentId = progress.profile?.id;
+    if (!studentId) return '';
+
+    try {
+      const res = await fetch('/api/link-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId }),
+      });
+      const data = await res.json();
+      if (data.code) {
+        setProgress((prev) => {
+          if (!prev.profile) return prev;
+          const nextProf = {
+            ...prev.profile,
+            botSyncCode: data.code,
+          };
+          try {
+            localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProf));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...prev, profile: nextProf }));
+          } catch {}
+          return {
+            ...prev,
+            profile: nextProf,
+          };
+        });
+        return data.code;
+      }
+    } catch (e) {
+      console.warn('refreshBotSyncCode error:', e);
+    }
+    return '';
+  }, [progress.profile?.id]);
+
+  const registerUser = async (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt' | 'academicYear' | 'academicYearEndDate'>) => {
     const fullName = `${profileData.firstName} ${profileData.lastName}`.trim();
     const { academicYear, endDate } = getCurrentAcademicYear();
-    setProgress((prev) => {
-      const isFirstReg = !prev.profile?.isRegistered;
+
+    try {
+      const res = await fetch('/api/auth/student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: fullName,
+          grade: profileData.grade,
+          region: profileData.region,
+          school: profileData.school,
+          parentName: profileData.parentName,
+          parentPhone: profileData.parentPhoneNumber || profileData.phoneNumber,
+        }),
+      });
+
+      let studentDbId = '';
+      let initialCoins = 0;
+      let initialXp = 0;
+      let initialStreak = 0;
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.student) {
+          studentDbId = data.student.id;
+          initialCoins = data.student.coins ?? 0;
+          initialXp = data.student.xp ?? 0;
+          initialStreak = data.student.streak ?? 0;
+          localStorage.setItem('liderkids_student_id', studentDbId);
+        }
+      }
+
+      const nextProfile: UserProfile = {
+        ...profileData,
+        id: studentDbId,
+        academicYear,
+        academicYearEndDate: endDate.toISOString(),
+        isRegistered: true,
+        registeredAt: new Date().toISOString(),
+        isBotLinked: false,
+      };
+
       const nextProgress: UserProgress = {
-        ...prev,
+        ...progress,
         name: fullName,
         grade: profileData.grade,
-        coins: isFirstReg ? prev.coins + 500 : prev.coins,
-        xp: isFirstReg ? prev.xp + 50 : prev.xp,
-        profile: {
-          ...profileData,
-          academicYear,
-          academicYearEndDate: endDate.toISOString(),
-          isRegistered: true,
-          registeredAt: prev.profile?.registeredAt || new Date().toISOString(),
-          botSyncCode: profileData.botSyncCode || prev.profile?.botSyncCode || generateBotSyncCode(),
-        },
+        coins: initialCoins,
+        xp: initialXp,
+        streaks: initialStreak,
+        profile: nextProfile,
       };
+
+      setProgress(nextProgress);
 
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(nextProgress));
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProgress.profile));
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProfile));
       } catch {}
 
-      return nextProgress;
-    });
+      // Fetch first 15-minute link code for bot
+      if (studentDbId) {
+        fetch(`/api/link-code?studentId=${studentDbId}`)
+          .then((r) => r.json())
+          .then((cd) => {
+            if (cd?.code) {
+              setProgress((p) => (p.profile ? { ...p, profile: { ...p.profile, botSyncCode: cd.code } } : p));
+            }
+          })
+          .catch(() => {});
+      }
+    } catch (err) {
+      console.warn('registerUser error:', err);
+    }
 
     setIsRegistrationModalOpen(false);
 
@@ -816,26 +963,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       sound.playVictory();
     }
   };
-
-  const refreshBotSyncCode = useCallback((): string => {
-    const newCode = generateBotSyncCode();
-    setProgress((prev) => {
-      if (!prev.profile) return prev;
-      const nextProf = {
-        ...prev.profile,
-        botSyncCode: newCode,
-      };
-      try {
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProf));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...prev, profile: nextProf }));
-      } catch {}
-      return {
-        ...prev,
-        profile: nextProf,
-      };
-    });
-    return newCode;
-  }, []);
 
   const updateProfile = (profileData: Partial<UserProfile>) => {
     setProgress((prev) => {
@@ -1116,8 +1243,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    syncResultToDb({
+      subject: 'puzzle',
+      type: 'puzzle',
+      correct: params.isCorrect ? 1 : 0,
+      total: 1,
+    });
+
     return params.isCorrect;
-  }, [progress.dailyPuzzleHistory, progress.grade, progress.soundEnabled, checkAndCelebrateMilestone]);
+  }, [progress.dailyPuzzleHistory, progress.grade, progress.soundEnabled, checkAndCelebrateMilestone, syncResultToDb]);
 
   const lionStage = LION_STAGES[progress.grade] || LION_STAGES[1];
 
@@ -1187,6 +1321,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         getWeeklyExamResult,
         weakTopics,
         refreshBotSyncCode,
+        checkBotLinkStatus,
+        syncResultToDb,
       }}
     >
       {children}

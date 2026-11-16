@@ -69,34 +69,6 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = ALL_QUIZ_QUESTIONS;
 
 export const LESSONS: Lesson[] = [
   {
-    id: 'les-1',
-    subjectId: 'math',
-    grade: 1,
-    title: 'Tezkor hisoblash: O‘nliklar bilan do‘stlashamiz',
-    durationMinutes: 6,
-    youtubeId: '3A_bX2q1f6E', // Namuna ta'lim videosi ID
-    description: '10 hosil qiluvchi juftliklar (1+9, 2+8, 3+7, 4+6, 5+5) orqali og‘zaki hisoblashni 2 baravar tezlashtiramiz!',
-    learningPoints: [
-      '10 sonining sehrli juftliklari',
-      'Barmoqlarsiz xayolda hisoblash sirlari',
-      'Do‘stona sonlar bilan o‘yinlar',
-    ],
-  },
-  {
-    id: 'les-2',
-    subjectId: 'logic',
-    grade: 1,
-    title: 'Mantiqiy jumboqlar: Qaysi biri ortiqcha?',
-    durationMinutes: 5,
-    youtubeId: '4-X2Fj0e-0c',
-    description: 'Narsalarning rangi, shakli, vazifasi va xususiyatlariga ko‘ra to‘g‘ri tasniflashni o‘rganamiz.',
-    learningPoints: [
-      'Narsalarning yashirin xususiyatlarini payqash',
-      'Guruhlash qoidalari',
-      'Kuzatuvchanlikni oshiruvchi mashqlar',
-    ],
-  },
-  {
     id: 'les-3',
     subjectId: 'critical',
     grade: 2,
@@ -150,20 +122,6 @@ export const LESSONS: Lesson[] = [
       '3D shakllarni 2D tekislikda ko‘ra bilish',
       'Yoyilmalarni xayolan buklash',
       'Ko‘rinmas tomonlarni hisoblash',
-    ],
-  },
-  {
-    id: 'les-eng-1',
-    subjectId: 'english',
-    grade: 1,
-    title: 'Sehrli ABC: Inglizcha alifbo va quvnoq ranglar',
-    durationMinutes: 6,
-    youtubeId: '75p-NQuAEzr',
-    description: 'Ingliz tilidagi ilk qadam: A dan Z gacha harflar, quvnoq ohanglar va asosiy ranglarni o‘yin orqali o‘rganamiz!',
-    learningPoints: [
-      'ABC qo‘shig‘i va harflar to‘g‘ri tovushlari',
-      'Ranglar nomi (Red, Blue, Green, Yellow)',
-      'Hayvonlar va mevalar olami',
     ],
   },
   {

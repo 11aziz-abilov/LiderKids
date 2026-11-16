@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { GradeLevel } from '@/types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   User,
-  CreditCard,
   Phone,
   MapPin,
   GraduationCap,
@@ -22,8 +21,7 @@ import {
   Calendar,
   Copy,
   RefreshCw,
-  Bot,
-  ExternalLink,
+  CheckCircle2,
 } from 'lucide-react';
 
 import { UZBEKISTAN_REGIONS } from '@/data/regionsData';
@@ -34,25 +32,50 @@ export default function ProfileModal() {
     isProfileModalOpen,
     setIsProfileModalOpen,
     setIsRegistrationModalOpen,
-    isSmsModalOpen,
-    setIsSmsModalOpen,
     progress,
     updateProfile,
     advanceAcademicYearManually,
     resetProgress,
     lionStage,
     refreshBotSyncCode,
+    checkBotLinkStatus,
   } = useGame();
 
   const [isEditing, setIsEditing] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isRefreshingCode, setIsRefreshingCode] = useState(false);
+
   const profile = progress.profile;
-  const botCode = profile?.botSyncCode || '748291';
+  const botCode = profile?.botSyncCode || '';
+  const isBotLinked = Boolean(profile?.isBotLinked);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsAdmin(window.location.search.includes('admin=true'));
+    }
+    if (isProfileModalOpen) {
+      checkBotLinkStatus();
+      if (!botCode && profile?.id) {
+        refreshBotSyncCode();
+      }
+    }
+  }, [isProfileModalOpen, checkBotLinkStatus, botCode, profile?.id, refreshBotSyncCode]);
 
   const handleCopyCode = (code: string) => {
+    if (!code) return;
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleRefreshCodeClick = async () => {
+    setIsRefreshingCode(true);
+    try {
+      await refreshBotSyncCode();
+    } finally {
+      setIsRefreshingCode(false);
+    }
   };
 
   // Editable fields
@@ -65,9 +88,6 @@ export default function ProfileModal() {
   const [parentName, setParentName] = useState(profile?.parentName || '');
   const [region, setRegion] = useState(profile?.region || 'Toshkent shahri');
   const [district, setDistrict] = useState(profile?.district || (UZBEKISTAN_REGIONS['Toshkent shahri']?.[0] || ''));
-  const [cardNumber, setCardNumber] = useState(profile?.cardNumber || '');
-  const [cardExpiry, setCardExpiry] = useState(profile?.cardExpiry || '');
-  const [cardHolder, setCardHolder] = useState(profile?.cardHolder || '');
 
   if (!isProfileModalOpen) return null;
 
@@ -82,30 +102,20 @@ export default function ProfileModal() {
       parentName: parentName.trim(),
       region,
       district: district.trim(),
-      cardNumber: cardNumber.trim(),
-      cardExpiry: cardExpiry.trim(),
-      cardHolder: cardHolder.trim().toUpperCase(),
     });
     setIsEditing(false);
   };
 
   const handleReset = () => {
-    if (confirm("Haqiqatan ham qaytadan ro‘yxatdan o‘tishni xohlaysizmi?")) {
+    if (confirm("Haqiqatan ham hisobdan chiqib, qaytadan ro‘yxatdan o‘tishni xohlaysizmi?")) {
       resetProgress();
       setIsProfileModalOpen(false);
       setIsRegistrationModalOpen(true);
     }
   };
 
-  const getMaskedCard = (cardNum?: string) => {
-    if (!cardNum) return 'Karta bog‘lanmagan';
-    const clean = cardNum.replace(/\s/g, '');
-    if (clean.length < 16) return cardNum;
-    return `${clean.slice(0, 4)} •••• •••• ${clean.slice(12)}`;
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -116,7 +126,7 @@ export default function ProfileModal() {
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-6 py-6 text-white relative">
           <button
             onClick={() => setIsProfileModalOpen(false)}
-            className="absolute top-4 right-4 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition"
+            className="absolute top-4 right-4 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -184,12 +194,9 @@ export default function ProfileModal() {
                   setPhoneNumber(profile?.phoneNumber || '');
                   setParentName(profile?.parentName || '');
                   setRegion(profile?.region || 'Toshkent shahri');
-                  setCardNumber(profile?.cardNumber || '');
-                  setCardExpiry(profile?.cardExpiry || '');
-                  setCardHolder(profile?.cardHolder || '');
                   setIsEditing(true);
                 }}
-                className="flex items-center gap-1.5 text-xs font-extrabold text-orange-600 dark:text-orange-400 hover:underline"
+                className="flex items-center gap-1.5 text-xs font-extrabold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 <span>Tahrirlash</span>
@@ -197,7 +204,7 @@ export default function ProfileModal() {
             ) : (
               <button
                 onClick={handleSave}
-                className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-extrabold hover:bg-emerald-600 transition"
+                className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-extrabold hover:bg-emerald-600 transition cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>Saqlash</span>
@@ -236,7 +243,7 @@ export default function ProfileModal() {
                     <button
                       type="button"
                       onClick={() => setGender('boy')}
-                      className={`py-2 px-3 rounded-xl text-xs font-black border-2 transition-all flex items-center justify-center gap-1.5 ${
+                      className={`py-2 px-3 rounded-xl text-xs font-black border-2 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                         gender === 'boy'
                           ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 shadow-sm'
                           : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
@@ -247,7 +254,7 @@ export default function ProfileModal() {
                     <button
                       type="button"
                       onClick={() => setGender('girl')}
-                      className={`py-2 px-3 rounded-xl text-xs font-black border-2 transition-all flex items-center justify-center gap-1.5 ${
+                      className={`py-2 px-3 rounded-xl text-xs font-black border-2 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                         gender === 'girl'
                           ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-200 shadow-sm'
                           : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
@@ -259,17 +266,7 @@ export default function ProfileModal() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase text-zinc-500">O‘quvchi telefon raqami</label>
-                  <input
-                    type="text"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full p-2 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 outline-none font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black uppercase text-zinc-500">Ota-ona telefon raqami (SMS qabul qiluvchi)</label>
+                  <label className="text-[10px] font-black uppercase text-zinc-500">Ota-ona telefon raqami</label>
                   <input
                     type="text"
                     value={parentPhoneNumber}
@@ -324,16 +321,6 @@ export default function ProfileModal() {
                     </select>
                   </div>
                 </div>
-
-                <div>
-                  <label className="text-[10px] font-black uppercase text-zinc-500">Karta raqami</label>
-                  <input
-                    type="text"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    className="w-full p-2 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 outline-none font-mono"
-                  />
-                </div>
               </div>
             ) : (
               <div className="space-y-2.5 text-xs sm:text-sm">
@@ -366,7 +353,7 @@ export default function ProfileModal() {
 
                 <div className="flex items-center justify-between py-1 border-b border-zinc-200 dark:border-zinc-700">
                   <span className="text-zinc-500 dark:text-zinc-400 font-bold flex items-center gap-1.5">
-                    <Phone className="w-4 h-4 text-emerald-500" /> Ota-ona telefoni (SMS):
+                    <Phone className="w-4 h-4 text-emerald-500" /> Ota-ona telefoni:
                   </span>
                   <span className="font-black font-mono text-zinc-800 dark:text-zinc-200">
                     {profile?.parentPhoneNumber || profile?.phoneNumber || "Ko‘rsatilmagan"}
@@ -392,17 +379,6 @@ export default function ProfileModal() {
                   </span>
                 </div>
 
-                {profile?.school && (
-                  <div className="flex items-center justify-between py-1 border-b border-zinc-200 dark:border-zinc-700">
-                    <span className="text-zinc-500 dark:text-zinc-400 font-bold flex items-center gap-1.5">
-                      <GraduationCap className="w-4 h-4 text-amber-500" /> Maktab:
-                    </span>
-                    <span className="font-black text-zinc-800 dark:text-zinc-200">
-                      {profile.school}
-                    </span>
-                  </div>
-                )}
-
                 {profile?.registeredAt && (
                   <div className="flex items-center justify-between py-1">
                     <span className="text-zinc-500 dark:text-zinc-400 font-bold flex items-center gap-1.5">
@@ -417,117 +393,121 @@ export default function ProfileModal() {
             )}
           </div>
 
-          {/* Telegram Botga Ulash Kodi (6 xonali maxsus kod) */}
-          <div className="bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 dark:from-sky-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border-2 border-sky-300 dark:border-sky-700 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-blue-600 text-white flex items-center justify-center text-lg shadow-md shrink-0">
+          {/* Telegram Bot Holati & 6 xonali ulanish kodi */}
+          {isBotLinked ? (
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-400 dark:border-emerald-700 p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shadow-md shrink-0">
                   🤖
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 flex-wrap">
-                    <span>Telegram Botga Ulash Kodi</span>
-                    <span className="bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300 text-[10px] px-2 py-0.5 rounded-full font-black">
-                      LiderKids Nazorat
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-black text-emerald-900 dark:text-emerald-100 flex items-center gap-1">
+                      <span>Bot ulangan</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    </h4>
+                    <span className="bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 text-[10px] px-2 py-0.5 rounded-full font-black">
+                      Faol
                     </span>
-                  </h4>
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                    Ota-onalar haftalik dars va test natijalarini bot orqali ko‘rishlari uchun
+                  </div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+                    Ota-onangiz <strong>@LiderKidsNazoratBot</strong> orqali barcha natijalaringizni kuzatib bormoqda.
                   </p>
                 </div>
               </div>
             </div>
-
-            {/* 6 xonali raqamlar katakchalari va boshqaruv */}
-            <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 bg-white dark:bg-zinc-800 rounded-xl border border-sky-200 dark:border-zinc-700 shadow-sm">
-              <div className="flex items-center gap-1 sm:gap-1.5">
-                {botCode.split('').map((digit, idx) => (
-                  <span
-                    key={idx}
-                    className="w-8 h-10 sm:w-9 sm:h-11 rounded-lg bg-sky-50 dark:bg-zinc-700 text-sky-900 dark:text-sky-100 border border-sky-300 dark:border-zinc-600 flex items-center justify-center font-mono text-xl sm:text-2xl font-black shadow-inner"
-                  >
-                    {digit}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleCopyCode(botCode)}
-                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
-                    copiedCode
-                      ? 'bg-emerald-500 text-white shadow-md'
-                      : 'bg-sky-500 hover:bg-sky-600 text-white shadow-sm'
-                  }`}
-                  title="Kodni nusxalash"
-                >
-                  {copiedCode ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Nusxalandi!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>Nusxalash</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => refreshBotSyncCode()}
-                  className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 transition active:scale-90 cursor-pointer"
-                  title="Yangi 6 xonali kod olish"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Bot manzili va ko'rsatma */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-zinc-600 dark:text-zinc-400 pt-0.5">
-              <div className="flex items-center gap-1">
-                <span className="font-extrabold text-sky-700 dark:text-sky-300">Bot:</span>
-                <span className="font-mono font-black text-zinc-800 dark:text-zinc-200">@LiderKidsNazoratBot</span>
-              </div>
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 italic">
-                Botga kirib ushbu 6 xonali kodni yuboring
-              </span>
-            </div>
-          </div>
-
-          {/* Ota-onalar SMS Markazi Kartasi */}
-          <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-sky-500/10 dark:from-blue-950/40 dark:to-indigo-950/40 p-4 rounded-2xl border-2 border-blue-200 dark:border-blue-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-lg shadow-md">
-                📱
-              </div>
-              <div>
-                <div className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-                  <span>Ota-onalar SMS Markazi</span>
-                  <span className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                    Faol
-                  </span>
+          ) : (
+            <div className="bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 dark:from-sky-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border-2 border-sky-300 dark:border-sky-700 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-blue-600 text-white flex items-center justify-center text-lg shadow-md shrink-0">
+                    🤖
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 flex-wrap">
+                      <span>Telegram Botga Ulash Kodi</span>
+                      <span className="bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300 text-[10px] px-2 py-0.5 rounded-full font-black">
+                        LiderKids Nazorat
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                      Ota-onalar test natijalarini kuzatishlari uchun (15 daqiqa amal qiladi)
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">
-                  1 kun kirmasa ogohlantirish & test natijalari hisoboti
-                </p>
+              </div>
+
+              {/* 6 xonali raqamlar katakchalari va boshqaruv */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 bg-white dark:bg-zinc-800 rounded-xl border border-sky-200 dark:border-zinc-700 shadow-sm">
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  {(botCode || '------').split('').slice(0, 6).map((digit, idx) => (
+                    <span
+                      key={idx}
+                      className="w-8 h-10 sm:w-9 sm:h-11 rounded-lg bg-sky-50 dark:bg-zinc-700 text-sky-900 dark:text-sky-100 border border-sky-300 dark:border-zinc-600 flex items-center justify-center font-mono text-xl sm:text-2xl font-black shadow-inner"
+                    >
+                      {digit}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyCode(botCode)}
+                    disabled={!botCode}
+                    className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-50 ${
+                      copiedCode
+                        ? 'bg-emerald-500 text-white shadow-md'
+                        : 'bg-sky-500 hover:bg-sky-600 text-white shadow-sm'
+                    }`}
+                    title="Kodni nusxalash"
+                  >
+                    {copiedCode ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Nusxalandi!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>Nusxalash</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleRefreshCodeClick}
+                    disabled={isRefreshingCode}
+                    className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 transition active:scale-90 cursor-pointer disabled:opacity-50"
+                    title="Yangi 6 xonali kod olish (15 daqiqalik)"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isRefreshingCode ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Bot manzili va ko'rsatma */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-zinc-600 dark:text-zinc-400 pt-0.5">
+                <div className="flex items-center gap-1">
+                  <span className="font-extrabold text-sky-700 dark:text-sky-300">Bot manzili:</span>
+                  <a
+                    href="https://t.me/LiderKidsNazoratBot"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono font-black text-sky-600 hover:underline"
+                  >
+                    @LiderKidsNazoratBot
+                  </a>
+                </div>
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 italic">
+                  Botga ushbu 6 xonali kodni yuboring
+                </span>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setIsProfileModalOpen(false);
-                setIsSmsModalOpen(true);
-              }}
-              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition"
-            >
-              SMS Markazi
-            </button>
-          </div>
+          )}
 
-          {/* O'quv yili va Avtomatik sinf yangilanishi kartasi */}
+          {/* O'quv yili ma'lumotlari */}
           <div className="bg-amber-100/60 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-300 dark:border-amber-800 space-y-2">
             <div className="flex items-center justify-between text-xs font-black text-amber-950 dark:text-amber-200">
               <span className="flex items-center gap-1.5">
@@ -539,48 +519,21 @@ export default function ProfileModal() {
               </span>
             </div>
             <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium">
-              O‘quv yili 25-mayda yakunlangach, tizim avtomatik ravishda keyingi sinfga o‘tkazadi va boshqa sinflar ko‘rinmaydi.
+              O‘quv yili davomida tanlangan sinf darslari o‘tiladi. 25-mayda tizim avtomatik keyingi sinfga o‘tkazadi.
             </p>
-            {progress.grade < 4 ? (
+
+            {/* Test / Debug Button — Strictly hidden from pupils, shown only with ?admin=true */}
+            {isAdmin && progress.grade < 4 && (
               <button
                 onClick={() => {
                   advanceAcademicYearManually();
                   setIsProfileModalOpen(false);
                 }}
                 className="w-full mt-1 py-2 px-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
-                title="O'quv yili yakunlanganda keyingi sinfga o'tishni sinab ko'rish"
+                title="Admin sinov: O'quv yilini yakunlash"
               >
-                <span>🎓 O‘quv yilini yakunlash (Keyingi sinfga o‘tishni sinash)</span>
+                <span>🛠️ [Admin] O‘quv yilini yakunlash (Keyingi sinfga o‘tishni sinash)</span>
               </button>
-            ) : (
-              <div className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 text-center py-1">
-                👑 Siz 4-sinf — Prezident maktabi nomzodisiz!
-              </div>
-            )}
-          </div>
-
-          {/* Linked Bank Card Section */}
-          <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-950/40 dark:to-orange-950/40 p-4 rounded-2xl border border-amber-300 dark:border-amber-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md">
-                <CreditCard className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-                  <span>Bog‘langan Karta</span>
-                  <span className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                    Faol
-                  </span>
-                </div>
-                <div className="text-xs font-mono font-bold text-zinc-600 dark:text-zinc-400 mt-0.5">
-                  {getMaskedCard(profile?.cardNumber)}
-                </div>
-              </div>
-            </div>
-            {profile?.cardExpiry && (
-              <div className="text-right text-xs font-mono font-bold text-zinc-500">
-                {profile.cardExpiry}
-              </div>
             )}
           </div>
 
@@ -588,15 +541,15 @@ export default function ProfileModal() {
           <div className="pt-2 flex items-center justify-between">
             <button
               onClick={handleReset}
-              className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 transition"
+              className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 transition cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
-              <span>Qaytadan ro‘yxatdan o‘tish</span>
+              <span>Chiqish & Qaytadan ro‘yxatdan o‘tish</span>
             </button>
 
             <button
               onClick={() => setIsProfileModalOpen(false)}
-              className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black shadow transition"
+              className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black shadow transition cursor-pointer"
             >
               Yopish
             </button>

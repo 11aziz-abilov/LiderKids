@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
 import { QUIZ_QUESTIONS, SUBJECTS } from '@/data/mockData';
+import { REWARDS_CONFIG } from '@/config/rewardsConfig';
 import { SubjectId, QuizQuestion, SmsMessage, GradeLevel, DifficultyLevel } from '@/types';
 import { sound } from '@/utils/sound';
 import { smsService } from '@/utils/smsService';
@@ -44,6 +45,7 @@ function QuizContent() {
     setIsSmsModalOpen,
     updateLastActiveDate,
     openAiAssistant,
+    syncResultToDb,
   } = useGame();
 
   const userGrade: GradeLevel = progress.grade || 4;
@@ -82,9 +84,8 @@ function QuizContent() {
 
   const currentQ = filteredQuestions[currentQuestionIndex];
 
-  // Coin reward based on question difficulty: Oson (1), O'rta (2), Qiyin (3)
-  const questionCoins =
-    currentQ?.difficulty === 'qiyin' ? 3 : currentQ?.difficulty === 'o‘rta' ? 2 : 1;
+  // Coin reward consistent with config (+10 coins per correct answer)
+  const questionCoins = REWARDS_CONFIG.QUIZ.COINS_PER_CORRECT;
 
   const handleSelectOption = (index: number) => {
     if (isAnswered || !currentQ) return;
@@ -93,6 +94,14 @@ function QuizContent() {
     setIsAnswered(true);
 
     const isCorrect = index === currentQ.correctAnswerIndex;
+
+    // Send answer result to server-side API routes for database update
+    syncResultToDb({
+      subject: currentQ.subjectId || selectedSubject || 'general',
+      type: 'quiz',
+      correct: isCorrect ? 1 : 0,
+      total: 1,
+    });
 
     if (isCorrect) {
       setScore((prev) => prev + 1);
