@@ -51,9 +51,12 @@ export default function ProfileModal() {
   const isBotLinked = Boolean(profile?.isBotLinked);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsAdmin(window.location.search.includes('admin=true'));
+    if (typeof window !== 'undefined' && window.location.search.includes('admin=true')) {
+      setIsAdmin(true);
     }
+  }, []);
+
+  useEffect(() => {
     if (isProfileModalOpen) {
       checkBotLinkStatus();
       if (!botCode && profile?.id) {
