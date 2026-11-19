@@ -174,7 +174,7 @@ export default function HomePage() {
                 </span>
               </h3>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium mt-0.5">
-                Ism, familiya, telefon va karta ma‘lumotlarini kiritib, barcha darslar va sovrinlarga ega bo‘ling!
+                O‘quvchi va ota-ona ma‘lumotlarini kiritib, barcha darslar va sovrinlarga ega bo‘ling!
               </p>
             </div>
           </div>

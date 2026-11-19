@@ -15,7 +15,13 @@ export async function GET(request: Request) {
     if (studentId) {
       query = query.eq('id', studentId);
     } else if (phone) {
-      query = query.eq('parent_phone', phone.trim());
+      const digits = phone.replace(/\D/g, '');
+      const last9 = digits.slice(-9);
+      if (last9.length === 9) {
+        query = query.ilike('parent_phone', `%${last9}%`);
+      } else {
+        query = query.eq('parent_phone', phone.trim());
+      }
     }
 
     const { data: students, error } = await query.limit(1);

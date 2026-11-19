@@ -106,6 +106,7 @@ interface GameContextType {
   markQuizCompleted: (quizId: string) => void;
   toggleSound: () => void;
   registerUser: (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt' | 'academicYear' | 'academicYearEndDate'>) => void;
+  loginUserByPhone: (phone: string) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (profileData: Partial<UserProfile>) => void;
   advanceAcademicYearManually: () => void;
   clearPromotionNotice: () => void;
@@ -957,10 +958,79 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       console.warn('registerUser error:', err);
     }
 
-    setIsRegistrationModalOpen(false);
-
     if (progress.soundEnabled) {
       sound.playVictory();
+    }
+  };
+
+  const loginUserByPhone = async (phone: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const cleanPhone = phone.trim();
+      const res = await fetch(`/api/auth/student?phone=${encodeURIComponent(cleanPhone)}`);
+      if (!res.ok) {
+        return { success: false, error: 'Server xatoligi yuz berdi' };
+      }
+      const data = await res.json();
+      if (!data.student) {
+        return {
+          success: false,
+          error: 'Ushbu telefon raqamiga biriktirilgan o‘quvchi topilmadi. Iltimos, raqamni tekshiring yoki yangi o‘quvchi sifatida ro‘yxatdan o‘ting.',
+        };
+      }
+
+      const s = data.student;
+      const { academicYear, endDate } = getCurrentAcademicYear();
+      const names = (s.name || '').trim().split(' ');
+      const firstName = names[0] || 'O‘quvchi';
+      const lastName = names.slice(1).join(' ') || '';
+
+      const loadedProfile: UserProfile = {
+        id: s.id,
+        firstName,
+        lastName,
+        grade: (s.grade || 1) as GradeLevel,
+        gender: 'boy',
+        phoneNumber: s.parent_phone || cleanPhone,
+        parentPhoneNumber: s.parent_phone || cleanPhone,
+        parentName: s.parent_name || 'Ota-ona',
+        region: s.region || 'Toshkent shahri',
+        district: s.school || '',
+        school: s.school || '',
+        academicYear,
+        academicYearEndDate: endDate.toISOString(),
+        isRegistered: true,
+        registeredAt: s.created_at || new Date().toISOString(),
+        smsNotificationsEnabled: true,
+        lastActiveDate: new Date().toISOString(),
+        isBotLinked: s.isBotLinked || false,
+      };
+
+      const loadedProgress: UserProgress = {
+        ...progress,
+        name: s.name,
+        grade: (s.grade || 1) as GradeLevel,
+        coins: s.coins ?? 0,
+        xp: s.xp ?? 0,
+        streaks: s.streak ?? 0,
+        profile: loadedProfile,
+      };
+
+      setProgress(loadedProgress);
+      setIsRegistrationModalOpen(false);
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(loadedProgress));
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(loadedProfile));
+        localStorage.setItem('liderkids_student_id', s.id);
+      } catch {}
+
+      if (progress.soundEnabled) {
+        sound.playVictory();
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Tarmoq xatoligi yuz berdi' };
     }
   };
 
@@ -1255,14 +1325,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const lionStage = LION_STAGES[progress.grade] || LION_STAGES[1];
 
+  const handleSetIsRegistrationModalOpen = useCallback((open: boolean) => {
+    if (!open && !progress.profile?.isRegistered) {
+      return;
+    }
+    setIsRegistrationModalOpen(open);
+  }, [progress.profile?.isRegistered]);
+
   return (
     <GameContext.Provider
       value={{
         progress,
         lionStage,
         isLoaded,
-        isRegistrationModalOpen,
-        setIsRegistrationModalOpen,
+        isRegistrationModalOpen: isLoaded ? (!progress.profile?.isRegistered || isRegistrationModalOpen) : false,
+        setIsRegistrationModalOpen: handleSetIsRegistrationModalOpen,
+        loginUserByPhone,
         isProfileModalOpen,
         setIsProfileModalOpen,
         isSmsModalOpen,

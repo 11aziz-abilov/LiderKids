@@ -26,3 +26,18 @@ html, body {
   overflow-x: hidden;
   max-width: 100%;
 }
+
+@media (pointer: fine) {
+  html.custom-cursor-active,
+  html.custom-cursor-active body,
+  html.custom-cursor-active a,
+  html.custom-cursor-active button,
+  html.custom-cursor-active [role="button"],
+  html.custom-cursor-active input,
+  html.custom-cursor-active select,
+  html.custom-cursor-active textarea,
+  html.custom-cursor-active summary,
+  html.custom-cursor-active .cursor-pointer {
+    cursor: none !important;
+  }
+}

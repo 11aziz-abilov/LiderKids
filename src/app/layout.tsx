@@ -10,6 +10,7 @@ import ParentSmsModal from '@/components/ParentSmsModal';
 import GlobalStreakModals from '@/components/GlobalStreakModals';
 import SherchaAiAssistantModal from '@/components/SherchaAiAssistantModal';
 import FloatingAiAssistantButton from '@/components/FloatingAiAssistantButton';
+import CustomCursor from '@/components/CustomCursor';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -44,6 +45,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-amber-50/30 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 selection:bg-amber-400 selection:text-amber-950 font-sans">
         <GameProvider>
+          <CustomCursor />
           <RegistrationModal />
           <ProfileModal />
           <ParentSmsModal />

@@ -14,8 +14,9 @@ import {
   Sparkles,
   ChevronRight,
   ChevronLeft,
-  Coins,
   X,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { UZBEKISTAN_REGIONS } from '@/data/regionsData';
 
@@ -24,12 +25,16 @@ export default function RegistrationModal() {
     isRegistrationModalOpen,
     setIsRegistrationModalOpen,
     registerUser,
+    loginUserByPhone,
     progress,
   } = useGame();
 
+  const isRegistered = Boolean(progress.profile?.isRegistered);
+
+  const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  // Form Fields
+  // Form Fields for Registration
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [grade, setGrade] = useState<GradeLevel>(progress.grade || 1);
@@ -41,14 +46,19 @@ export default function RegistrationModal() {
   const [parentName, setParentName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
+  // Login Form
+  const [loginPhone, setLoginPhone] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isRegistrationModalOpen) return null;
 
   // Format Phone (+998 (XX) XXX-XX-XX)
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numbers = e.target.value.replace(/\D/g, '');
+  const formatUzbekPhone = (val: string) => {
+    const numbers = val.replace(/\D/g, '');
     let clean = numbers;
     if (clean.startsWith('998')) {
       clean = clean.slice(3);
@@ -61,8 +71,19 @@ export default function RegistrationModal() {
     if (clean.length >= 5) formatted += `-${clean.slice(5, 7)}`;
     if (clean.length >= 7) formatted += `-${clean.slice(7, 9)}`;
 
-    setPhoneNumber(clean.length > 0 ? formatted : '');
+    return clean.length > 0 ? formatted : '';
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatUzbekPhone(e.target.value);
+    setPhoneNumber(formatted);
     if (errors.phoneNumber) setErrors((prev) => ({ ...prev, phoneNumber: '' }));
+  };
+
+  const handleLoginPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatUzbekPhone(e.target.value);
+    setLoginPhone(formatted);
+    if (loginError) setLoginError('');
   };
 
   // Validate Step 1
@@ -115,25 +136,48 @@ export default function RegistrationModal() {
     }
   };
 
+  const handleLoginSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const digits = loginPhone.replace(/\D/g, '');
+    if (digits.length < 12) {
+      setLoginError('Iltimos, to‘liq telefon raqamini kiriting (masalan: +998 90 123-45-67)');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError('');
+    try {
+      const res = await loginUserByPhone(loginPhone);
+      if (res.success) {
+        triggerConfetti();
+        setIsRegistrationModalOpen(false);
+      } else {
+        setLoginError(res.error || 'O‘quvchi topilmadi');
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
   const handleFinish = () => {
     setIsRegistrationModalOpen(false);
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 0.92, opacity: 0, y: 15 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border-2 border-amber-300/60 dark:border-zinc-700 w-full max-w-xl overflow-hidden my-8"
+        exit={{ scale: 0.92, opacity: 0 }}
+        className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border-2 border-amber-300/60 dark:border-zinc-700 w-full max-w-xl overflow-hidden my-6"
       >
         {/* Modal Top Header */}
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-6 py-5 text-white relative">
-          {step !== 3 && (
+          {isRegistered && step !== 3 && (
             <button
               onClick={() => setIsRegistrationModalOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition cursor-pointer"
-              title="Keyinroq to‘ldirish"
+              title="Yopish"
             >
               <X className="w-5 h-5" />
             </button>
@@ -152,14 +196,18 @@ export default function RegistrationModal() {
                   Prezident Maktabiga Tayyorlov
                 </span>
               </div>
-              <h2 className="text-2xl font-black tracking-tight mt-0.5">
-                {step === 3 ? "Ro‘yxatdan o‘tdingiz! 🎉" : "O‘quvchini Ro‘yxatdan O‘tkazish"}
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight mt-0.5">
+                {step === 3
+                  ? "Ro‘yxatdan o‘tdingiz! 🎉"
+                  : authMode === 'login'
+                  ? "Tizimga Kirish"
+                  : "O‘quvchini Ro‘yxatdan O‘tkazish"}
               </h2>
             </div>
           </div>
 
-          {/* Stepper indicator */}
-          {step !== 3 && (
+          {/* Stepper indicator (only for registration flow) */}
+          {authMode === 'register' && step !== 3 && (
             <div className="mt-4 flex items-center justify-start gap-4 text-xs font-extrabold text-amber-100">
               <div className="flex items-center gap-1.5">
                 <div
@@ -186,11 +234,121 @@ export default function RegistrationModal() {
           )}
         </div>
 
+        {/* Tab Switcher: Ro'yxatdan o'tish vs Kirish */}
+        {step !== 3 && (
+          <div className="flex border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-800/60 p-1.5 gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('register');
+                setLoginError('');
+              }}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer flex items-center justify-center gap-2 ${
+                authMode === 'register'
+                  ? 'bg-white dark:bg-zinc-700 text-orange-600 dark:text-orange-400 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+              }`}
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Yangi o‘quvchi (Ro‘yxatdan o‘tish)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('login');
+                setErrors({});
+              }}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer flex items-center justify-center gap-2 ${
+                authMode === 'login'
+                  ? 'bg-white dark:bg-zinc-700 text-orange-600 dark:text-orange-400 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+              }`}
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Mening profilim bor (Kirish)</span>
+            </button>
+          </div>
+        )}
+
         {/* Modal Body Content */}
         <div className="p-6">
           <AnimatePresence mode="wait">
-            {/* STEP 1: Student Details */}
-            {step === 1 && (
+            {/* LOGIN MODE */}
+            {authMode === 'login' && (
+              <motion.div
+                key="login-mode"
+                initial={{ opacity: 0, x: -15 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 15 }}
+                className="space-y-4"
+              >
+                <div className="bg-amber-50 dark:bg-zinc-800/60 p-3.5 rounded-2xl border border-amber-200 dark:border-zinc-700 flex items-start gap-3">
+                  <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-xs sm:text-sm text-amber-900 dark:text-amber-200 font-medium">
+                    Avval ro‘yxatdan o‘tgan ota-ona telefon raqamini kiriting. Barcha tangalar, streak va yutuqlaringiz saqlangan holda ochiladi.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase mb-1">
+                    Ota-ona telefon raqami <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400" />
+                    <input
+                      type="tel"
+                      value={loginPhone}
+                      onChange={handleLoginPhoneChange}
+                      placeholder="+998 (90) 123-45-67"
+                      className={`w-full pl-10 pr-3 py-2.5 rounded-xl border-2 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold text-zinc-800 dark:text-zinc-100 outline-none transition font-mono ${
+                        loginError
+                          ? 'border-red-400 bg-red-50/50'
+                          : 'border-zinc-200 dark:border-zinc-700 focus:border-amber-500'
+                      }`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleLoginSubmit();
+                        }
+                      }}
+                    />
+                  </div>
+                  {loginError && (
+                    <p className="text-xs text-red-500 mt-2 font-semibold bg-red-50 dark:bg-red-950/40 p-2.5 rounded-xl border border-red-200 dark:border-red-800">
+                      ⚠️ {loginError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    disabled={isLoggingIn}
+                    onClick={() => handleLoginSubmit()}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-sm font-black bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-orange-500/25 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer disabled:opacity-60"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>{isLoggingIn ? 'Tekshirilmoqda...' : 'Tizimga Kirish'}</span>
+                  </button>
+                </div>
+
+                <div className="text-center pt-2">
+                  <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
+                    Hali ro‘yxatdan o‘tmaganmisiz?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('register')}
+                      className="text-orange-500 hover:text-orange-600 underline font-black cursor-pointer"
+                    >
+                      Ro‘yxatdan o‘tish
+                    </button>
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* REGISTER STEP 1: Student Details */}
+            {authMode === 'register' && step === 1 && (
               <motion.div
                 key="step1"
                 initial={{ opacity: 0, x: 20 }}
@@ -262,25 +420,25 @@ export default function RegistrationModal() {
                     <button
                       type="button"
                       onClick={() => setGender('boy')}
-                      className={`py-3 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm cursor-pointer ${
+                      className={`py-2.5 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm cursor-pointer ${
                         gender === 'boy'
-                          ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/20 scale-[1.02]'
+                          ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/20 scale-[1.01]'
                           : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-blue-300'
                       }`}
                     >
-                      <span className="text-xl">👦</span>
+                      <span className="text-lg">👦</span>
                       <span>O‘g‘il bola (Sher)</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setGender('girl')}
-                      className={`py-3 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm cursor-pointer ${
+                      className={`py-2.5 px-3 rounded-2xl border-2 flex items-center justify-center gap-2 transition font-black text-xs sm:text-sm cursor-pointer ${
                         gender === 'girl'
-                          ? 'border-pink-500 bg-pink-500 text-white shadow-md shadow-pink-500/20 scale-[1.02]'
+                          ? 'border-pink-500 bg-pink-500 text-white shadow-md shadow-pink-500/20 scale-[1.01]'
                           : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-pink-300'
                       }`}
                     >
-                      <span className="text-xl">👧</span>
+                      <span className="text-lg">👧</span>
                       <span>Qiz bola (Shercha)</span>
                     </button>
                   </div>
@@ -299,7 +457,7 @@ export default function RegistrationModal() {
                           type="button"
                           key={g}
                           onClick={() => setGrade(g)}
-                          className={`py-2.5 px-3 rounded-2xl border-2 text-center transition flex flex-col items-center gap-1 cursor-pointer ${
+                          className={`py-2.5 px-2 rounded-2xl border-2 text-center transition flex flex-col items-center gap-0.5 cursor-pointer ${
                             isSelected
                               ? 'border-orange-500 bg-orange-500 text-white shadow-md shadow-orange-500/20'
                               : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-400 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
@@ -307,7 +465,7 @@ export default function RegistrationModal() {
                         >
                           <span className="text-base font-black">{g}-sinf</span>
                           <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-100' : 'text-zinc-400'}`}>
-                            {g === 1 ? '🐾 Baby' : g === 2 ? '⚡ Play' : g === 3 ? '🎯 Teen' : '👑 King'}
+                            {g === 1 ? '🐾 1-sinf' : g === 2 ? '⚡ 2-sinf' : g === 3 ? '🎯 3-sinf' : '👑 4-sinf'}
                           </span>
                         </button>
                       );
@@ -388,8 +546,8 @@ export default function RegistrationModal() {
               </motion.div>
             )}
 
-            {/* STEP 2: Parent & Contact Details */}
-            {step === 2 && (
+            {/* REGISTER STEP 2: Parent & Contact Details */}
+            {authMode === 'register' && step === 2 && (
               <motion.div
                 key="step2"
                 initial={{ opacity: 0, x: 20 }}
@@ -475,7 +633,7 @@ export default function RegistrationModal() {
 
                 <div className="bg-amber-50 dark:bg-zinc-800 border-2 border-amber-300 dark:border-zinc-700 p-4 rounded-2xl max-w-sm mx-auto shadow-sm">
                   <div className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-1">
-                    🌟 Boshlang‘ich Holat
+                    🌟 Boshlang‘ich Balans
                   </div>
                   <div className="flex items-center justify-center gap-6">
                     <div className="flex items-center gap-1.5 font-black text-base text-amber-900 dark:text-amber-200">
@@ -504,8 +662,8 @@ export default function RegistrationModal() {
           </AnimatePresence>
         </div>
 
-        {/* Modal Footer Controls */}
-        {step !== 3 && (
+        {/* Modal Footer Controls (Register Flow) */}
+        {authMode === 'register' && step !== 3 && (
           <div className="bg-zinc-50 dark:bg-zinc-800/80 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
             {step > 1 ? (
               <button
@@ -516,13 +674,21 @@ export default function RegistrationModal() {
                 <ChevronLeft className="w-4 h-4" />
                 <span>Orqaga</span>
               </button>
-            ) : (
+            ) : isRegistered ? (
               <button
                 type="button"
                 onClick={() => setIsRegistrationModalOpen(false)}
                 className="text-xs font-extrabold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition cursor-pointer"
               >
-                Keyinroq to‘ldirish
+                Bekor qilish
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAuthMode('login')}
+                className="text-xs font-extrabold text-orange-500 hover:text-orange-600 transition cursor-pointer"
+              >
+                Mening hisobim bor (Kirish)
               </button>
             )}
 
