@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateParentWeeklyReport } from '@/utils/parentReportService';
 import { UserProgress } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Kelajakda "LiderKids Nazorat" Telegram botiga xizmat qiluvchi endpoint.
  * Bola progressi va hafta kodi yuborilganda, to'liq xulosa va tayyor Telegram matnini qaytaradi.

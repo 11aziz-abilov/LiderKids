@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+export const dynamic = 'force-dynamic';
+
 function generateRandom6Digit(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }

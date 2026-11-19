@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SHERCHA_SYSTEM_PROMPT, generateOfflineKidResponse, AiAssistantContextData } from '@/utils/aiKidTutor';
 
+export const dynamic = 'force-dynamic';
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
