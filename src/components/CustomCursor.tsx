@@ -25,14 +25,14 @@ const TRAIL_DURATION = 400; // ms
 const SPARKLE_COLORS = ['#F59E0B', '#FBBF24', '#FCD34D', '#F97316', '#FEF08A'];
 
 export default function CustomCursor() {
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isPointerFine, setIsPointerFine] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
 
-  // Mouse coordinates (Instantaneous)
+  // Instantaneous mouse coordinates
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
+  const cursorOpacity = useMotionValue(0);
 
   // Outer ring follows with smooth spring physics
   // Requirement: stiffness: 150, damping: 18, mass: 0.5
@@ -48,21 +48,21 @@ export default function CustomCursor() {
   const isRunningRef = useRef(false);
 
   useEffect(() => {
-    // Only enable on devices that have a fine pointer (mouse/trackpad), never on touch/mobile
+    // Only activate for devices that have a mouse / trackpad (pointer: fine)
+    if (typeof window === 'undefined') return;
     const mediaQuery = window.matchMedia('(pointer: fine)');
     if (!mediaQuery.matches) {
       return;
     }
 
-    setIsEnabled(true);
-    document.documentElement.classList.add('custom-cursor-active');
+    setIsPointerFine(true);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Handle high-DPI displays
+    // Handle high-DPI retina rendering
     const handleResize = () => {
       if (!canvas) return;
       const dpr = window.devicePixelRatio || 1;
@@ -74,7 +74,7 @@ export default function CustomCursor() {
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Animation Loop
+    // Animation Render Loop
     const render = () => {
       const now = performance.now();
       const width = window.innerWidth;
@@ -82,7 +82,7 @@ export default function CustomCursor() {
 
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Filter out expired trail points (> 400ms)
+      // 1. Remove expired trail points (> 400ms)
       pointsRef.current = pointsRef.current.filter((p) => now - p.time <= TRAIL_DURATION);
       const points = pointsRef.current;
 
@@ -99,7 +99,7 @@ export default function CustomCursor() {
 
           // Width tapers smoothly from ~6px down to ~0.5px
           const lineWidth = Math.max(0.6, progress * 6);
-          const alpha = Math.max(0, Math.min(0.6, progress * 0.65));
+          const alpha = Math.max(0, Math.min(0.65, progress * 0.7));
 
           // Outer glowing amber ribbon
           ctx.beginPath();
@@ -147,12 +147,13 @@ export default function CustomCursor() {
           ctx.beginPath();
           ctx.moveTo(p.x, p.y - s);
           ctx.quadraticCurveTo(p.x, p.y, p.x + s, p.y);
+          ctx.quadraticCurveTo(p.x, p.y, p.x + s, p.y);
           ctx.quadraticCurveTo(p.x, p.y, p.x, p.y + s);
           ctx.quadraticCurveTo(p.x, p.y, p.x - s, p.y);
           ctx.quadraticCurveTo(p.x, p.y, p.x, p.y - s);
           ctx.fill();
         } else {
-          // Circular particle
+          // Glowing circular particle
           ctx.beginPath();
           ctx.arc(p.x, p.y, Math.max(0.2, p.size * life), 0, Math.PI * 2);
           ctx.fill();
@@ -160,7 +161,7 @@ export default function CustomCursor() {
         ctx.restore();
       }
 
-      // Keep running if there's any active trail or particles
+      // Keep RAF running as long as there is an active trail or particles
       if (points.length > 0 || particles.length > 0) {
         animFrameId.current = requestAnimationFrame(render);
       } else {
@@ -180,7 +181,7 @@ export default function CustomCursor() {
     const spawnParticles = (x: number, y: number, count = 1, isBurst = false) => {
       const now = performance.now();
       for (let i = 0; i < count; i++) {
-        const speed = isBurst ? Math.random() * 2.8 + 0.5 : Math.random() * 0.9 + 0.2;
+        const speed = isBurst ? Math.random() * 2.8 + 0.6 : Math.random() * 0.9 + 0.2;
         const angle = Math.random() * Math.PI * 2;
         const color = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
 
@@ -188,7 +189,7 @@ export default function CustomCursor() {
           x: x + (Math.random() - 0.5) * 4,
           y: y + (Math.random() - 0.5) * 4,
           vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - (isBurst ? 0.3 : 0.1),
+          vy: Math.sin(angle) * speed - (isBurst ? 0.35 : 0.1),
           size: isBurst ? Math.random() * 3 + 1.5 : Math.random() * 2.2 + 1,
           color,
           createdAt: now,
@@ -204,10 +205,7 @@ export default function CustomCursor() {
       const { clientX: x, clientY: y } = e;
       mouseX.set(x);
       mouseY.set(y);
-
-      if (!isVisible) {
-        setIsVisible(true);
-      }
+      cursorOpacity.set(1);
 
       const dx = x - lastMousePos.current.x;
       const dy = y - lastMousePos.current.y;
@@ -217,7 +215,7 @@ export default function CustomCursor() {
       const now = performance.now();
       pointsRef.current.push({ x, y, time: now });
 
-      // Spawn stardust when moving sufficiently
+      // Spawn stardust particles when cursor moves
       if (dist > 4) {
         spawnParticles(x, y, dist > 25 ? 2 : 1, false);
       }
@@ -233,7 +231,7 @@ export default function CustomCursor() {
             'button, a, [role="button"], input, select, textarea, [data-cursor="pointer"], .cursor-pointer, summary'
           )
         );
-        setIsHovered(isInteractive);
+        setIsHovered((prev) => (prev !== isInteractive ? isInteractive : prev));
       }
     };
 
@@ -249,11 +247,11 @@ export default function CustomCursor() {
 
     // Window Leave / Enter
     const onMouseLeave = () => {
-      setIsVisible(false);
+      cursorOpacity.set(0);
     };
 
     const onMouseEnter = () => {
-      setIsVisible(true);
+      cursorOpacity.set(1);
     };
 
     window.addEventListener('mousemove', onMouseMove, { passive: true });
@@ -273,27 +271,25 @@ export default function CustomCursor() {
       if (animFrameId.current) {
         cancelAnimationFrame(animFrameId.current);
       }
-      document.documentElement.classList.remove('custom-cursor-active');
     };
-  }, [isVisible, mouseX, mouseY]);
-
-  if (!isEnabled) {
-    return null;
-  }
+  }, [mouseX, mouseY, cursorOpacity]);
 
   return (
-    <>
-      {/* 1. Trail Canvas (Smooth fluid ribbon and stardust embers) */}
+    <div
+      style={{ display: isPointerFine ? 'block' : 'none' }}
+      className="pointer-events-none fixed inset-0 z-[99999] overflow-hidden"
+    >
+      {/* 1. Motion Trail Canvas (Smooth fluid ribbon and stardust embers) */}
       <canvas
         ref={canvasRef}
-        className="pointer-events-none fixed inset-0 z-[9998] w-full h-full block"
+        className="pointer-events-none fixed inset-0 z-[99999] w-full h-full block"
         style={{ willChange: 'transform' }}
       />
 
       {/* 2. Outer Ring (32px circular ring with spring physics, hover scaling, warm radial glow) */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 z-[9999] rounded-full border border-amber-500/40"
+        className="pointer-events-none fixed top-0 left-0 z-[99999] rounded-full border border-amber-500/40"
         style={{
           x: ringX,
           y: ringY,
@@ -301,10 +297,10 @@ export default function CustomCursor() {
           translateY: '-50%',
           width: 32,
           height: 32,
-          opacity: isVisible ? 1 : 0,
+          opacity: cursorOpacity,
           boxShadow: isHovered
-            ? '0 0 20px rgba(245, 158, 11, 0.45)'
-            : '0 0 10px rgba(245, 158, 11, 0.15)',
+            ? '0 0 22px rgba(245, 158, 11, 0.5)'
+            : '0 0 12px rgba(245, 158, 11, 0.2)',
         }}
         animate={{
           scale: isClicked ? 0.85 : isHovered ? 1.6 : 1,
@@ -321,13 +317,13 @@ export default function CustomCursor() {
       {/* 3. Inner Core (Crisp 6px solid amber/gold dot tracking exact coordinates instantaneously) */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 z-[10000] w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.9)]"
+        className="pointer-events-none fixed top-0 left-0 z-[99999] w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.9)]"
         style={{
           x: mouseX,
           y: mouseY,
           translateX: '-50%',
           translateY: '-50%',
-          opacity: isVisible ? 1 : 0,
+          opacity: cursorOpacity,
         }}
         animate={{
           scale: isClicked ? 0.7 : isHovered ? 1.25 : 1,
@@ -336,6 +332,6 @@ export default function CustomCursor() {
           scale: { type: 'spring', stiffness: 400, damping: 25 },
         }}
       />
-    </>
+    </div>
   );
 }
