@@ -26,7 +26,8 @@ export default function Header() {
   const navLinks: { href: string; label: string; icon: any; badge?: string }[] = [
     { href: '/', label: 'Bosh sahifa', icon: Crown },
     { href: '/quiz', label: 'Testlar', icon: CheckCircle2 },
-    { href: '/lessons', label: 'Darslar', icon: BookOpen },
+    { href: '/olimpiada', label: 'Olimpiada', icon: Trophy, badge: 'Tez kunda' },
+    { href: '/lessons', label: 'Videodarslar', icon: BookOpen, badge: 'Tez kunda' },
     { href: '/tournament', label: 'Shashka 🏁', icon: Swords },
     { href: '/market', label: 'Market 🛍️', icon: ShoppingBag },
     { href: '/leaderboard', label: 'Reyting 🔥', icon: Flame },
@@ -240,10 +241,12 @@ export default function Header() {
                       : 'text-zinc-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-zinc-800'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 shrink-0" />
                   <span>{link.label}</span>
                   {link.badge && (
-                    <span className="w-2 h-2 rounded-full bg-orange-500 ring-2 ring-white animate-ping ml-0.5" />
+                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xs ml-0.5 shrink-0">
+                      {link.badge}
+                    </span>
                   )}
                 </Link>
               );

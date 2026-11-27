@@ -1,328 +1,289 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useGame } from '@/context/GameContext';
-import { LESSONS, SUBJECTS } from '@/data/mockData';
-import { Lesson, SubjectId } from '@/types';
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 import {
   PlayCircle,
-  Flame,
-  CheckCircle2,
   Clock,
   Sparkles,
   BookOpen,
-  X,
-  Award,
+  ArrowRight,
+  CheckCircle2,
+  Trophy,
+  Swords,
+  ChevronRight,
+  Flame,
+  Star,
+  GraduationCap,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
+import { SUBJECTS } from '@/data/mockData';
 
-function LessonsContent() {
-  const searchParams = useSearchParams();
-  const subjectParam = searchParams.get('subject') as SubjectId | null;
+const UPCOMING_LESSONS_PREVIEW = [
+  {
+    id: 'math',
+    title: 'Matematika',
+    icon: '📐',
+    desc: 'Prezident maktabiga xos oson va tez hisoblash usullari, geometrik sirlar hamda tenglamalar.',
+    topics: ['Sonlar pillapoyasi', 'Tezkor karra jadvali', 'Geometrik shakllar sehri', 'Mantiqiy amallar'],
+    accent: 'from-blue-500 to-indigo-600',
+    badge: 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300',
+  },
+  {
+    id: 'logic',
+    title: 'Muammoli masalalar',
+    icon: '🧩',
+    desc: 'Hayotiy vaziyatlar, qiziqarli jumboqlar va mantiqiy chalkashliklarni yechish mahorati.',
+    topics: ['O‘rmon hayvonlari poygasi', 'Tarozi va og‘irlik sirlari', 'Soat va vaqt hisobi', 'Yo‘l va tezlik jumboqlari'],
+    accent: 'from-amber-500 to-orange-600',
+    badge: 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300',
+  },
+  {
+    id: 'critical',
+    title: 'Tanqidiy fikrlash',
+    icon: '💡',
+    desc: 'Ketma-ketliklarni topish, ortiqcha narsani ajratish, fazoviy shakllar va chuqur tahlil sirlari.',
+    topics: ['Sehrli naqshlar ketma-ketligi', 'Fazoviy kubiklar aylanishi', 'Ortiqchasini top', 'Qonuniyatni aniqlash'],
+    accent: 'from-emerald-500 to-teal-600',
+    badge: 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300',
+  },
+  {
+    id: 'english',
+    title: 'Ingliz tili',
+    icon: '🇬🇧',
+    desc: 'Prezident maktabi uchun ingliz tili: yangi so‘zlar, qiziqarli grammatika va quvnoq listening mashqlari.',
+    topics: ['Numbers & Animals', 'School & Classroom', 'My Family & Friends', 'Colors & Shapes'],
+    accent: 'from-purple-500 to-pink-600',
+    badge: 'border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300',
+  },
+];
 
-  const { progress, markLessonCompleted, openAiAssistant } = useGame();
-  const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(
-    subjectParam || 'all'
-  );
-  const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
-  const [completedNotification, setCompletedNotification] = useState(false);
-
-  const filteredLessons = LESSONS.filter((lesson) => {
-    const gradeMatch = lesson.grade === progress.grade;
-    if (selectedSubject === 'all') return gradeMatch;
-    return gradeMatch && lesson.subjectId === selectedSubject;
-  });
-
-  const handleCompleteLesson = (lessonId: string) => {
-    const isNew = markLessonCompleted(lessonId);
-    if (isNew) {
-      setCompletedNotification(true);
-      setTimeout(() => setCompletedNotification(false), 2500);
-    }
-  };
+export default function LessonsPage() {
+  const [showSyllabus, setShowSyllabus] = useState(false);
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Top Header Banner */}
-      <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2">
-              <Flame className="w-4 h-4 text-orange-200 fill-orange-200" />
-              <span>Bilim energiyasi va Olovchalar</span>
+    <div className="space-y-8 sm:space-y-10 pb-16">
+      {/* Top Banner with "Tez kunda" indicator */}
+      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        {/* Subtle decorative circles */}
+        <div className="absolute top-0 right-0 -mr-12 -mt-12 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 -mb-10 w-48 h-48 bg-yellow-300/20 rounded-full blur-xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider text-yellow-100">
+              <Sparkles className="w-4 h-4 text-yellow-200" />
+              <span>Yangi Bo‘lim • Tez Kunda</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black">
-              Video Darslar Olami 🎬
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight flex items-center gap-3 flex-wrap">
+              <span>Video Darslar Olami</span>
+              <span className="text-2xl sm:text-3xl">🎬</span>
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider bg-white text-orange-600 px-3 py-1 rounded-xl shadow-md">
+                Tez kunda
+              </span>
             </h1>
-            <p className="text-orange-100 text-sm sm:text-base font-medium max-w-xl mt-1">
-              Prezident maktabiga tushuvchi qiziqarli darslarni ko‘ring va har bir dars uchun +1 🔥 olovcha energiya jamg‘aring!
+
+            <p className="text-amber-100 text-xs sm:text-sm font-medium max-w-xl leading-relaxed">
+              Prezident maktabiga tayyorgarlik uchun animatsion va qiziqarli videodarslar bo‘limi tayyorlanmoqda.
             </p>
           </div>
 
-          <div className="bg-white/20 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/25 flex items-center gap-3">
-            <Flame className="w-8 h-8 text-orange-300 fill-orange-300 animate-pulse" />
+          {/* Quick badge box */}
+          <div className="bg-white/15 backdrop-blur-md px-5 py-3.5 rounded-2xl border border-white/25 flex items-center gap-3.5 shrink-0 shadow-inner">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+              🦁
+            </div>
             <div>
-              <div className="text-xs font-bold text-orange-100 uppercase">
-                O‘zlashtirilgan darslar
+              <div className="text-[11px] font-bold text-amber-100 uppercase tracking-wider">
+                Shercha studiyasi
               </div>
-              <div className="text-2xl font-black">
-                {progress.completedLessons.length} ta dars
+              <div className="text-sm font-black text-white">
+                Darslar tasvirga olinmoqda 🎥
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Main Friendly "Tez kunda" Hero Card */}
+      <motion.section
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-10 border-2 border-amber-300 dark:border-zinc-700 shadow-xl text-center relative overflow-hidden"
+      >
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Animated Lion & Clapperboard */}
+          <div className="relative inline-block">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr from-amber-400 via-orange-500 to-yellow-400 flex items-center justify-center text-5xl sm:text-6xl shadow-xl shadow-orange-500/25 mx-auto animate-bounce duration-1000">
+              🦁
+            </div>
+            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white dark:bg-zinc-800 border-2 border-amber-300 dark:border-zinc-700 flex items-center justify-center text-xl shadow-md">
+              🎬
+            </div>
+          </div>
 
-      {/* Subject Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-4 rounded-2xl border-2 border-amber-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-amber-500" />
-          <span className="text-sm font-black text-zinc-800 dark:text-zinc-200">
-            Fanlar bo‘yicha darslar:
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            onClick={() => setSelectedSubject('all')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
-              selectedSubject === 'all'
-                ? 'bg-orange-500 text-white shadow-md'
-                : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            }`}
-          >
-            Barchasi
-          </button>
-          {SUBJECTS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSelectedSubject(s.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
-                selectedSubject === s.id
-                  ? 'bg-orange-500 text-white shadow-md'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
+          {/* Main Title & Message */}
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 text-xs font-black uppercase tracking-wider">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Jarayon qizg‘in davom etmoqda</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-zinc-900 dark:text-white tracking-tight">
+              Videodarslar tez kunda! 🚀
+            </h2>
+
+            <p className="text-zinc-600 dark:text-zinc-300 text-sm sm:text-base font-medium leading-relaxed max-w-xl mx-auto">
+              Hozir ustozlarimiz bilan eng qiziqarli videodarslarni tayyorlayapmiz. Ungacha testlar va mantiqiy o‘yinlarni sinab ko‘ring!
+            </p>
+          </div>
+
+          {/* Highlights / Features coming soon */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+            <div className="bg-amber-50/70 dark:bg-zinc-800/60 p-3.5 rounded-2xl border border-amber-200 dark:border-zinc-700">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+                  5–7 daqiqalik darslar
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+                Zeriktirmaydigan qisqa, aniq va animatsion tushuntirishlar.
+              </p>
+            </div>
+
+            <div className="bg-amber-50/70 dark:bg-zinc-800/60 p-3.5 rounded-2xl border border-amber-200 dark:border-zinc-700">
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="w-4 h-4 text-orange-500 shrink-0" />
+                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+                  +1 🔥 Har bir dars uchun
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+                Darsni ko‘rib, olovcha energiyangizni oshirasiz.
+              </p>
+            </div>
+
+            <div className="bg-amber-50/70 dark:bg-zinc-800/60 p-3.5 rounded-2xl border border-amber-200 dark:border-zinc-700">
+              <div className="flex items-center gap-2 mb-1">
+                <GraduationCap className="w-4 h-4 text-blue-500 shrink-0" />
+                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+                  Prezident maktabi sirlari
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+                Kuchli repetitorlar tomonidan saralangan masalalar.
+              </p>
+            </div>
+          </div>
+
+          {/* Primary Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+            <Link
+              href="/quiz"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-orange-500/25 transition active:scale-95 cursor-pointer"
             >
-              {s.title}
-            </button>
-          ))}
+              <span>Testlar yechishni boshlash</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+
+            <Link
+              href="/tournament"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-100 font-black text-sm rounded-2xl border-2 border-zinc-200 dark:border-zinc-700 transition active:scale-95 cursor-pointer"
+            >
+              <Swords className="w-4 h-4 text-orange-500" />
+              <span>Shashka o‘ynash 🏁</span>
+            </Link>
+
+            <Link
+              href="/"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-3.5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 font-bold text-xs sm:text-sm transition cursor-pointer"
+            >
+              <span>Bosh sahifaga qaytish</span>
+            </Link>
+          </div>
         </div>
-      </div>
+      </motion.section>
 
-      {/* Lessons List Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredLessons.map((lesson) => {
-          const isCompleted = progress.completedLessons.includes(lesson.id);
-          const currentSubject = SUBJECTS.find((s) => s.id === lesson.subjectId);
+      {/* Upcoming Curriculum Preview Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold">
+              📚
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100">
+                Tayyorlanayotgan Fanlar va Darslar
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                Prezident maktabiga kirish imtihonlari dasturi asosida tuzilmoqda
+              </p>
+            </div>
+          </div>
 
-          return (
-            <motion.div
-              key={lesson.id}
-              whileHover={{ y: -4, scale: 1.01 }}
-              className={`bg-white dark:bg-zinc-900 rounded-3xl p-6 border-4 flex flex-col justify-between shadow-lg transition-all ${
-                isCompleted
-                  ? 'border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/20'
-                  : 'border-amber-200 dark:border-zinc-800'
-              }`}
+          <button
+            type="button"
+            onClick={() => setShowSyllabus(!showSyllabus)}
+            className="text-xs font-black text-orange-600 dark:text-orange-400 hover:underline cursor-pointer"
+          >
+            {showSyllabus ? 'Yashirish ▲' : 'Batafsil ko‘rish ▼'}
+          </button>
+        </div>
+
+        {/* 4 Subject Preview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {UPCOMING_LESSONS_PREVIEW.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border-2 border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-amber-400 dark:hover:border-zinc-700 transition"
             >
               <div>
-                {/* Header Tag */}
-                <div className="flex items-center justify-between mb-4">
-                  <span
-                    className={`text-xs font-black px-3 py-1 rounded-full ${
-                      currentSubject?.themeColor.badge || 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {currentSubject?.title} • {lesson.grade}-sinf
-                  </span>
-
-                  <div className="flex items-center gap-1 text-xs font-bold text-zinc-500 dark:text-zinc-400">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{lesson.durationMinutes} daqiqa</span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-100 to-orange-100 dark:from-zinc-800 dark:to-zinc-700 flex items-center justify-center text-2xl shadow-sm">
+                    {item.icon}
                   </div>
+                  <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.badge}`}>
+                    Tez kunda
+                  </span>
                 </div>
 
-                {/* Title */}
-                <h3 className="text-xl font-black text-zinc-900 dark:text-white mb-2 leading-tight">
-                  {lesson.title}
+                <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 mb-1">
+                  {item.title}
                 </h3>
-
-                <p className="text-zinc-600 dark:text-zinc-300 text-xs sm:text-sm leading-relaxed mb-4">
-                  {lesson.description}
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed mb-4">
+                  {item.desc}
                 </p>
 
-                {/* Key Points */}
-                <div className="space-y-1.5 mb-6 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-                  <span className="text-[11px] font-black uppercase text-zinc-400 tracking-wider">
-                    Darsda o‘rganiladi:
-                  </span>
-                  {lesson.learningPoints.map((point, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300"
-                    >
-                      <Sparkles className="w-3 h-3 text-amber-500 flex-shrink-0" />
-                      <span>{point}</span>
-                    </div>
-                  ))}
-                </div>
+                {showSyllabus && (
+                  <div className="space-y-1.5 pt-3 border-t border-zinc-100 dark:border-zinc-800 animate-in fade-in">
+                    <span className="text-[10px] font-black uppercase text-zinc-400 tracking-wider block">
+                      Rejadagi mavzular:
+                    </span>
+                    {item.topics.map((top, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                        <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+                        <span>{top}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-2 pt-2">
-                <button
-                  onClick={() => setActiveLesson(lesson)}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-sm rounded-2xl shadow-md transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              <div className="pt-4 mt-auto">
+                <Link
+                  href={`/quiz?subject=${item.id === 'logic' ? 'muammoli-masalalar' : item.id === 'critical' ? 'tanqidiy-fikrlash' : item.id}`}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-amber-900 dark:text-amber-200 text-xs font-black transition cursor-pointer"
                 >
-                  <PlayCircle className="w-5 h-5" />
-                  <span>Darsni ko‘rish</span>
-                </button>
-
-                <div className="flex items-center justify-between text-xs font-bold pt-1 px-1">
-                  {isCompleted ? (
-                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                      <CheckCircle2 className="w-4 h-4" /> Dars yakunlangan (+1 🔥)
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
-                      <Flame className="w-4 h-4" /> Yakunlasangiz: +1 🔥 olovcha
-                    </span>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* VIDEO PLAYER MODAL */}
-      <AnimatePresence>
-        {activeLesson && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl max-w-3xl w-full p-6 sm:p-8 border-4 border-amber-300 dark:border-amber-800 shadow-2xl relative max-h-[90vh] overflow-y-auto"
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setActiveLesson(null)}
-                className="absolute top-5 right-5 p-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300 rounded-full transition"
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              {/* Lesson Details */}
-              <div className="mb-4 pr-10">
-                <span className="text-xs font-black text-orange-600 dark:text-orange-400 uppercase tracking-wider">
-                  Video dars
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white mt-1">
-                  {activeLesson.title}
-                </h2>
-              </div>
-
-              {/* Video Embed Player */}
-              <div className="relative aspect-video rounded-2xl overflow-hidden bg-black mb-6 shadow-inner border border-zinc-200 dark:border-zinc-800">
-                <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${activeLesson.youtubeId}?autoplay=1&rel=0`}
-                  title={activeLesson.title}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-
-              {/* Lesson Description & Complete Action */}
-              <div className="space-y-4">
-                <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300">
-                  {activeLesson.description}
-                </p>
-
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                  <div className="flex items-center gap-2 text-sm font-extrabold text-orange-600 dark:text-orange-400">
-                    <Flame className="w-5 h-5 fill-orange-500" />
-                    <span>Darsni yakunlab, olovcha hisobingizni oshiring!</span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <button
-                      onClick={() => handleCompleteLesson(activeLesson.id)}
-                      className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm shadow-md transition-transform hover:scale-105 active:scale-95 ${
-                        progress.completedLessons.includes(activeLesson.id)
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white'
-                      }`}
-                    >
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span>
-                        {progress.completedLessons.includes(activeLesson.id)
-                          ? 'Dars yakunlangan (Qayta ko‘rilmoqda)'
-                          : 'Darsni yakunlash (+1 🔥)'}
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openAiAssistant({
-                          question: `${activeLesson.title}: ${activeLesson.description}`,
-                          subject: activeLesson.subjectId,
-                          topic: activeLesson.learningPoints?.join(', ') || activeLesson.title,
-                          grade: activeLesson.grade,
-                          lessonId: activeLesson.id,
-                        })
-                      }
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-amber-950 shadow-md transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-                      title="Shercha AI ushbu dars mavzusini sodda tushuntirib beradi"
-                    >
-                      <span>🦁</span>
-                      <span>Sherchadan tushuntirish so‘rash</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Floating Notification for Flame Earned */}
-      <AnimatePresence>
-        {completedNotification && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-yellow-300"
-          >
-            <Flame className="w-8 h-8 fill-yellow-200 text-yellow-200 animate-bounce" />
-            <div>
-              <div className="font-black text-lg">Ajoyib! +1 🔥 Olovcha berildi!</div>
-              <div className="text-xs font-semibold text-orange-100">
-                Sherchangiz energiyasi ortdi!
+                  <span>Mavzu bo‘yicha test yechish</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-export default function LessonsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="p-12 text-center font-bold text-zinc-500">
-          Video darslar yuklanmoqda... 🎬
+          ))}
         </div>
-      }
-    >
-      <LessonsContent />
-    </Suspense>
+      </section>
+    </div>
   );
 }

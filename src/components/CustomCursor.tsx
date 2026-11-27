@@ -289,8 +289,8 @@ export default function CustomCursor() {
       {/* 1. Motion Trail Canvas (Smooth fluid ribbon and stardust embers) */}
       <canvas
         ref={canvasRef}
-        className="pointer-events-none fixed inset-0 z-[99999] w-full h-full block"
-        style={{ willChange: 'transform' }}
+        className="pointer-events-none fixed inset-0 z-[99999] w-full h-full block bg-transparent"
+        style={{ willChange: 'transform', background: 'transparent' }}
       />
 
       {/* 2. Outer Ring (32px circular ring with spring physics, hover scaling, warm radial glow) */}

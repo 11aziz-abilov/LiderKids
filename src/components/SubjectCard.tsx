@@ -61,7 +61,10 @@ export default function SubjectCard({
           </div>
           <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 bg-white/80 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
             <PlayCircle className="w-4 h-4 text-orange-500" />
-            <span>{lessonCount} ta video dars</span>
+            <span>Videodarslar</span>
+            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-950/60 dark:text-orange-400 ml-auto">
+              Tez kunda
+            </span>
           </div>
         </div>
       </div>
@@ -77,10 +80,13 @@ export default function SubjectCard({
         </Link>
         <Link
           href={`/lessons?subject=${subject.id}`}
-          className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/80 text-zinc-800 dark:text-zinc-200 font-extrabold text-sm border-2 border-zinc-200 dark:border-zinc-700 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-2xl bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/80 text-zinc-800 dark:text-zinc-200 font-extrabold text-sm border-2 border-zinc-200 dark:border-zinc-700 transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
-          <PlayCircle className="w-4 h-4 text-orange-500" />
-          <span>Darsni ko‘rish</span>
+          <PlayCircle className="w-4 h-4 text-orange-500 shrink-0" />
+          <span>Darslar</span>
+          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white shrink-0">
+            Tez
+          </span>
         </Link>
       </div>
     </motion.div>

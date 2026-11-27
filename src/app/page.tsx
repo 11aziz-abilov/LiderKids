@@ -292,32 +292,80 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Shashka Tournament Promo Banner */}
-      <section className="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 rounded-3xl p-5 sm:p-6 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shrink-0 shadow-inner">
-            🏁
-          </div>
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-yellow-200">
-              <Swords className="w-3.5 h-3.5" />
-              <span>Yangi: Respublika Shashka Turniri</span>
+      {/* Event Banners: Katta Respublika Olimpiadasi (Tez kunda) & Shashka Turniri */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Olimpiada Promo Banner */}
+        <section className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-5 sm:p-6 text-white shadow-lg flex flex-col justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shrink-0 shadow-inner">
+              🏆
             </div>
-            <h3 className="text-xl sm:text-2xl font-black mt-0.5">
-              Tengdoshlar bilan shashkada bellashing!
-            </h3>
-            <p className="text-orange-100 text-xs sm:text-sm mt-0.5 max-w-xl">
-              Platformadagi o‘quvchilar bilan jonli shashka o‘ynang, kuboklar to‘plang va Grandmaster Qirol unvoniga erishing!
-            </p>
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-yellow-200">
+                <Trophy className="w-3.5 h-3.5" />
+                <span>Katta Respublika Olimpiadasi</span>
+                <span className="bg-white text-orange-600 text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase ml-1">
+                  Tez kunda
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black mt-0.5">
+                Olimpiadaga hozirdan tayyorlaning!
+              </h3>
+              <p className="text-amber-100 text-xs sm:text-sm mt-0.5 leading-relaxed">
+                1–4-sinflar o‘rtasida noutbuk, planshet va oltin kubok uchun onlayn olimpiada boshlanadi.
+              </p>
+            </div>
           </div>
-        </div>
-        <Link
-          href="/tournament"
-          className="px-6 py-3 bg-white text-orange-600 hover:bg-orange-50 active:scale-95 transition font-black text-xs sm:text-sm rounded-2xl shadow-md shrink-0 flex items-center gap-2"
-        >
-          <span>Turnirga kirish 🏆</span>
-        </Link>
-      </section>
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[11px] font-bold text-yellow-100">
+              🎁 Grand Prix: Zamonaviy Noutbuk
+            </span>
+            <Link
+              href="/olimpiada"
+              className="px-5 py-2.5 bg-white text-orange-600 hover:bg-orange-50 active:scale-95 transition font-black text-xs sm:text-sm rounded-xl shadow-md shrink-0 flex items-center gap-1.5"
+            >
+              <span>Batafsil ko‘rish</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </section>
+
+        {/* Shashka Tournament Promo Banner */}
+        <section className="bg-gradient-to-r from-amber-600 via-orange-600 to-yellow-500 rounded-3xl p-5 sm:p-6 text-white shadow-lg flex flex-col justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shrink-0 shadow-inner">
+              🏁
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-yellow-200">
+                <Swords className="w-3.5 h-3.5" />
+                <span>Jonli Bellashuv</span>
+                <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase ml-1">
+                  Jonli
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black mt-0.5">
+                Respublika Shashka Turniri
+              </h3>
+              <p className="text-orange-100 text-xs sm:text-sm mt-0.5 leading-relaxed">
+                Platformadagi o‘quvchilar bilan jonli shashka o‘ynang, kuboklar to‘plang va Grandmaster bo‘ling!
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[11px] font-bold text-yellow-100">
+              ⚡ Har bir g‘alabaga: +50 tanga
+            </span>
+            <Link
+              href="/tournament"
+              className="px-5 py-2.5 bg-white text-orange-600 hover:bg-orange-50 active:scale-95 transition font-black text-xs sm:text-sm rounded-xl shadow-md shrink-0 flex items-center gap-1.5"
+            >
+              <span>Turnirga kirish 🏆</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </section>
+      </div>
 
       {/* 3 Main Directions (Subjects) */}
       <section>

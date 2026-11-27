@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Crown, CheckCircle2, BookOpen, Flame, User, Swords, Smartphone } from 'lucide-react';
+import { Crown, CheckCircle2, BookOpen, Flame, User, Swords, Smartphone, Trophy } from 'lucide-react';
 import { useDeviceMode } from '@/context/DeviceModeContext';
 import { useGame } from '@/context/GameContext';
 import { sound } from '@/utils/sound';
@@ -23,7 +23,8 @@ export default function BottomNavigationBar() {
   const navItems = [
     { href: '/', label: 'Bosh sahifa', icon: Crown },
     { href: '/quiz', label: 'Testlar', icon: CheckCircle2 },
-    { href: '/lessons', label: 'Darslar', icon: BookOpen },
+    { href: '/olimpiada', label: 'Olimpiada', icon: Trophy, badge: 'Tez' },
+    { href: '/lessons', label: 'Darslar', icon: BookOpen, badge: 'Tez' },
     { href: '/tournament', label: 'Shashka', icon: Swords },
     { href: '/leaderboard', label: 'Reyting', icon: Flame },
   ];
@@ -69,7 +70,12 @@ export default function BottomNavigationBar() {
               )}
               <div className="relative">
                 <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5] scale-110' : 'stroke-[2]'}`} />
-                {item.href === '/leaderboard' && progress.streaks > 0 && (
+                {item.badge && (
+                  <span className="absolute -top-1 -right-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[8px] font-black px-1 py-0.2 rounded-full shadow-xs">
+                    {item.badge}
+                  </span>
+                )}
+                {item.href === '/leaderboard' && progress.streaks > 0 && !item.badge && (
                   <span className="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] font-black px-1 rounded-full shadow-sm">
                     {progress.streaks}
                   </span>

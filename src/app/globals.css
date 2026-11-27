@@ -34,6 +34,12 @@ html, body {
   }
 }
 
+#custom-cursor-root,
+#custom-cursor-root canvas {
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
 /* =========================================================
    DEVICE MODE ADAPTIVE STYLES
    ========================================================= */
