@@ -188,6 +188,34 @@ export default function ProfileModal() {
 
         {/* Body content */}
         <div className="p-6 space-y-4">
+          {/* Guest Mode Callout */}
+          {profile?.isGuest && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:bg-amber-950/40 p-4 rounded-2xl border-2 border-amber-300 dark:border-amber-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                  👤
+                </div>
+                <div>
+                  <span className="text-xs font-black text-amber-950 dark:text-amber-200 block">
+                    Mehmon rejimidan foydalanmoqdasiz
+                  </span>
+                  <span className="text-[11px] text-amber-800 dark:text-amber-300 font-medium">
+                    To‘liq hisob ochib, barcha sovrinlarni yutib oling va 100 tanga bonusga ega bo‘ling!
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileModalOpen(false);
+                  setIsRegistrationModalOpen(true);
+                }}
+                className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95 cursor-pointer shrink-0 text-center"
+              >
+                To‘liq hisob ochish ✨
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <User className="w-5 h-5 text-amber-500" />

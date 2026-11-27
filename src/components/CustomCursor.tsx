@@ -50,29 +50,32 @@ export default function CustomCursor() {
   useEffect(() => {
     // Only activate for devices that have a mouse / trackpad (pointer: fine)
     if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(pointer: fine)');
-    if (!mediaQuery.matches) {
-      return;
-    }
+    try {
+      const mediaQuery = window.matchMedia('(pointer: fine)');
+      if (!mediaQuery.matches) {
+        return;
+      }
 
-    setIsPointerFine(true);
+      setIsPointerFine(true);
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Handle high-DPI retina rendering
-    const handleResize = () => {
+      const canvas = canvasRef.current;
       if (!canvas) return;
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
+      // Handle high-DPI retina rendering
+      const handleResize = () => {
+        try {
+          if (!canvas) return;
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = window.innerWidth * dpr;
+          canvas.height = window.innerHeight * dpr;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        } catch {}
+      };
+
+      handleResize();
+      window.addEventListener('resize', handleResize);
 
     // Animation Render Loop
     const render = () => {
@@ -260,18 +263,21 @@ export default function CustomCursor() {
     document.addEventListener('mouseleave', onMouseLeave);
     document.addEventListener('mouseenter', onMouseEnter);
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('mouseleave', onMouseLeave);
-      document.removeEventListener('mouseenter', onMouseEnter);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mousedown', onMouseDown);
+        window.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('mouseleave', onMouseLeave);
+        document.removeEventListener('mouseenter', onMouseEnter);
 
-      if (animFrameId.current) {
-        cancelAnimationFrame(animFrameId.current);
-      }
-    };
+        if (animFrameId.current) {
+          cancelAnimationFrame(animFrameId.current);
+        }
+      };
+    } catch (e) {
+      console.warn('Custom cursor error:', e);
+    }
   }, [mouseX, mouseY, cursorOpacity]);
 
   return (

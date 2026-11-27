@@ -47,9 +47,10 @@ export default function HomePage() {
 
       const peers = stored.filter(
         (s) =>
+          Boolean(s) &&
           s.grade === progress.grade &&
           s.id !== currentId &&
-          s.name.trim().toLowerCase() !== currentName.trim().toLowerCase()
+          (s.name || '').trim().toLowerCase() !== (currentName || '').trim().toLowerCase()
       );
 
       const combined = [currentLearner, ...peers].sort((a, b) => b.streaks - a.streaks);
@@ -168,21 +169,23 @@ export default function HomePage() {
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 justify-center sm:justify-start flex-wrap">
-                <span>Hali ro‘yxatdan o‘tmadingizmi?</span>
+                <span>{progress.profile?.isGuest ? 'Siz mehmon rejimidamisiz?' : 'Hali ro‘yxatdan o‘tmadingizmi?'}</span>
                 <span className="bg-amber-500 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">
                   +100 🪙 Bonus!
                 </span>
               </h3>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium mt-0.5">
-                O‘quvchi va ota-ona ma‘lumotlarini kiritib, barcha darslar va sovrinlarga ega bo‘ling!
+                {progress.profile?.isGuest
+                  ? 'Barcha natijalaringizni doimiy saqlab qolish va Prezident maktabi sovrinlarini yutish uchun to‘liq ro‘yxatdan o‘ting!'
+                  : 'O‘quvchi va ota-ona ma‘lumotlarini kiritib, barcha darslar va sovrinlarga ega bo‘ling!'}
               </p>
             </div>
           </div>
           <button
             onClick={() => setIsRegistrationModalOpen(true)}
-            className="shrink-0 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-black text-sm shadow-md transition hover:scale-105 active:scale-95"
+            className="shrink-0 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-black text-sm shadow-md transition hover:scale-105 active:scale-95 cursor-pointer"
           >
-            Hozir Ro‘yxatdan O‘tish ✨
+            {progress.profile?.isGuest ? 'To‘liq hisob ochish ✨' : 'Hozir Ro‘yxatdan O‘tish ✨'}
           </button>
         </motion.div>
       ) : (

@@ -186,7 +186,7 @@ export default function Header() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsProfileModalOpen(true)}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3 py-1.5 rounded-2xl shadow-sm text-xs sm:text-sm font-extrabold transition"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3 py-1.5 rounded-2xl shadow-sm text-xs sm:text-sm font-extrabold transition cursor-pointer"
                 title="Profil ma‘lumotlari va bog‘langan karta"
               >
                 <User className="w-4 h-4" />
@@ -194,12 +194,25 @@ export default function Header() {
                   {progress.profile.firstName}
                 </span>
               </motion.button>
+            ) : progress.profile?.isGuest ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsRegistrationModalOpen(true)}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white px-3 py-1.5 rounded-2xl shadow-md text-xs sm:text-sm font-black transition cursor-pointer"
+                title="To‘liq hisob ochish va 100 tanga olish"
+              >
+                <span>👤 Mehmon</span>
+                <span className="bg-white/25 text-[10px] px-1.5 py-0.5 rounded-full font-black text-yellow-100">
+                  Ro‘yxatdan o‘tish
+                </span>
+              </motion.button>
             ) : (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsRegistrationModalOpen(true)}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-3 py-1.5 rounded-2xl shadow-md text-xs sm:text-sm font-black transition animate-pulse"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-3 py-1.5 rounded-2xl shadow-md text-xs sm:text-sm font-black transition animate-pulse cursor-pointer"
                 title="Ro‘yxatdan o‘tib 100 tanga oling"
               >
                 <span>🦁 Kirish</span>

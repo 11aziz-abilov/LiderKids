@@ -91,12 +91,14 @@ export default function BottomNavigationBar() {
           <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white text-[11px] font-black shadow-sm">
             {progress.profile?.isRegistered ? (
               (progress.profile.firstName?.[0] || '🦁').toUpperCase()
+            ) : progress.profile?.isGuest ? (
+              '👤'
             ) : (
               <User className="w-3.5 h-3.5 text-white" />
             )}
           </div>
           <span className="text-[10px] tracking-tight mt-0.5 leading-none">
-            {progress.profile?.isRegistered ? 'Profil' : 'Kirish'}
+            {progress.profile?.isRegistered ? 'Profil' : progress.profile?.isGuest ? 'Mehmon' : 'Kirish'}
           </span>
         </button>
       </div>

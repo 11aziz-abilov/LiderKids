@@ -48,8 +48,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-amber-50/30 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 selection:bg-amber-400 selection:text-amber-950 font-sans overflow-x-hidden">
-        <CustomCursor />
         <ErrorBoundary>
+          <CustomCursor />
           <DeviceModeProvider>
             <GameProvider>
               <DeviceSelectorModal />

@@ -47,7 +47,9 @@ export function deduplicateLearners(list: ActiveLearner[]): ActiveLearner[] {
   for (const item of list) {
     if (!item || !item.name) continue;
     // Bitta o'quvchi bir xil sinfda faqat bir marta bo'lishi kerak
-    const dedupeKey = `${item.name.trim().toLowerCase()}_${item.grade}`;
+    const safeName = String(item.name || '').trim().toLowerCase();
+    if (!safeName) continue;
+    const dedupeKey = `${safeName}_${item.grade}`;
 
     const existing = map.get(dedupeKey);
     if (!existing) {
@@ -92,10 +94,11 @@ export function saveStoredLearner(learner: ActiveLearner) {
   if (typeof window === 'undefined') return;
   try {
     const list = getStoredLearners();
+    const targetName = String(learner.name || '').trim().toLowerCase();
     const existingIndex = list.findIndex(
       (l) =>
         l.id === learner.id ||
-        (l.name.trim().toLowerCase() === learner.name.trim().toLowerCase() && l.grade === learner.grade)
+        (String(l.name || '').trim().toLowerCase() === targetName && l.grade === learner.grade)
     );
 
     if (existingIndex >= 0) {

@@ -136,6 +136,7 @@ export interface UserProfile {
   academicYear?: string;
   academicYearEndDate?: string;
   isRegistered: boolean;
+  isGuest?: boolean; // Ro'yxatdan o'tmasdan sinab ko'rayotgan mehmon o'quvchi
   smsNotificationsEnabled?: boolean;
   lastActiveDate?: string;
   lastInactivitySmsSentDate?: string;

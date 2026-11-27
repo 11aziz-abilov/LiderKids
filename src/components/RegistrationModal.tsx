@@ -26,6 +26,7 @@ export default function RegistrationModal() {
     isRegistrationModalOpen,
     setIsRegistrationModalOpen,
     registerUser,
+    continueAsGuest,
     loginUserByPhone,
     progress,
   } = useGame();
@@ -175,7 +176,7 @@ export default function RegistrationModal() {
       >
         {/* Modal Top Header */}
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-6 py-5 text-white relative">
-          {isRegistered && step !== 3 && (
+          {(isRegistered || progress.profile?.isGuest) && step !== 3 && (
             <button
               onClick={() => setIsRegistrationModalOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition cursor-pointer"
@@ -331,6 +332,17 @@ export default function RegistrationModal() {
                   >
                     <LogIn className="w-4 h-4" />
                     <span>{isLoggingIn ? 'Tekshirilmoqda...' : 'Tizimga Kirish'}</span>
+                  </button>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={continueAsGuest}
+                    className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-black border-2 border-dashed border-amber-400 dark:border-amber-600 bg-amber-50/70 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-amber-900 dark:text-amber-200 transition cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span>Ro‘yxatdan o‘tmasdan sinab ko‘rish (Mehmon rejimi) 🚀</span>
                   </button>
                 </div>
 
@@ -666,43 +678,59 @@ export default function RegistrationModal() {
 
         {/* Modal Footer Controls (Register Flow) */}
         {authMode === 'register' && step !== 3 && (
-          <div className="bg-zinc-50 dark:bg-zinc-800/80 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-            {step > 1 ? (
-              <button
-                type="button"
-                onClick={() => setStep((s) => (s - 1) as 1 | 2)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Orqaga</span>
-              </button>
-            ) : isRegistered ? (
-              <button
-                type="button"
-                onClick={() => setIsRegistrationModalOpen(false)}
-                className="text-xs font-extrabold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition cursor-pointer"
-              >
-                Bekor qilish
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setAuthMode('login')}
-                className="text-xs font-extrabold text-orange-500 hover:text-orange-600 transition cursor-pointer"
-              >
-                Mening hisobim bor (Kirish)
-              </button>
-            )}
+          <div>
+            <div className="bg-zinc-50 dark:bg-zinc-800/80 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              {step > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setStep((s) => (s - 1) as 1 | 2)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Orqaga</span>
+                </button>
+              ) : isRegistered || progress.profile?.isGuest ? (
+                <button
+                  type="button"
+                  onClick={() => setIsRegistrationModalOpen(false)}
+                  className="text-xs font-extrabold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition cursor-pointer"
+                >
+                  Yopish
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('login')}
+                  className="text-xs font-extrabold text-orange-500 hover:text-orange-600 transition cursor-pointer"
+                >
+                  Mening hisobim bor (Kirish)
+                </button>
+              )}
 
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={handleNext}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-orange-500/20 hover:scale-105 active:scale-95 transition cursor-pointer disabled:opacity-60"
-            >
-              <span>{isSubmitting ? 'Saqlanmoqda...' : step === 2 ? "Ro‘yxatdan o‘tish" : "Keyingisi"}</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleNext}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-orange-500/20 hover:scale-105 active:scale-95 transition cursor-pointer disabled:opacity-60"
+              >
+                <span>{isSubmitting ? 'Saqlanmoqda...' : step === 2 ? "Ro‘yxatdan o‘tish" : "Keyingisi"}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Guest Mode Access */}
+            {!isRegistered && !progress.profile?.isGuest && (
+              <div className="bg-amber-50 dark:bg-zinc-900/90 py-2.5 px-4 border-t border-amber-200/60 dark:border-zinc-800 text-center">
+                <button
+                  type="button"
+                  onClick={continueAsGuest}
+                  className="text-xs font-black text-amber-700 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300 inline-flex items-center gap-1.5 transition cursor-pointer hover:underline"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Ro‘yxatdan o‘tmasdan sinab ko‘rish (Mehmon bo‘lib kirish) →</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </motion.div>

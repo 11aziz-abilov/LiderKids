@@ -106,6 +106,7 @@ interface GameContextType {
   markQuizCompleted: (quizId: string) => void;
   toggleSound: () => void;
   registerUser: (profileData: Omit<UserProfile, 'isRegistered' | 'registeredAt' | 'academicYear' | 'academicYearEndDate'>) => void;
+  continueAsGuest: () => void;
   loginUserByPhone: (phone: string) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (profileData: Partial<UserProfile>) => void;
   advanceAcademicYearManually: () => void;
@@ -190,6 +191,7 @@ const emptyProfile: UserProfile = {
   academicYear: '2026-2027',
   academicYearEndDate: new Date(2027, 4, 25, 23, 59, 59).toISOString(),
   isRegistered: false,
+  isGuest: false,
   registeredAt: '',
   smsNotificationsEnabled: true,
   lastActiveDate: '',
@@ -402,7 +404,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        if (parsedProgress && !isOldDemo && parsedProgress.profile?.isRegistered) {
+        const isGuestSaved = localStorage.getItem('liderkids_is_guest') === 'true';
+
+        if (parsedProgress && !isOldDemo && (parsedProgress.profile?.isRegistered || parsedProgress.profile?.isGuest || isGuestSaved)) {
           setProgress((prev) => ({ ...prev, ...parsedProgress }));
         } else {
           // New visitor: Show registration modal, 0 coins, 0 streak, 0 xp
@@ -963,6 +967,41 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const continueAsGuest = useCallback(() => {
+    const { academicYear, endDate } = getCurrentAcademicYear();
+    const guestProfile: UserProfile = {
+      ...emptyProfile,
+      firstName: 'Mehmon',
+      lastName: 'o‘quvchi',
+      isRegistered: false,
+      isGuest: true,
+      academicYear,
+      academicYearEndDate: endDate.toISOString(),
+      registeredAt: new Date().toISOString(),
+    };
+
+    const guestProgress: UserProgress = {
+      ...progress,
+      name: 'Mehmon o‘quvchi',
+      profile: guestProfile,
+    };
+
+    setProgress(guestProgress);
+    setIsRegistrationModalOpen(false);
+
+    try {
+      localStorage.setItem('liderkids_is_guest', 'true');
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(guestProgress));
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(guestProfile));
+    } catch (e) {
+      console.warn('Failed to save guest state:', e);
+    }
+
+    if (progress.soundEnabled) {
+      sound.playVictory();
+    }
+  }, [progress]);
+
   const loginUserByPhone = async (phone: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const cleanPhone = phone.trim();
@@ -1326,11 +1365,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const lionStage = LION_STAGES[progress.grade] || LION_STAGES[1];
 
   const handleSetIsRegistrationModalOpen = useCallback((open: boolean) => {
-    if (!open && !progress.profile?.isRegistered) {
+    // Only block closing if the user has neither completed registration nor chosen guest mode
+    if (!open && !progress.profile?.isRegistered && !progress.profile?.isGuest) {
       return;
     }
     setIsRegistrationModalOpen(open);
-  }, [progress.profile?.isRegistered]);
+  }, [progress.profile?.isRegistered, progress.profile?.isGuest]);
 
   return (
     <GameContext.Provider
@@ -1338,8 +1378,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         progress,
         lionStage,
         isLoaded,
-        isRegistrationModalOpen: isLoaded ? (!progress.profile?.isRegistered || isRegistrationModalOpen) : false,
+        isRegistrationModalOpen: isLoaded ? ((!progress.profile?.isRegistered && !progress.profile?.isGuest) || isRegistrationModalOpen) : false,
         setIsRegistrationModalOpen: handleSetIsRegistrationModalOpen,
+        continueAsGuest,
         loginUserByPhone,
         isProfileModalOpen,
         setIsProfileModalOpen,
