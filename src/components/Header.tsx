@@ -4,12 +4,14 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGame } from '@/context/GameContext';
+import { useDeviceMode } from '@/context/DeviceModeContext';
 import { GradeLevel } from '@/types';
-import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap, ShoppingBag, Smartphone, Swords } from 'lucide-react';
+import { Flame, Coins, Volume2, VolumeX, BookOpen, CheckCircle2, Trophy, Crown, User, GraduationCap, ShoppingBag, Smartphone, Tablet, Laptop, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Header() {
   const pathname = usePathname();
+  const { deviceMode, openDeviceSelector } = useDeviceMode();
   const {
     progress,
     setGrade,
@@ -121,6 +123,26 @@ export default function Header() {
               </motion.div>
             </Link>
 
+            {/* Qurilmani tanlash / o'zgartirish */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={openDeviceSelector}
+              className="flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/80 hover:border-amber-400 text-zinc-700 dark:text-zinc-200 transition shadow-sm cursor-pointer"
+              title={`Qurilma: ${deviceMode === 'mobile' ? 'Telefon' : deviceMode === 'tablet' ? 'Planshet' : 'Kompyuter'} (O‘zgartirish)`}
+            >
+              {deviceMode === 'mobile' ? (
+                <Smartphone className="w-4 h-4 text-orange-500" />
+              ) : deviceMode === 'tablet' ? (
+                <Tablet className="w-4 h-4 text-amber-500" />
+              ) : (
+                <Laptop className="w-4 h-4 text-blue-500" />
+              )}
+              <span className="hidden xl:inline text-[11px] font-black">
+                {deviceMode === 'mobile' ? 'Telefon' : deviceMode === 'tablet' ? 'Planshet' : 'Kompyuter'}
+              </span>
+            </motion.button>
+
             {/* Ovoz tugmasi */}
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -189,30 +211,32 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Navigation Tabs (Pastki qator) */}
-        <nav className="flex items-center justify-center sm:justify-start gap-2 py-2 overflow-x-auto border-t border-zinc-100 dark:border-zinc-800/80">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all whitespace-nowrap ${
-                  isActive
-                    ? 'bg-amber-500 text-white shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-zinc-800'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{link.label}</span>
-                {link.badge && (
-                  <span className="w-2 h-2 rounded-full bg-orange-500 ring-2 ring-white animate-ping ml-0.5" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Navigation Tabs (Faqat Planshet va Kompyuter rejimida yuqorida turadi, Mobil rejimida esa pastki qulay menyu chiqadi) */}
+        {deviceMode !== 'mobile' && (
+          <nav className="flex items-center justify-center sm:justify-start gap-2 py-2 overflow-x-auto border-t border-zinc-100 dark:border-zinc-800/80">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{link.label}</span>
+                  {link.badge && (
+                    <span className="w-2 h-2 rounded-full bg-orange-500 ring-2 ring-white animate-ping ml-0.5" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </div>
     </header>
   );

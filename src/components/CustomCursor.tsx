@@ -276,6 +276,7 @@ export default function CustomCursor() {
 
   return (
     <div
+      id="custom-cursor-root"
       style={{ display: isPointerFine ? 'block' : 'none' }}
       className="pointer-events-none fixed inset-0 z-[99999] overflow-hidden"
     >

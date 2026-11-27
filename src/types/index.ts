@@ -1,5 +1,7 @@
 export type GradeLevel = 1 | 2 | 3 | 4;
 
+export type DeviceMode = 'mobile' | 'tablet' | 'desktop';
+
 export type SubjectId = 'math' | 'logic' | 'critical' | 'english';
 
 export interface SubjectInfo {

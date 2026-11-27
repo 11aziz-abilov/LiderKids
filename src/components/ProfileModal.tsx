@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
+import { useDeviceMode } from '@/context/DeviceModeContext';
 import { GradeLevel } from '@/types';
 import { motion } from 'framer-motion';
 import {
@@ -22,6 +23,9 @@ import {
   Copy,
   RefreshCw,
   CheckCircle2,
+  Smartphone,
+  Tablet,
+  Laptop,
 } from 'lucide-react';
 
 import { UZBEKISTAN_REGIONS } from '@/data/regionsData';
@@ -40,6 +44,8 @@ export default function ProfileModal() {
     refreshBotSyncCode,
     checkBotLinkStatus,
   } = useGame();
+
+  const { deviceMode, openDeviceSelector } = useDeviceMode();
 
   const [isEditing, setIsEditing] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -509,6 +515,44 @@ export default function ProfileModal() {
               </div>
             </div>
           )}
+
+          {/* Qurilma rejimi va sozlamalari */}
+          <div className="bg-zinc-50 dark:bg-zinc-800/60 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700/80 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                {deviceMode === 'mobile' ? (
+                  <Smartphone className="w-5 h-5" />
+                ) : deviceMode === 'tablet' ? (
+                  <Tablet className="w-5 h-5" />
+                ) : (
+                  <Laptop className="w-5 h-5" />
+                )}
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-400 block">
+                  Joriy qurilma
+                </span>
+                <span className="text-xs sm:text-sm font-black text-zinc-800 dark:text-zinc-100">
+                  {deviceMode === 'mobile'
+                    ? '📱 Telefon (Mobil rejim)'
+                    : deviceMode === 'tablet'
+                    ? '📟 Planshet (2 ustunli rejim)'
+                    : '💻 Noutbuk / Kompyuter'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsProfileModalOpen(false);
+                openDeviceSelector();
+              }}
+              className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-black shadow-sm transition active:scale-95 cursor-pointer shrink-0"
+            >
+              Qurilmani o‘zgartirish
+            </button>
+          </div>
 
           {/* O'quv yili ma'lumotlari */}
           <div className="bg-amber-100/60 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-300 dark:border-amber-800 space-y-2">

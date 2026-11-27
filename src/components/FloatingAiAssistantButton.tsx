@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '@/context/GameContext';
+import { useDeviceMode } from '@/context/DeviceModeContext';
 import { Sparkles, MessageCircle, X } from 'lucide-react';
 import { sound } from '@/utils/sound';
 
 export default function FloatingAiAssistantButton() {
   const { isAiAssistantOpen, openAiAssistant, progress } = useGame();
+  const { deviceMode } = useDeviceMode();
   const [showBubble, setShowBubble] = useState(true);
   const [bubbleTextIndex, setBubbleTextIndex] = useState(0);
 
@@ -30,8 +32,14 @@ export default function FloatingAiAssistantButton() {
 
   if (isAiAssistantOpen) return null;
 
+  const isMobile = deviceMode === 'mobile';
+
   return (
-    <div className="fixed bottom-6 left-5 sm:left-6 z-40 flex items-end gap-2 pointer-events-auto">
+    <div
+      className={`fixed z-40 flex items-end gap-2 pointer-events-auto transition-all ${
+        isMobile ? 'bottom-20 left-4' : 'bottom-6 left-5 sm:left-6'
+      }`}
+    >
       {/* Main Avatar Button */}
       <motion.button
         whileHover={{ scale: 1.08 }}

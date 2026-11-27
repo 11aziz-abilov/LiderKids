@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
+import { useDeviceMode } from '@/context/DeviceModeContext';
 import { GradeLevel } from '@/types';
 import { triggerConfetti } from './ConfettiEffect';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,6 +30,7 @@ export default function RegistrationModal() {
     progress,
   } = useGame();
 
+  const { isDeviceSelected, isDeviceSelectorOpen } = useDeviceMode();
   const isRegistered = Boolean(progress.profile?.isRegistered);
 
   const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
@@ -54,7 +56,7 @@ export default function RegistrationModal() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isRegistrationModalOpen) return null;
+  if (!isRegistrationModalOpen || !isDeviceSelected || isDeviceSelectorOpen) return null;
 
   // Format Phone (+998 (XX) XXX-XX-XX)
   const formatUzbekPhone = (val: string) => {
